@@ -17,6 +17,9 @@ from urllib.parse import urlparse
 # Named constants to avoid magic numbers
 DOMAIN_PARTS = 2
 MIN_FQDN_LABELS = 3
+# Precomputed character sets to avoid rebuilding per call
+ALLOWED_LABEL_CHARS = frozenset(string.ascii_letters + string.digits + "_-")
+HEX_DIGITS = frozenset(string.hexdigits)
 
 
 class ExtractionError(Exception):
@@ -40,6 +43,18 @@ class Extractor:
         self.ignore = ignore
         # Small per-instance cache to avoid repeated classification work.
         self._cache: dict[tuple[str | None, str], str] = {}
+        # Pre-bind predicate checks to avoid rebuilding on every call
+        self._checks: list[tuple[Callable[[str], bool], str]] = [
+            (self._is_ip, "ip"),
+            (self._is_url, "url"),
+            (self._is_domain, "domain"),
+            (self._is_hash, "hash"),
+            (self._is_user_agent, "user-agent"),
+            (self._is_uri_path, "uri_path"),
+            (self._is_registry, "registry"),
+            (self._is_mail, "mail"),
+            (self._is_fqdn, "fqdn"),
+        ]
 
     # --- Type checks ---
     @staticmethod
@@ -59,8 +74,7 @@ class Extractor:
 
     @staticmethod
     def _label_allowed(label: str) -> bool:
-        allowed = set(string.ascii_letters + string.digits + "_-")
-        return bool(label) and all(c in allowed for c in label)
+        return bool(label) and all(c in ALLOWED_LABEL_CHARS for c in label)
 
     @classmethod
     def _is_domain(cls, value: str) -> bool:
@@ -76,8 +90,7 @@ class Extractor:
     def _is_hash(value: str) -> bool:
         if len(value) not in {32, 40, 64}:
             return False
-        hexd = set(string.hexdigits)
-        return all(c in hexd for c in value)
+        return all(c in HEX_DIGITS for c in value)
 
     @staticmethod
     def _is_user_agent(value: str) -> bool:
@@ -85,10 +98,13 @@ class Extractor:
 
     @staticmethod
     def _is_uri_path(value: str) -> bool:
+        # Consider non-HTTP(S) URI schemes like ftp://, file://, etc.
         if value.startswith(("http://", "https://")):
             return False
+        if "://" not in value:
+            return False
         parsed = urlparse(value)
-        return bool(parsed.scheme and "://" in value)
+        return bool(parsed.scheme)
 
     @staticmethod
     def _is_registry(value: str) -> bool:
@@ -137,18 +153,7 @@ class Extractor:
                 return self._cache[key]
 
             dtype = ""
-            checks: list[tuple[Callable[[str], bool], str]] = [
-                (self._is_ip, "ip"),
-                (self._is_url, "url"),
-                (self._is_domain, "domain"),
-                (self._is_hash, "hash"),
-                (self._is_user_agent, "user-agent"),
-                (self._is_uri_path, "uri_path"),
-                (self._is_registry, "registry"),
-                (self._is_mail, "mail"),
-                (self._is_fqdn, "fqdn"),
-            ]
-            for predicate, dtype_name in checks:
+            for predicate, dtype_name in self._checks:
                 if predicate(value):
                     dtype = dtype_name
                     break
@@ -180,7 +185,7 @@ class Extractor:
         """
         results: list[dict[str, str]] = []
 
-        if not isinstance(iterable, str | list | dict):
+        if not isinstance(iterable, (str, list, dict, tuple, set)):
             raise TypeError("Not supported type.")
 
         stack: list[Any] = [iterable]
@@ -188,7 +193,7 @@ class Extractor:
             item = stack.pop()
             if isinstance(item, dict):
                 stack.extend(item.values())
-            elif isinstance(item, list):
+            elif isinstance(item, (list, tuple, set)):
                 stack.extend(item)
             elif isinstance(item, str):
                 dt = self.__checktype(item)
