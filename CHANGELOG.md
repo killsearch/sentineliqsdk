@@ -19,6 +19,12 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 [0.1.0]: https://github.com/killsearch/sentineliqsdk/releases/tag/v0.1.0
 
+## v0.1.2 (2025-09-05)
+
+### Fix
+
+- update tests to use modern API and fix import issues
+
 ## v0.1.1 (2025-09-05)
 
 ### Feat
