@@ -14,11 +14,14 @@ from email.utils import parseaddr
 from typing import Any
 from urllib.parse import urlparse
 
+from sentineliqsdk.constants import (
+    DOMAIN_PARTS,
+    HASH_LENGTHS,
+    MIN_FQDN_LABELS,
+    USER_AGENT_PREFIXES,
+)
 from sentineliqsdk.models import ExtractorResult, ExtractorResults
 
-# Named constants to avoid magic numbers
-DOMAIN_PARTS = 2
-MIN_FQDN_LABELS = 3
 # Precomputed character sets to avoid rebuilding per call
 ALLOWED_LABEL_CHARS = frozenset(string.ascii_letters + string.digits + "_-")
 HEX_DIGITS = frozenset(string.hexdigits)
@@ -90,13 +93,13 @@ class Extractor:
 
     @staticmethod
     def _is_hash(value: str) -> bool:
-        if len(value) not in {32, 40, 64}:
+        if len(value) not in HASH_LENGTHS:
             return False
         return all(c in HEX_DIGITS for c in value)
 
     @staticmethod
     def _is_user_agent(value: str) -> bool:
-        return value.startswith(("Mozilla/4.0 ", "Mozilla/5.0 "))
+        return value.startswith(USER_AGENT_PREFIXES)
 
     @staticmethod
     def _is_uri_path(value: str) -> bool:

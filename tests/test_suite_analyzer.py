@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -93,7 +94,6 @@ def test_analyzer_error_response_sanitizes_secrets(capsys: pytest.CaptureFixture
         analyzer.error("Test error message")
 
     out = capsys.readouterr().out.strip()
-    import json
 
     json_output = json.loads(out)
     assert json_output["success"] is False

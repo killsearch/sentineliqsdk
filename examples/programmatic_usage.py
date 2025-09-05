@@ -16,6 +16,7 @@ class ReputationAnalyzer(Analyzer):
     """Example analyzer that marks specific IPs as malicious."""
 
     def run(self) -> None:
+        """Run the reputation analyzer to check if the IP is malicious."""
         observable = self.get_data()
 
         # Simple reputation check
@@ -43,6 +44,7 @@ class BlockIpResponder(Responder):
     """Example responder that blocks IPs."""
 
     def run(self) -> None:
+        """Run the IP blocker responder to block the given IP."""
         ip = self.get_data()
 
         # Simulate blocking action

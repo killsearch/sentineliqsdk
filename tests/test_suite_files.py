@@ -10,7 +10,7 @@ from sentineliqsdk import Analyzer, WorkerInput
 
 
 def _write_job_input(job_dir: str, payload: dict) -> None:
-    """Helper to write job input JSON file."""
+    """Write job input JSON file to the specified directory."""
     os.makedirs(os.path.join(job_dir, "input"), exist_ok=True)
     with open(os.path.join(job_dir, "input", "input.json"), "w") as fh:
         json.dump(payload, fh)

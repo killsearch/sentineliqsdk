@@ -16,10 +16,9 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, NoReturn
 
+from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, EXIT_ERROR
 from sentineliqsdk.core.config.proxy import EnvProxyConfigurator
 from sentineliqsdk.models import Artifact, Operation, WorkerError, WorkerInput
-
-DEFAULT_SECRET_PHRASES = ("key", "password", "secret", "token")
 
 
 class Worker(ABC):
@@ -136,7 +135,7 @@ class Worker(ABC):
         }
 
         print(json.dumps(error_dict))
-        sys.exit(1)
+        sys.exit(EXIT_ERROR)
 
     def summary(self, raw: Any) -> dict[str, Any]:
         """Return a summary for 'short.html' template.

@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from sentineliqsdk.constants import DEFAULT_PAP, DEFAULT_TLP
+
 # Type aliases for better readability
 TaxonomyLevel = Literal["info", "safe", "suspicious", "malicious"]
 DataType = Literal[
@@ -39,9 +41,9 @@ class WorkerConfig:
     """Configuration for workers including TLP/PAP validation and proxy settings."""
 
     check_tlp: bool = False
-    max_tlp: int = 2
+    max_tlp: int = DEFAULT_TLP
     check_pap: bool = False
-    max_pap: int = 2
+    max_pap: int = DEFAULT_PAP
     auto_extract: bool = True
     proxy: ProxyConfig = field(default_factory=ProxyConfig)
 
@@ -53,8 +55,8 @@ class WorkerInput:
     data_type: str
     data: str
     filename: str | None = None
-    tlp: int = 2
-    pap: int = 2
+    tlp: int = DEFAULT_TLP
+    pap: int = DEFAULT_PAP
     config: WorkerConfig = field(default_factory=WorkerConfig)
 
 

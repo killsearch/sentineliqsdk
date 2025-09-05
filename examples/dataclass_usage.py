@@ -26,6 +26,7 @@ class AdvancedAnalyzer(Analyzer):
     """Advanced analyzer example using dataclasses."""
 
     def run(self) -> None:
+        """Run the advanced analyzer to analyze the observable."""
         observable = self.get_data()
 
         # Simple reputation check
@@ -68,6 +69,7 @@ class AdvancedResponder(Responder):
     """Advanced responder example using dataclasses."""
 
     def run(self) -> None:
+        """Run the advanced responder to block the IP."""
         ip = self.get_data()
 
         # Build operations using dataclass
@@ -136,7 +138,7 @@ def demonstrate_dataclass_features():
 
 
 def main():
-    """Main demonstration function."""
+    """Demonstrate the SentinelIQ SDK dataclass usage examples."""
     print("SentinelIQ SDK Dataclass Usage Examples")
     print("=" * 50)
 

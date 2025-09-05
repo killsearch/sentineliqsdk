@@ -12,6 +12,7 @@ class SimpleAnalyzer(Analyzer):
     """Simple analyzer example."""
 
     def run(self) -> None:
+        """Run the simple analyzer to check if the IP is malicious."""
         observable = self.get_data()
 
         # Simple analysis logic
@@ -37,7 +38,7 @@ class SimpleAnalyzer(Analyzer):
 
 
 def main():
-    """Simple programmatic usage example."""
+    """Demonstrate simple programmatic usage of the SentinelIQ SDK."""
     # Create input data using dataclass (no file needed)
     input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)
 
