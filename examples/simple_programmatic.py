@@ -5,8 +5,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from sentineliqsdk import Analyzer
-from sentineliqsdk.analyzers.base import TaxonomyLevel
+from sentineliqsdk import Analyzer, TaxonomyLevel, WorkerInput
 
 
 class SimpleAnalyzer(Analyzer):
@@ -39,14 +38,8 @@ class SimpleAnalyzer(Analyzer):
 
 def main():
     """Simple programmatic usage example."""
-    # Create input data directly (no file needed)
-    input_data = {
-        "dataType": "ip",
-        "data": "1.2.3.4",
-        "tlp": 2,
-        "pap": 2,
-        "config": {"auto_extract": True},
-    }
+    # Create input data using dataclass (no file needed)
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)
 
     # Create analyzer with input data
     analyzer = SimpleAnalyzer(input_data)
@@ -55,17 +48,17 @@ def main():
     observable = analyzer.get_data()
     verdict = cast(TaxonomyLevel, "malicious" if observable == "1.2.3.4" else "safe")
 
+    taxonomy = analyzer.build_taxonomy(
+        level=verdict,
+        namespace="reputation",
+        predicate="static",
+        value=str(observable),
+    )
+
     full_report = {
         "observable": observable,
         "verdict": verdict,
-        "taxonomy": [
-            analyzer.build_taxonomy(
-                level=verdict,
-                namespace="reputation",
-                predicate="static",
-                value=str(observable),
-            )
-        ],
+        "taxonomy": [taxonomy],
     }
 
     # Get result in memory

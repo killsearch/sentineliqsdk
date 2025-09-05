@@ -9,8 +9,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from sentineliqsdk import Analyzer, Responder
-from sentineliqsdk.analyzers.base import TaxonomyLevel
+from sentineliqsdk import Analyzer, Responder, TaxonomyLevel, WorkerInput
 
 
 class ReputationAnalyzer(Analyzer):
@@ -63,14 +62,8 @@ def main():
     # Example 1: Using Analyzer in programmatic mode
     print("=== Analyzer Example ===")
 
-    # Create input data directly
-    input_data = {
-        "dataType": "ip",
-        "data": "1.2.3.4",
-        "tlp": 2,
-        "pap": 2,
-        "config": {"check_tlp": True, "max_tlp": 2, "auto_extract": True},
-    }
+    # Create input data using dataclass
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)
 
     # Create analyzer instance with input data
     analyzer = ReputationAnalyzer(input_data)
@@ -81,14 +74,8 @@ def main():
     # Example 2: Using Responder in programmatic mode
     print("\n=== Responder Example ===")
 
-    # Create input data for responder
-    responder_input = {
-        "dataType": "ip",
-        "data": "5.6.7.8",
-        "tlp": 2,
-        "pap": 2,
-        "config": {"check_tlp": True, "max_tlp": 2},
-    }
+    # Create input data for responder using dataclass
+    responder_input = WorkerInput(data_type="ip", data="5.6.7.8", tlp=2, pap=2)
 
     # Create responder instance with input data
     responder = BlockIpResponder(responder_input)
@@ -132,13 +119,7 @@ def main():
     results = []
 
     for obs in observables:
-        batch_input = {
-            "dataType": "ip",
-            "data": obs,
-            "tlp": 2,
-            "pap": 2,
-            "config": {"auto_extract": True},
-        }
+        batch_input = WorkerInput(data_type="ip", data=obs, tlp=2, pap=2)
 
         batch_analyzer = ReputationAnalyzer(batch_input)
         observable = batch_analyzer.get_data()

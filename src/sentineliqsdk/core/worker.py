@@ -14,11 +14,10 @@ import json
 import os
 import sys
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
 from typing import Any, NoReturn
 
 from sentineliqsdk.core.config.proxy import EnvProxyConfigurator
-from sentineliqsdk.core.config.secrets import sanitize_config
+from sentineliqsdk.models import Artifact, Operation, WorkerError, WorkerInput
 
 DEFAULT_SECRET_PHRASES = ("key", "password", "secret", "token")
 
@@ -28,28 +27,26 @@ class Worker(ABC):
 
     def __init__(
         self,
-        input_data: dict[str, Any],
+        input_data: WorkerInput,
         secret_phrases: tuple[str, ...] | None = None,
     ) -> None:
         self.secret_phrases = DEFAULT_SECRET_PHRASES if secret_phrases is None else secret_phrases
         self._input = input_data
 
-        # Set parameters
-        self.data_type = self.get_param("dataType", None, "Missing dataType field")
-        self.tlp = self.get_param("tlp", 2)
-        self.pap = self.get_param("pap", 2)
+        # Set parameters from structured input
+        self.data_type = self._input.data_type
+        self.tlp = self._input.tlp
+        self.pap = self._input.pap
 
         # Load configuration
-        config = self.get_param("config", {})
-        self.enable_check_tlp = config.get("check_tlp", False)
-        self.max_tlp = config.get("max_tlp", 2)
-        self.enable_check_pap = config.get("check_pap", False)
-        self.max_pap = config.get("max_pap", 2)
+        self.enable_check_tlp = self._input.config.check_tlp
+        self.max_tlp = self._input.config.max_tlp
+        self.enable_check_pap = self._input.config.check_pap
+        self.max_pap = self._input.config.max_pap
 
         # Set proxy configuration
-        proxy_config = config.get("proxy", {})
-        self.http_proxy = proxy_config.get("http")
-        self.https_proxy = proxy_config.get("https")
+        self.http_proxy = self._input.config.proxy.http
+        self.https_proxy = self._input.config.proxy.https
         self.__set_proxies()
 
         # Validate TLP/PAP
@@ -57,35 +54,6 @@ class Worker(ABC):
 
     def __set_proxies(self) -> None:
         EnvProxyConfigurator().set_environ(self.http_proxy, self.https_proxy)
-
-    def __get_param(
-        self,
-        source: Mapping[str, Any],
-        name: str | list[str],
-        default: Any | None = None,
-        message: str | None = None,
-    ) -> Any:
-        """Extract a specific parameter from given source.
-
-        :param source: Python dict to search through
-        :param name: Name of the parameter to get. JSON-like syntax,
-                     e.g. `config.username` at first, but in recursive calls a list
-        :param default: Default value, if not found. Default: None
-        :param message: Error message. If given and name not found, exit with error.
-                        Default: None
-        """
-        if isinstance(name, str):
-            name = name.split(".")
-
-        if len(name) == 0:
-            # The name is empty, return the source content
-            return source
-        new_source = source.get(name[0])
-        if new_source is not None:
-            return self.__get_param(new_source, name[1:], default, message)
-        if message is not None:
-            self.error(message)
-        return default
 
     def _validate_tlp_pap(self) -> None:
         """Validate TLP and PAP values against configured limits."""
@@ -99,32 +67,25 @@ class Worker(ABC):
 
         :return: Data (observable value) given through Cortex
         """
-        return self.get_param("data", None, "Missing data field")
+        return self._input.data
 
     @staticmethod
-    def build_operation(op_type: str, **parameters: Any) -> dict[str, Any]:
+    def build_operation(op_type: str, **parameters: Any) -> Operation:
         """
         Build an operation descriptor.
 
         :param op_type: an operation type as a string
         :param parameters: a dict including the operation's params
-        :return: dict
+        :return: Operation dataclass
         """
-        operation = {"type": op_type}
-        operation.update(parameters)
+        return Operation(operation_type=op_type, parameters=parameters)
 
-        return operation
-
-    def operations(self, raw: Any) -> list[dict[str, Any]]:
+    def operations(self, raw: Any) -> list[Operation]:
         """Return the list of operations to execute after the job completes.
 
         :returns: by default return an empty array
         """
         return []
-
-    def get_param(self, name: str, default: Any | None = None, message: str | None = None) -> Any:
-        """Dotted access into the input JSON; errors when `message` is provided."""
-        return self.__get_param(self._input, name, default, message)
 
     def get_env(self, key: str, default: Any | None = None, message: str | None = None) -> Any:
         """
@@ -147,16 +108,34 @@ class Worker(ABC):
 
         :param message: Error message
         """
-        # Get analyzer input
-        analyzer_input = self._input
+        # Create error response using dataclass
+        error_response = WorkerError(success=False, error_message=message, input_data=self._input)
 
-        # Loop over all the sensitive config names and clean them
-        analyzer_input["config"] = sanitize_config(
-            analyzer_input.get("config", {}), self.secret_phrases
-        )
+        # Convert to dict for JSON output
+        error_dict = {
+            "success": error_response.success,
+            "errorMessage": error_response.error_message,
+            "input": {
+                "dataType": self._input.data_type,
+                "data": self._input.data,
+                "filename": self._input.filename,
+                "tlp": self._input.tlp,
+                "pap": self._input.pap,
+                "config": {
+                    "check_tlp": self._input.config.check_tlp,
+                    "max_tlp": self._input.config.max_tlp,
+                    "check_pap": self._input.config.check_pap,
+                    "max_pap": self._input.config.max_pap,
+                    "auto_extract": self._input.config.auto_extract,
+                    "proxy": {
+                        "http": self._input.config.proxy.http,
+                        "https": self._input.config.proxy.https,
+                    },
+                },
+            },
+        }
 
-        error_result = {"success": False, "input": analyzer_input, "errorMessage": message}
-        print(json.dumps(error_result))
+        print(json.dumps(error_dict))
         sys.exit(1)
 
     def summary(self, raw: Any) -> dict[str, Any]:
@@ -168,15 +147,15 @@ class Worker(ABC):
         """
         return {}
 
-    def artifacts(self, raw: Any) -> list[dict[str, Any]]:
+    def artifacts(self, raw: Any) -> list[Artifact]:
         """Return a list of artifacts (empty by default)."""
         return []
 
-    def report(self, output: dict[str, Any]) -> dict[str, Any]:
+    def report(self, output: dict[str, Any]) -> dict[str, Any] | Any:
         """Return a JSON dict in memory.
 
         :param output: worker output.
-        :return: The output dict
+        :return: The output dict or report object
         """
         return output
 

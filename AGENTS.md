@@ -13,6 +13,7 @@ into your own agents.
 - `sentineliqsdk.Responder`: base class for responders.
 - `sentineliqsdk.Extractor`: stdlib‑based IOC extractor (ip/url/hash/...).
 - `sentineliqsdk.runner(worker_cls)`: helper to instantiate and run a worker.
+- `sentineliqsdk.models`: dataclasses for type-safe data structures.
 
 Internal layout (for maintainers):
 - `sentineliqsdk/core/worker.py` implements `Worker` (composition over helpers).
@@ -24,14 +25,59 @@ Internal layout (for maintainers):
 
 ## Input/Output Contract
 
-Workers receive input data directly as a dictionary and output results to STDOUT or return them in memory.
+Workers receive input data as dataclasses (recommended) or dictionaries (backward compatibility) and output results to STDOUT or return them in memory.
 
-- Input: Data is passed directly to the worker constructor as a dictionary.
-- Output: JSON is returned in memory via `report()`.
+- Input: Data is passed as `WorkerInput` dataclass or dictionary to the worker constructor.
+- Output: Structured data is returned in memory via `report()`.
 
-Common input fields in the input data dictionary:
+### Modern Input (Dataclasses)
 
-- `dataType`: one of `ip`, `url`, `domain`, `hash`, `file`, ...
+```python
+from sentineliqsdk import WorkerInput, WorkerConfig, ProxyConfig
+
+input_data = WorkerInput(
+    data_type="ip",
+    data="1.2.3.4",
+    filename=None,  # Optional, for file datatypes
+    tlp=2,
+    pap=2,
+    config=WorkerConfig(
+        check_tlp=True,
+        max_tlp=2,
+        check_pap=True,
+        max_pap=2,
+        auto_extract=True,
+        proxy=ProxyConfig(
+            http="http://proxy:8080",
+            https="https://proxy:8080"
+        )
+    )
+)
+```
+
+### Legacy Input (Dictionaries)
+
+```python
+input_data = {
+    "dataType": "ip",
+    "data": "1.2.3.4",
+    "tlp": 2,
+    "pap": 2,
+    "config": {
+        "check_tlp": True,
+        "max_tlp": 2,
+        "auto_extract": True,
+        "proxy": {
+            "http": "http://proxy:8080",
+            "https": "https://proxy:8080"
+        }
+    }
+}
+```
+
+Common input fields:
+
+- `data_type`/`dataType`: one of `ip`, `url`, `domain`, `hash`, `file`, ...
 - `data` or `filename`: observable value or filename for `dataType == "file"`.
 - `tlp` and `pap`: numbers; optionally enforced via config (see below).
 - `config.*`: agent configuration, including:
@@ -122,6 +168,48 @@ API:
 
 ## Minimal Analyzer Example
 
+### Modern Approach (Dataclasses)
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Analyzer, WorkerInput, runner
+
+
+class ReputationAnalyzer(Analyzer):
+    """Toy analyzer that marks "1.2.3.4" as malicious and others as safe."""
+
+    def run(self) -> None:
+        observable = self.get_data()
+
+        verdict = "malicious" if observable == "1.2.3.4" else "safe"
+        
+        # Build taxonomy using dataclass
+        taxonomy = self.build_taxonomy(
+            level=verdict,
+            namespace="reputation",
+            predicate="static",
+            value=str(observable),
+        )
+        
+        full = {
+            "observable": observable,
+            "verdict": verdict,
+            "taxonomy": [taxonomy.to_dict()],
+        }
+
+        self.report(full)
+
+
+if __name__ == "__main__":
+    # Using dataclass input
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
+    analyzer = ReputationAnalyzer(input_data)
+    analyzer.run()
+```
+
+### Legacy Approach (Dictionaries)
+
 ```python
 from __future__ import annotations
 
@@ -156,6 +244,42 @@ if __name__ == "__main__":
 ```
 
 ## Minimal Responder Example
+
+### Modern Approach (Dataclasses)
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Responder, WorkerInput
+
+
+class BlockIpResponder(Responder):
+    def run(self) -> None:
+        ip = self.get_data()
+        
+        # Build operations using dataclass
+        operations = [
+            self.build_operation("block", target=ip, duration="24h"),
+            self.build_operation("alert", severity="high")
+        ]
+        
+        result = {
+            "action": "block", 
+            "target": ip, 
+            "status": "ok",
+            "operations": [operation.to_dict() for operation in operations]
+        }
+        self.report(result)
+
+
+if __name__ == "__main__":
+    # Using dataclass input
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
+    responder = BlockIpResponder(input_data)
+    responder.run()
+```
+
+### Legacy Approach (Dictionaries)
 
 ```python
 from __future__ import annotations
@@ -241,6 +365,33 @@ On an error, the worker writes:
 
 You can use the SDK directly in your code without file I/O by passing input data directly to the constructor:
 
+### Modern Approach (Dataclasses)
+
+```python
+from sentineliqsdk import Analyzer, WorkerInput
+
+class MyAnalyzer(Analyzer):
+    def run(self) -> None:
+        observable = self.get_data()
+        # Your analysis logic here
+        result = {"observable": observable, "verdict": "safe"}
+        self.report(result)
+
+# Create input data using dataclass
+input_data = WorkerInput(
+    data_type="ip",
+    data="1.2.3.4",
+    tlp=2,
+    pap=2
+)
+
+# Use analyzer without file I/O
+analyzer = MyAnalyzer(input_data=input_data)
+analyzer.run()
+```
+
+### Legacy Approach (Dictionaries)
+
 ```python
 from sentineliqsdk import Analyzer
 
@@ -267,11 +418,11 @@ analyzer.run()
 
 ### In-Memory Results
 
-To get results in memory instead of writing to files, use `report_in_memory()`:
+To get results in memory instead of writing to files, use `report()`:
 
 ```python
 # Get result directly in memory
-result = analyzer.report_in_memory(full_report)
+result = analyzer.report(full_report)
 print(f"Analysis result: {result}")
 ```
 
@@ -280,22 +431,101 @@ print(f"Analysis result: {result}")
 Process multiple observables without file I/O:
 
 ```python
+from sentineliqsdk import WorkerInput
+
 observables = ["1.2.3.4", "8.8.8.8", "5.6.7.8"]
 results = []
 
 for obs in observables:
-    input_data = {
-        "dataType": "ip",
-        "data": obs,
-        "tlp": 2,
-        "config": {"auto_extract": True}
-    }
+    input_data = WorkerInput(
+        data_type="ip",
+        data=obs,
+        tlp=2,
+        pap=2
+    )
     
     analyzer = MyAnalyzer(input_data=input_data)
     # Process and get result in memory
-    result = analyzer.report_in_memory(full_report)
+    result = analyzer.report(full_report)
     results.append(result)
 ```
+
+## Dataclasses and Type Safety
+
+The SDK now provides dataclasses for better type safety and developer experience:
+
+### Available Dataclasses
+
+- **`WorkerInput`**: Input data for workers
+- **`WorkerConfig`**: Worker configuration (TLP/PAP, proxy, etc.)
+- **`ProxyConfig`**: HTTP/HTTPS proxy configuration
+- **`TaxonomyEntry`**: Taxonomy entries for analyzers
+- **`Artifact`**: Extracted artifacts
+- **`Operation`**: Follow-up operations
+- **`AnalyzerReport`**: Complete analyzer report
+- **`ResponderReport`**: Complete responder report
+- **`WorkerError`**: Error responses
+- **`ExtractorResult`**: Individual extraction results
+- **`ExtractorResults`**: Collection of extraction results
+
+### Benefits
+
+- **Type Safety**: Catch errors at development time
+- **IDE Support**: Better autocomplete and error detection
+- **Immutability**: Data structures are frozen and cannot be accidentally modified
+- **Clear Contracts**: Well-defined data structures
+- **Backward Compatibility**: Still accepts dictionary inputs
+
+### Example Usage
+
+```python
+from sentineliqsdk import (
+    WorkerInput, WorkerConfig, ProxyConfig, 
+    TaxonomyEntry, Artifact, Operation
+)
+
+# Create structured input
+input_data = WorkerInput(
+    data_type="ip",
+    data="1.2.3.4",
+    config=WorkerConfig(
+        check_tlp=True,
+        max_tlp=2,
+        proxy=ProxyConfig(http="http://proxy:8080")
+    )
+)
+
+# Create taxonomy entry
+taxonomy = TaxonomyEntry(
+    level="malicious",
+    namespace="reputation",
+    predicate="static",
+    value="1.2.3.4"
+)
+
+# Create artifact
+artifact = Artifact(
+    data_type="ip",
+    data="8.8.8.8",
+    tlp=2,
+    extra={"confidence": 0.9}
+)
+
+# Create operation
+operation = Operation(
+    operation_type="hunt",
+    parameters={"target": "1.2.3.4", "priority": "high"}
+)
+
+# Convert to dict for JSON serialization
+json_data = {
+    "taxonomy": [taxonomy.to_dict()],
+    "artifacts": [artifact.to_dict()],
+    "operations": [operation.to_dict()]
+}
+```
+
+For more detailed information about dataclasses, see `DATACLASS_MIGRATION.md`.
 
 ## Project and CI Tips
 

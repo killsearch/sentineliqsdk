@@ -10,9 +10,41 @@ from typing import Any, Protocol, TypeVar
 from sentineliqsdk.analyzers import Analyzer
 from sentineliqsdk.core import Worker
 from sentineliqsdk.extractors import Extractor
+from sentineliqsdk.models import (
+    AnalyzerReport,
+    Artifact,
+    ExtractorResult,
+    ExtractorResults,
+    Operation,
+    ProxyConfig,
+    ResponderReport,
+    TaxonomyEntry,
+    TaxonomyLevel,
+    WorkerConfig,
+    WorkerError,
+    WorkerInput,
+)
 from sentineliqsdk.responders import Responder
 
-__all__ = ["Analyzer", "Extractor", "Responder", "Worker", "runner"]
+__all__ = [
+    "Analyzer",
+    "AnalyzerReport",
+    "Artifact",
+    "Extractor",
+    "ExtractorResult",
+    "ExtractorResults",
+    "Operation",
+    "ProxyConfig",
+    "Responder",
+    "ResponderReport",
+    "TaxonomyEntry",
+    "TaxonomyLevel",
+    "Worker",
+    "WorkerConfig",
+    "WorkerError",
+    "WorkerInput",
+    "runner",
+]
 
 
 class Runnable(Protocol):
@@ -25,7 +57,7 @@ class Runnable(Protocol):
 T = TypeVar("T", bound=Runnable)
 
 
-def runner(worker_cls: type[T], input_data: dict[str, Any]) -> None:
+def runner(worker_cls: type[T], input_data: WorkerInput) -> None:
     """Instantiate and run a worker class with a ``run()`` method."""
     worker: Runnable = worker_cls(input_data)  # type: ignore[call-arg]
     worker.run()

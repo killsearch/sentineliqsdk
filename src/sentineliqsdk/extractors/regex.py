@@ -14,6 +14,8 @@ from email.utils import parseaddr
 from typing import Any
 from urllib.parse import urlparse
 
+from sentineliqsdk.models import ExtractorResult, ExtractorResults
+
 # Named constants to avoid magic numbers
 DOMAIN_PARTS = 2
 MIN_FQDN_LABELS = 3
@@ -141,11 +143,10 @@ class Extractor:
         :return: Data type of value, if known, else empty string
         :rtype: str
         """
-        if self.ignore:
+        if self.ignore and isinstance(value, str) and self.ignore == value:
             # Ignore only exact matches to avoid hiding valid IOCs that merely
             # contain the observable as a substring.
-            if isinstance(value, str) and self.ignore == value:
-                return ""
+            return ""
 
         if isinstance(value, str):
             key = (self.ignore, value)
@@ -172,20 +173,20 @@ class Extractor:
         """
         return self.__checktype(value)
 
-    def check_iterable(self, iterable: Any) -> list[dict[str, str]]:
+    def check_iterable(self, iterable: Any) -> list[ExtractorResult]:
         """Check values of a list or a dict for IOCs.
 
-        Returns a list of dict {type, value}. Raises TypeError if iterable is not an
+        Returns a list of ExtractorResult objects. Raises TypeError if iterable is not an
         expected type.
 
         :param iterable: List or dict of values
         :type iterable: list | dict | str
-        :return: List of IOCs matching the regex
-        :rtype: list
+        :return: List of IOC results
+        :rtype: list[ExtractorResult]
         """
-        results: list[dict[str, str]] = []
+        results = ExtractorResults()
 
-        if not isinstance(iterable, (str, list, dict, tuple, set)):
+        if not isinstance(iterable, str | list | dict | tuple | set):
             raise TypeError("Not supported type.")
 
         stack: list[Any] = [iterable]
@@ -193,14 +194,16 @@ class Extractor:
             item = stack.pop()
             if isinstance(item, dict):
                 stack.extend(item.values())
-            elif isinstance(item, (list, tuple, set)):
+            elif isinstance(item, list | tuple | set):
                 stack.extend(item)
             elif isinstance(item, str):
                 dt = self.__checktype(item)
                 if dt:
-                    results.append({"dataType": dt, "data": item})
+                    results.add_result(dt, item)
 
-        return self.deduplicate(results)
+        # Deduplicate and return as list of ExtractorResult objects
+        deduped = results.deduplicate()
+        return deduped.results
 
     @staticmethod
     def deduplicate(list_of_objects: list[dict[str, str]]) -> list[dict[str, str]]:
