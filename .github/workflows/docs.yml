@@ -1,0 +1,46 @@
+name: Docs
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 23
+
+      - name: Install @devcontainers/cli
+        run: npm install --location=global @devcontainers/cli@0.73.0
+
+      - name: Start Dev Container
+        run: |
+          git config --global init.defaultBranch main
+          devcontainer up --workspace-folder .
+        env:
+          PYTHON_VERSION: 3.13
+          RESOLUTION_STRATEGY: highest
+
+      - name: Ensure dev dependencies (uv)
+        run: devcontainer exec --workspace-folder . uv sync --group dev --all-extras
+
+      - name: Build docs (MkDocs)
+        run: devcontainer exec --workspace-folder . bash -lc 'PYTHONPATH=src poe docs'
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          force_orphan: true

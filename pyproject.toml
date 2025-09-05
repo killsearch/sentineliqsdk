@@ -19,7 +19,7 @@ homepage = "https://github.com/killsearch/sentineliqsdk"
 source = "https://github.com/killsearch/sentineliqsdk"
 changelog = "https://github.com/killsearch/sentineliqsdk/blob/main/CHANGELOG.md"
 releasenotes = "https://github.com/killsearch/sentineliqsdk/releases"
-documentation = "https://github.com/killsearch/sentineliqsdk"
+documentation = "https://killsearch.github.io/sentineliqsdk/"
 issues = "https://github.com/killsearch/sentineliqsdk/issues"
 
 [dependency-groups]  # https://docs.astral.sh/uv/concepts/projects/dependencies/#development-dependencies
@@ -31,7 +31,9 @@ dev = [
   "ipython (>=8.18.0)",
   "ipywidgets (>=8.1.2)",
   "mypy (>=1.14.1)",
-  "pdoc (>=15.0.1)",
+  "mkdocs (>=1.6.1)",
+  "mkdocs-material (>=9.5.49)",
+  "mkdocstrings[python] (>=0.26.2)",
   "poethepoet (>=0.32.1)",
   "pre-commit (>=4.0.1)",
   "pytest (>=8.3.4)",
@@ -106,25 +108,12 @@ type = "simple"
 [tool.poe.tasks]
 
   [tool.poe.tasks.docs]
-  help = "Generate this package's docs"
-  cmd = """
-    pdoc
-      --docformat $docformat
-      --output-directory $outputdirectory
-      sentineliqsdk
-    """
+  help = "Build the MkDocs site"
+  cmd = "mkdocs build --clean --strict"
 
-    [[tool.poe.tasks.docs.args]]
-    help = "The docstring style (default: numpy)"
-    name = "docformat"
-    options = ["--docformat"]
-    default = "numpy"
-
-    [[tool.poe.tasks.docs.args]]
-    help = "The output directory (default: docs)"
-    name = "outputdirectory"
-    options = ["--output-directory"]
-    default = "docs"
+  [tool.poe.tasks.docs-serve]
+  help = "Serve the MkDocs site locally"
+  cmd = "mkdocs serve --dev-addr 0.0.0.0:8000"
 
   [tool.poe.tasks.lint]
   help = "Lint this package"

@@ -1,0 +1,48 @@
+site_name: SentinelIQ SDK
+site_description: Utility classes for building SentinelIQ analyzers and responders
+site_url: https://killsearch.github.io/sentineliqsdk/
+repo_url: https://github.com/killsearch/sentineliqsdk
+repo_name: killsearch/sentineliqsdk
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Guide: guide.md
+  - API Reference: reference.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            separate_signature: true
+            show_root_heading: true
+            show_signature_annotations: true
+            filters:
+              - '!^_'
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - def_list
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/killsearch/sentineliqsdk

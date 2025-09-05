@@ -252,44 +252,52 @@ On an error, the worker writes:
 
 This repository publishes to PyPI via GitHub Actions when you create a GitHub Release.
 
-- Workflow: see `.github/workflows/publish.yml` (runs `uv build` and `uv publish`).
-- Auth: uses GitHub OIDC (permissions `id-token: write`) with a PyPI Trusted Publisher.
-- Trigger: fires on GitHub Release creation for tags like `vX.Y.Z`.
+- Workflow: see `.github/workflows/publish.yml` (runs `uv build` then `uv publish`).
+- Auth: GitHub OIDC (`permissions: id-token: write`) with a PyPI Trusted Publisher.
+- Trigger: GitHub Release for a tag like `vX.Y.Z`.
 
 Release checklist (maintainers):
 
 1. Ensure `main` is green
-   - Open a PR, wait for the "Test" workflow to pass on CI.
-   - Merge to `main` once lint, type checks, and tests pass.
+   - Open a PR and wait for the "Test" workflow to pass.
+   - Merge to `main` once lint, types, and tests pass.
 2. Bump version and changelog with Commitizen
-   - From the repo root, run: `cz bump`
-   - Choose the bump (patch/minor/major) according to Conventional Commits.
-   - This updates `[project].version` in `pyproject.toml`, updates/creates `CHANGELOG.md`,
-     creates a tag `vX.Y.Z`, and commits the changes.
-   - Push branch and tags: `git push origin main --tags`.
-3. Create a GitHub Release for the new tag
-   - Via UI or CLI, e.g.: `gh release create vX.Y.Z --generate-notes`.
-   - Title: `vX.Y.Z`. Link to the corresponding section in `CHANGELOG.md` if present.
-4. CI publishes to PyPI
-   - The "Publish" workflow builds artifacts and calls `uv publish` using OIDC.
-   - Track the run under Actions → Publish; wait for a green check.
-5. Verify the release
-   - Install explicitly: `pip install sentineliqsdk==X.Y.Z`.
-   - Sanity-check `import sentineliqsdk; print(sentineliqsdk.__version__)` if exposed.
+   - Recommended (uses the project env): `uv run cz bump`
+   - Non‑interactive examples:
+     - Patch: `uv run cz bump --increment patch`
+     - Minor: `uv run cz bump --increment minor`
+     - Major: `uv run cz bump --increment major`
+   - Pre‑releases:
+     - First RC: `uv run cz bump --prerelease rc`
+     - Next RC: `uv run cz bump --prerelease rc`
+     - RC for next minor: `uv run cz bump --increment minor --prerelease rc`
+   - Commitizen updates `[project].version` in `pyproject.toml`, updates `CHANGELOG.md`,
+     creates the tag `vX.Y.Z` and commits the change (per `[tool.commitizen]`).
+3. Push branch and tags
+   - `git push origin main --follow-tags`
+   - If your local branch is behind: `git pull --rebase origin main` then push again.
+4. Create a GitHub Release for the new tag
+   - UI: Releases → New release → Choose tag `vX.Y.Z` → Publish.
+   - CLI: `gh release create vX.Y.Z --title "vX.Y.Z" --notes-file CHANGELOG.md --latest`
+5. CI publishes to PyPI
+   - The "Publish" workflow runs and calls `uv publish` using OIDC.
+   - Acompanhe em Actions → Publish (ou `gh run list --workflow=Publish`).
+6. Verify the release
+   - `pip install sentineliqsdk==X.Y.Z`
+   - `python -c "import importlib.metadata as m; print(m.version('sentineliqsdk'))"`
 
 Prerequisites (one-time, org/maintainers):
 
 - Configure a PyPI Trusted Publisher for this repo:
-  - On PyPI: Project → Settings → Collaboration → Trusted Publishers → Add → GitHub
+  - PyPI: Project → Settings → Collaboration → Trusted Publishers → Add → GitHub
     - Repository: `killsearch/sentineliqsdk`
     - Workflows: allow `.github/workflows/publish.yml`
-  - No classic API tokens are needed; OIDC is handled by `id-token: write`.
-- Optional: protect the `pypi` environment in GitHub with required reviewers if desired.
+  - No classic API tokens; OIDC is granted by `id-token: write`.
+- Optional: protect the `pypi` environment in GitHub with required reviewers.
 
 Notes and tips:
 
-- Tag format is `v$version` (Commitizen config); ensure the tag matches `pyproject.toml`.
-- For pre-releases, you can run `cz bump --prerelease rc` to create versions like
-  `X.Y.Z-rc.1`. Mark the GitHub Release as "Pre-release" to signal stability level.
-- If the Publish job fails with a PyPI permission error, double-check the Trusted
-  Publisher configuration and that the workflow has `permissions: id-token: write`.
+- Tag format is `v$version` (Commitizen config); it must match `pyproject.toml`.
+- Mark GitHub Releases as "Pre-release" when publishing RCs (`X.Y.Z-rc.N`).
+- If the Publish job fails with a PyPI permission error, review the Trusted Publisher
+  settings and the workflow `permissions`.
