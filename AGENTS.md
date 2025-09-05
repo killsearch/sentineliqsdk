@@ -247,3 +247,49 @@ On an error, the worker writes:
 - Tests: `poe test` (pytest with coverage to `reports/`).
 - Docs: `poe docs` generates API docs to `docs/`.
 - Build: `uv build`; publish via CI on GitHub release.
+
+## Releases (CI/CD)
+
+This repository publishes to PyPI via GitHub Actions when you create a GitHub Release.
+
+- Workflow: see `.github/workflows/publish.yml` (runs `uv build` and `uv publish`).
+- Auth: uses GitHub OIDC (permissions `id-token: write`) with a PyPI Trusted Publisher.
+- Trigger: fires on GitHub Release creation for tags like `vX.Y.Z`.
+
+Release checklist (maintainers):
+
+1. Ensure `main` is green
+   - Open a PR, wait for the "Test" workflow to pass on CI.
+   - Merge to `main` once lint, type checks, and tests pass.
+2. Bump version and changelog with Commitizen
+   - From the repo root, run: `cz bump`
+   - Choose the bump (patch/minor/major) according to Conventional Commits.
+   - This updates `[project].version` in `pyproject.toml`, updates/creates `CHANGELOG.md`,
+     creates a tag `vX.Y.Z`, and commits the changes.
+   - Push branch and tags: `git push origin main --tags`.
+3. Create a GitHub Release for the new tag
+   - Via UI or CLI, e.g.: `gh release create vX.Y.Z --generate-notes`.
+   - Title: `vX.Y.Z`. Link to the corresponding section in `CHANGELOG.md` if present.
+4. CI publishes to PyPI
+   - The "Publish" workflow builds artifacts and calls `uv publish` using OIDC.
+   - Track the run under Actions → Publish; wait for a green check.
+5. Verify the release
+   - Install explicitly: `pip install sentineliqsdk==X.Y.Z`.
+   - Sanity-check `import sentineliqsdk; print(sentineliqsdk.__version__)` if exposed.
+
+Prerequisites (one-time, org/maintainers):
+
+- Configure a PyPI Trusted Publisher for this repo:
+  - On PyPI: Project → Settings → Collaboration → Trusted Publishers → Add → GitHub
+    - Repository: `killsearch/sentineliqsdk`
+    - Workflows: allow `.github/workflows/publish.yml`
+  - No classic API tokens are needed; OIDC is handled by `id-token: write`.
+- Optional: protect the `pypi` environment in GitHub with required reviewers if desired.
+
+Notes and tips:
+
+- Tag format is `v$version` (Commitizen config); ensure the tag matches `pyproject.toml`.
+- For pre-releases, you can run `cz bump --prerelease rc` to create versions like
+  `X.Y.Z-rc.1`. Mark the GitHub Release as "Pre-release" to signal stability level.
+- If the Publish job fails with a PyPI permission error, double-check the Trusted
+  Publisher configuration and that the workflow has `permissions: id-token: write`.
