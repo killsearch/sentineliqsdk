@@ -5,7 +5,7 @@ Exports the modern API and a convenience runner for workers.
 
 from __future__ import annotations
 
-from typing import Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from sentineliqsdk.analyzers import Analyzer
 from sentineliqsdk.core import Worker
@@ -25,7 +25,7 @@ class Runnable(Protocol):
 T = TypeVar("T", bound=Runnable)
 
 
-def runner(worker_cls: type[T]) -> None:
+def runner(worker_cls: type[T], input_data: dict[str, Any]) -> None:
     """Instantiate and run a worker class with a ``run()`` method."""
-    worker: Runnable = worker_cls()  # type: ignore[call-arg]
+    worker: Runnable = worker_cls(input_data)  # type: ignore[call-arg]
     worker.run()

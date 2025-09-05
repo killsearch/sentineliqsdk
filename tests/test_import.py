@@ -17,12 +17,16 @@ def test_public_api_importable() -> None:
 
 
 def test_runner_invokes_run() -> None:
-    """`runner` should instantiate the class and call `run()` with no args."""
+    """`runner` should instantiate the class and call `run()` with input_data."""
     executed = {"ok": False}
 
     class Dummy:
+        def __init__(self, input_data):
+            self.input_data = input_data
+
         def run(self) -> None:  # pragma: no cover - direct call below
             executed["ok"] = True
 
-    runner(Dummy)
+    input_data = {"dataType": "ip", "data": "1.2.3.4"}
+    runner(Dummy, input_data)
     assert executed["ok"] is True

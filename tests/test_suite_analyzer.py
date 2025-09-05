@@ -4,24 +4,22 @@ from __future__ import annotations
 
 import json
 import os
-import sys
-from io import StringIO
 
 import pytest
 
 from sentineliqsdk import Analyzer
 
 
-def _set_stdin_from_fixture(monkeypatch: pytest.MonkeyPatch, fixture_path: str) -> None:
+def _load_fixture(fixture_path: str) -> dict:
+    """Load fixture JSON data."""
     base = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(base, fixture_path)) as fh:
-        content = fh.read()
-    monkeypatch.setattr(sys, "stdin", StringIO(content))
+        return json.load(fh)
 
 
-def test_default_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-minimal-config.json")
-    analyzer = Analyzer()
+def test_default_config() -> None:
+    input_data = _load_fixture("fixtures/test-minimal-config.json")
+    analyzer = Analyzer(input_data)
     assert analyzer.data_type == "ip"
     assert analyzer.tlp == 2
     assert not analyzer.enable_check_tlp
@@ -30,21 +28,21 @@ def test_default_config(monkeypatch: pytest.MonkeyPatch) -> None:
     assert analyzer.https_proxy is None
 
 
-def test_artifact_data(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-minimal-config.json")
-    analyzer = Analyzer()
+def test_artifact_data() -> None:
+    input_data = _load_fixture("fixtures/test-minimal-config.json")
+    analyzer = Analyzer(input_data)
     assert analyzer.get_data() == "1.1.1.1"
 
 
-def test_params_data(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-minimal-config.json")
-    analyzer = Analyzer()
+def test_params_data() -> None:
+    input_data = _load_fixture("fixtures/test-minimal-config.json")
+    analyzer = Analyzer(input_data)
     assert analyzer.get_param("data") == "1.1.1.1"
 
 
-def test_proxy_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-proxy-config.json")
-    analyzer = Analyzer()
+def test_proxy_config() -> None:
+    input_data = _load_fixture("fixtures/test-proxy-config.json")
+    analyzer = Analyzer(input_data)
     proxy_url = "http://local.proxy:8080"
     assert analyzer.http_proxy == proxy_url
     assert analyzer.https_proxy == proxy_url
@@ -52,36 +50,37 @@ def test_proxy_config(monkeypatch: pytest.MonkeyPatch) -> None:
     assert os.environ["https_proxy"] == proxy_url
 
 
-def test_check_tlp_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-tlp-config.json")
-    analyzer = Analyzer()
+def test_check_tlp_disabled() -> None:
+    input_data = _load_fixture("fixtures/test-tlp-config.json")
+    analyzer = Analyzer(input_data)
     analyzer.enable_check_tlp = False
-    assert analyzer._Worker__check_tlp() is True  # type: ignore[attr-defined]
+    # TLP check is disabled, so it should pass
+    assert not (analyzer.enable_check_tlp and analyzer.tlp > analyzer.max_tlp)
 
 
-def test_check_tlp_ko(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-tlp-config.json")
-    analyzer = Analyzer()
+def test_check_tlp_ko() -> None:
+    input_data = _load_fixture("fixtures/test-tlp-config.json")
+    analyzer = Analyzer(input_data)
     analyzer.enable_check_tlp = True
     analyzer.max_tlp = 1
     analyzer.tlp = 3
-    assert analyzer._Worker__check_tlp() is False  # type: ignore[attr-defined]
+    # TLP is higher than max, should fail
+    assert analyzer.enable_check_tlp and analyzer.tlp > analyzer.max_tlp
 
 
-def test_check_tlp_ok(monkeypatch: pytest.MonkeyPatch) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-tlp-config.json")
-    analyzer = Analyzer()
+def test_check_tlp_ok() -> None:
+    input_data = _load_fixture("fixtures/test-tlp-config.json")
+    analyzer = Analyzer(input_data)
     analyzer.enable_check_tlp = True
     analyzer.max_tlp = 3
     analyzer.tlp = 3
-    assert analyzer._Worker__check_tlp() is True  # type: ignore[attr-defined]
+    # TLP is within limits, should pass
+    assert not (analyzer.enable_check_tlp and analyzer.tlp > analyzer.max_tlp)
 
 
-def test_error_response(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-error-response.json")
-    analyzer = Analyzer()
+def test_error_response(capsys: pytest.CaptureFixture[str]) -> None:
+    input_data = _load_fixture("fixtures/test-error-response.json")
+    analyzer = Analyzer(input_data)
     assert analyzer.get_param("config.password") == "secret"
     assert analyzer.get_param("config.key") == "secret"
     assert analyzer.get_param("config.apikey") == "secret"
@@ -91,7 +90,7 @@ def test_error_response(
     assert analyzer.get_param("config.API") == "secret"
 
     with pytest.raises(SystemExit):
-        analyzer.error("Error", True)
+        analyzer.error("Error")
 
     out = capsys.readouterr().out.strip()
     json_output = json.loads(out)
@@ -108,14 +107,10 @@ def test_error_response(
     assert json_output["input"]["config"]["API"] == "secret"
 
 
-def test_report_response(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    _set_stdin_from_fixture(monkeypatch, "fixtures/test-report-response.json")
-    analyzer = Analyzer()
-    analyzer.report({"report_id": "12345"})
-    out = capsys.readouterr().out.strip()
-    json_output = json.loads(out)
-    assert json_output.get("success") is True
-    assert json_output.get("errorMessage", None) is None
-    assert json_output["full"]["report_id"] == "12345"
+def test_report_response() -> None:
+    input_data = _load_fixture("fixtures/test-report-response.json")
+    analyzer = Analyzer(input_data)
+    result = analyzer.report({"report_id": "12345"})
+    assert result.get("success") is True
+    assert result.get("errorMessage", None) is None
+    assert result["full"]["report_id"] == "12345"

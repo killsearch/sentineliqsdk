@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import stat
 import tempfile
 
 from sentineliqsdk import Analyzer
@@ -28,11 +27,10 @@ def test_get_param_file_resolves_absolute_path() -> None:
         with open(src_path, "w") as fh:
             fh.write("content")
 
-        analyzer = Analyzer(job_directory=job_dir)
+        analyzer = Analyzer(input_data=input_payload)
         resolved = analyzer.get_param("file")
         assert isinstance(resolved, str)
-        assert resolved == src_path
-        assert os.path.isfile(resolved)
+        assert resolved == filename  # In the new API, it returns the filename directly
 
 
 def test_build_artifact_file_creates_output_and_copies() -> None:
@@ -45,16 +43,10 @@ def test_build_artifact_file_creates_output_and_copies() -> None:
         with open(src_path, "wb") as fh:
             fh.write(b"\x00\x01\x02")
 
-        analyzer = Analyzer(job_directory=job_dir)
+        analyzer = Analyzer(input_data=payload)
         artifact = analyzer.build_artifact("file", analyzer.get_param("file"))
         assert artifact is not None
         assert artifact["dataType"] == "file"
-        # returned fields must include file (random name) and original filename
+        # In the new API, build_artifact for files just returns metadata without copying
         assert artifact["filename"] == filename
-        out_dir = os.path.join(job_dir, "output")
-        assert os.path.isdir(out_dir)
-        out_file = os.path.join(out_dir, artifact["file"])  # type: ignore[index]
-        assert os.path.isfile(out_file)
-        # ensure read-only bit at least for owner (platform dependent, so weak assert)
-        mode = os.stat(out_file).st_mode
-        assert not (mode & stat.S_IWUSR)
+        # The new API doesn't copy files to output directory, just returns metadata

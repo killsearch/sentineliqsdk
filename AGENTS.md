@@ -21,19 +21,15 @@ Internal layout (for maintainers):
 - `sentineliqsdk/extractors/regex.py` implements `Extractor`.
 - `sentineliqsdk/core/config/proxy.py` sets env proxies (`EnvProxyConfigurator`).
 - `sentineliqsdk/core/config/secrets.py` sanitizes error payload config.
-- `sentineliqsdk/core/io/output_writer.py` writes JSON output (`JsonOutputWriter`).
-- `sentineliqsdk/core/runtime/encoding.py` ensures UTF‑8 streams.
 
 ## Input/Output Contract
 
-Workers read a job either from a job directory or from STDIN and write results to the job
-directory or STDOUT.
+Workers receive input data directly as a dictionary and output results to STDOUT or return them in memory.
 
-- Job directory mode: `<job_dir>/input/input.json` (and files for file observables).
-- STDIN mode: if no job directory input exists, JSON is read from STDIN.
-- Output: JSON is written to `<job_dir>/output/output.json` or STDOUT.
+- Input: Data is passed directly to the worker constructor as a dictionary.
+- Output: JSON is returned in memory via `report()`.
 
-Common input fields inside `input.json`:
+Common input fields in the input data dictionary:
 
 - `dataType`: one of `ip`, `url`, `domain`, `hash`, `file`, ...
 - `data` or `filename`: observable value or filename for `dataType == "file"`.
@@ -240,6 +236,66 @@ On an error, the worker writes:
 - Job directory mode: `python my_agent.py /job` with `input/input.json` present.
 - STDIN mode: `cat input.json | python my_agent.py`.
 - Proxies: set `config.proxy.http` / `config.proxy.https` or environment variables.
+
+## Programmatic Usage (No File I/O)
+
+You can use the SDK directly in your code without file I/O by passing input data directly to the constructor:
+
+```python
+from sentineliqsdk import Analyzer
+
+class MyAnalyzer(Analyzer):
+    def run(self) -> None:
+        observable = self.get_data()
+        # Your analysis logic here
+        result = {"observable": observable, "verdict": "safe"}
+        self.report(result)
+
+# Create input data directly
+input_data = {
+    "dataType": "ip",
+    "data": "1.2.3.4",
+    "tlp": 2,
+    "pap": 2,
+    "config": {"auto_extract": True}
+}
+
+# Use analyzer without file I/O
+analyzer = MyAnalyzer(input_data=input_data)
+analyzer.run()
+```
+
+### In-Memory Results
+
+To get results in memory instead of writing to files, use `report_in_memory()`:
+
+```python
+# Get result directly in memory
+result = analyzer.report_in_memory(full_report)
+print(f"Analysis result: {result}")
+```
+
+### Batch Processing
+
+Process multiple observables without file I/O:
+
+```python
+observables = ["1.2.3.4", "8.8.8.8", "5.6.7.8"]
+results = []
+
+for obs in observables:
+    input_data = {
+        "dataType": "ip",
+        "data": obs,
+        "tlp": 2,
+        "config": {"auto_extract": True}
+    }
+    
+    analyzer = MyAnalyzer(input_data=input_data)
+    # Process and get result in memory
+    result = analyzer.report_in_memory(full_report)
+    results.append(result)
+```
 
 ## Project and CI Tips
 
