@@ -1,0 +1,13 @@
+_commit: v1.5.1
+_src_path: gh:superlinear-ai/substrate
+author_email: team@sentineliq.com.br
+author_name: Sentineliq Team
+project_description: A Python library of utility classes for SentinelIQ analyzers
+    and responders
+project_name: Sentineliqsdk
+project_type: package
+project_url: https://github.com/killsearch/sentineliqsdk
+python_version: '3.13'
+typing: optional
+with_conventional_commits: true
+with_typer_cli: false
