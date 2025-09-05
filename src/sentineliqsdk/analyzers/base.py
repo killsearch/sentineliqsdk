@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import Any, Literal
+from typing import Any
 
 from sentineliqsdk.core import Worker
 from sentineliqsdk.extractors import Extractor
-from sentineliqsdk.models import AnalyzerReport, Artifact, TaxonomyEntry, WorkerInput
-
-# Keep backward compatibility
-TaxonomyLevel = Literal["info", "safe", "suspicious", "malicious"]
+from sentineliqsdk.models import AnalyzerReport, Artifact, TaxonomyEntry, TaxonomyLevel, WorkerInput
 
 
 class Analyzer(Worker):
