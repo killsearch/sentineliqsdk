@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-import pytest
-
 from sentineliqsdk.core.config.proxy import EnvProxyConfigurator
 from sentineliqsdk.core.config.secrets import sanitize_config
 

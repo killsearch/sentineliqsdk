@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from sentineliqsdk.core.contracts import OutputWriter, ProxyConfigurator, SecretSanitizer
 
 

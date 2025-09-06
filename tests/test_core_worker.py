@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from io import StringIO
 from unittest.mock import patch
 
@@ -13,11 +12,9 @@ import pytest
 from sentineliqsdk.constants import EXIT_ERROR
 from sentineliqsdk.core.worker import Worker
 from sentineliqsdk.models import (
-    Artifact,
     Operation,
     ProxyConfig,
     WorkerConfig,
-    WorkerError,
     WorkerInput,
 )
 

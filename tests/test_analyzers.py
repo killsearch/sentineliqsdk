@@ -9,7 +9,6 @@ import pytest
 from sentineliqsdk.analyzers import Analyzer
 from sentineliqsdk.models import (
     Artifact,
-    ProxyConfig,
     TaxonomyEntry,
     WorkerConfig,
     WorkerInput,

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 from io import StringIO
 from unittest.mock import patch
 
@@ -41,7 +40,7 @@ class TestAnalyzerIntegration:
 
             # Build taxonomy
             taxonomy = self.build_taxonomy(
-                level=verdict,
+                level=verdict,  # type: ignore
                 namespace="reputation",
                 predicate="static",
                 value=str(observable),
@@ -149,7 +148,10 @@ class TestResponderIntegration:
             ]
 
             # Add operations to result
-            result["operations"] = [op.to_dict() for op in operations]
+            result["operations"] = [
+                {"operation_type": op.operation_type, "parameters": op.parameters}
+                for op in operations
+            ]
 
             # Report the results
             self.report(result)
@@ -356,7 +358,10 @@ class TestEndToEndIntegration:
                 result = {
                     "action": "block",
                     "target": self.get_data(),
-                    "operations": [op.to_dict() for op in operations],
+                    "operations": [
+                        {"operation_type": op.operation_type, "parameters": op.parameters}
+                        for op in operations
+                    ],
                 }
                 self.report(result)
 

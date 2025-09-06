@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from sentineliqsdk.extractors import ExtractionError, Extractor
+from sentineliqsdk.extractors import Extractor
 from sentineliqsdk.models import ExtractorResult
 
 

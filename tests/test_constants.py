@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from sentineliqsdk.constants import (
     DEFAULT_PAP,
     DEFAULT_SECRET_PHRASES,
