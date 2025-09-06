@@ -16,7 +16,7 @@ def sanitize_config(config: dict[str, Any], secret_phrases: tuple[str, ...]) -> 
 
     def _sanitize(value: Any) -> Any:
         if isinstance(value, dict):
-            return {k: _sanitize(v) for k, v in value.items()}
+            return sanitize_config(value, secret_phrases)
         if isinstance(value, list):
             return [_sanitize(v) for v in value]
         return value

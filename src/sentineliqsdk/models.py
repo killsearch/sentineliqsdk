@@ -69,6 +69,15 @@ class TaxonomyEntry:
     predicate: str
     value: str
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "level": self.level,
+            "namespace": self.namespace,
+            "predicate": self.predicate,
+            "value": self.value,
+        }
+
 
 @dataclass(frozen=True)
 class Artifact:
