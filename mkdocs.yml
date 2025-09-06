@@ -30,7 +30,11 @@ nav:
   - Guides:
     - Agent Guide: guides/guide.md
   - Reference:
-    - API Reference: reference/api/worker.md
+    - Worker: reference/api/worker.md
+    - Analyzer: reference/api/analyzer.md
+    - Responder: reference/api/responder.md
+    - Extractor: reference/api/extractor.md
+    - Models: reference/api/models.md
   - Architecture:
     - Overview: architecture/overview.md
   - Development:

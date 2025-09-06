@@ -19,6 +19,17 @@ Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 
     Impactful operations (e.g., scans) must be gated behind `--include-dangerous`.
 - Reference your example from README or docs when helpful.
 
+## Documentation Updates (Always)
+
+Keep the documentation in sync with any code change or new capability:
+
+- Update docs under `docs/` (Guides, Tutorials, Examples, Reference) to reflect behavior,
+  flags, and safety gates (`--execute`, `--include-dangerous`).
+- Link new examples in the relevant pages (`docs/examples/*.md`) and, when helpful, in README.
+- If you add new public API or modules, ensure mkdocstrings pages exist and navigation in
+  `mkdocs.yml` is updated.
+- Run `poe docs` (or `poe docs-serve`) to validate the site locally before merging.
+
 ## Scaffolding (Poe tasks)
 
 - Generic: `poe new -- --kind <analyzer|responder|detector> --name <Name> [--force]`
@@ -116,6 +127,8 @@ Checklist:
 - Calls `self.report(...)` with a dict; taxonomy included.
 - Example under `examples/analyzers/` runnable and prints a compact result.
 - Tests added; `poe lint` and `poe test` pass.
+- Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
+  `poe docs` passes locally.
 
 ### Responder
 
@@ -153,6 +166,8 @@ Checklist:
 - `execute()` and `run()` return `ResponderReport`.
 - Operations created via `build_operation` and reported.
 - Example under `examples/responders/` runnable and prints compact result.
+- Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
+  `poe docs` passes locally.
 
 ### Detector
 
@@ -190,6 +205,8 @@ Checklist:
 - Type included in `DataType` (if core) and precedence adjusted in `Extractor`.
 - Tests cover positives/negatives; avoid obvious false positives.
 - Example in `examples/detectors/` demonstrating `Extractor.check_string/iterable`.
+- Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
+  `poe docs` passes locally.
 
 ## Modules Overview
 
