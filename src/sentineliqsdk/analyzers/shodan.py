@@ -22,7 +22,56 @@ from typing import Any
 
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.clients import ShodanClient
-from sentineliqsdk.models import TaxonomyLevel
+from sentineliqsdk.models import AnalyzerReport, TaxonomyLevel
+
+# Allowlist of ShodanClient methods exposed for dynamic calls
+ALLOWED_METHODS: set[str] = {
+    "host_information",
+    "search_host_count",
+    "search_host",
+    "search_host_facets",
+    "search_host_filters",
+    "search_host_tokens",
+    "ports",
+    "protocols",
+    "scan",
+    "scan_internet",
+    "scans",
+    "scan_by_id",
+    "alert_create",
+    "alert_info",
+    "alert_delete",
+    "alert_edit",
+    "alerts",
+    "alert_triggers",
+    "alert_enable_trigger",
+    "alert_disable_trigger",
+    "alert_whitelist_service",
+    "alert_unwhitelist_service",
+    "alert_add_notifier",
+    "alert_remove_notifier",
+    "notifiers",
+    "notifier_providers",
+    "notifier_create",
+    "notifier_delete",
+    "notifier_get",
+    "notifier_update",
+    "queries",
+    "query_search",
+    "query_tags",
+    "data_datasets",
+    "data_dataset",
+    "org",
+    "org_member_update",
+    "org_member_remove",
+    "account_profile",
+    "dns_domain",
+    "dns_resolve",
+    "dns_reverse",
+    "tools_httpheaders",
+    "tools_myip",
+    "api_info",
+}
 
 
 class ShodanAnalyzer(Analyzer):
@@ -43,56 +92,11 @@ class ShodanAnalyzer(Analyzer):
         """
         client = self._client()
 
-        # Allowlist of callable methods (full coverage of client)
-        allowed = {
-            "host_information",
-            "search_host_count",
-            "search_host",
-            "search_host_facets",
-            "search_host_filters",
-            "search_host_tokens",
-            "ports",
-            "protocols",
-            "scan",
-            "scan_internet",
-            "scans",
-            "scan_by_id",
-            "alert_create",
-            "alert_info",
-            "alert_delete",
-            "alert_edit",
-            "alerts",
-            "alert_triggers",
-            "alert_enable_trigger",
-            "alert_disable_trigger",
-            "alert_whitelist_service",
-            "alert_unwhitelist_service",
-            "alert_add_notifier",
-            "alert_remove_notifier",
-            "notifiers",
-            "notifier_providers",
-            "notifier_create",
-            "notifier_delete",
-            "notifier_get",
-            "notifier_update",
-            "queries",
-            "query_search",
-            "query_tags",
-            "data_datasets",
-            "data_dataset",
-            "org",
-            "org_member_update",
-            "org_member_remove",
-            "account_profile",
-            "dns_domain",
-            "dns_resolve",
-            "dns_reverse",
-            "tools_httpheaders",
-            "tools_myip",
-            "api_info",
-        }
-        if method not in allowed:
+        # Validate method against allowlist
+        if method not in ALLOWED_METHODS:
             self.error(f"Unsupported Shodan method: {method}")
+        if params is not None and not isinstance(params, Mapping):
+            self.error("Shodan params must be a mapping object (JSON object).")
         func = getattr(client, method)
         try:
             return func(**(dict(params) if params else {}))
@@ -149,7 +153,8 @@ class ShodanAnalyzer(Analyzer):
             pass
         return "safe"
 
-    def run(self) -> None:
+    def execute(self) -> AnalyzerReport:
+        """Execute analysis and return an AnalyzerReport (programmatic usage)."""
         dtype = self.data_type
         observable = self.get_data()
 
@@ -160,11 +165,14 @@ class ShodanAnalyzer(Analyzer):
             env_params = self.get_env("SHODAN_PARAMS")
             if env_params:
                 try:
-                    params = json.loads(env_params)
+                    parsed = json.loads(env_params)
                 except json.JSONDecodeError:
-                    self.error("Invalid SHODAN_PARAMS (must be JSON).")
+                    self.error("Invalid SHODAN_PARAMS (must be valid JSON).")
+                if not isinstance(parsed, Mapping):
+                    self.error("SHODAN_PARAMS must be a JSON object.")
+                params = dict(parsed)
 
-            full = {
+            details = {
                 "method": env_method,
                 "params": params,
                 "result": self._call_dynamic(env_method, params),
@@ -175,56 +183,62 @@ class ShodanAnalyzer(Analyzer):
                 predicate="api-call",
                 value=env_method,
             )
-            envelope = {
+            full_report = {
                 "observable": observable,
                 "verdict": "info",
                 "taxonomy": [taxonomy.to_dict()],
                 "source": "shodan",
                 "data_type": dtype,
-                "details": full,
+                "details": details,
             }
-            self.report(envelope)
-            return
+            return self.report(full_report)
 
         # 2) Dynamic call via data payload when dtype == other
         if dtype == "other":
             try:
                 payload = json.loads(str(observable))
-                method = payload["method"]
-                params = payload.get("params", {})
-                full = {
-                    "method": method,
-                    "params": params,
-                    "result": self._call_dynamic(method, params),
-                }
-                taxonomy = self.build_taxonomy(
-                    level="info",
-                    namespace="shodan",
-                    predicate="api-call",
-                    value=method,
-                )
-                envelope = {
-                    "observable": observable,
-                    "verdict": "info",
-                    "taxonomy": [taxonomy.to_dict()],
-                    "source": "shodan",
-                    "data_type": dtype,
-                    "details": full,
-                }
-                self.report(envelope)
-                return
-            except Exception:
+            except json.JSONDecodeError:
                 self.error(
                     "For data_type 'other', data must be a JSON string with keys 'method' and 'params'."
                 )
+            if not isinstance(payload, Mapping):
+                self.error("For data_type 'other', JSON payload must be an object.")
+            if "method" not in payload:
+                self.error("Missing 'method' in payload for data_type 'other'.")
+            method = str(payload["method"])  # force to str
+            params_val = payload.get("params", {})
+            if params_val is None:
+                params_val = {}
+            if not isinstance(params_val, Mapping):
+                self.error("Payload 'params' must be a JSON object.")
+            details = {
+                "method": method,
+                "params": dict(params_val),
+                "result": self._call_dynamic(method, params_val),
+            }
+            taxonomy = self.build_taxonomy(
+                level="info",
+                namespace="shodan",
+                predicate="api-call",
+                value=method,
+            )
+            full_report = {
+                "observable": observable,
+                "verdict": "info",
+                "taxonomy": [taxonomy.to_dict()],
+                "source": "shodan",
+                "data_type": dtype,
+                "details": details,
+            }
+            return self.report(full_report)
 
         # 3) Default behavior for common observables
         if dtype == "ip":
-            full = self._analyze_ip(str(observable))
-            verdict = self._verdict_from_shodan(full)
+            details = self._analyze_ip(str(observable))
+            verdict = self._verdict_from_shodan(details)
         elif dtype in ("domain", "fqdn"):
-            full = self._analyze_domain(str(observable))
-            verdict = self._verdict_from_shodan(full)
+            details = self._analyze_domain(str(observable))
+            verdict = self._verdict_from_shodan(details)
         else:
             self.error(f"Unsupported data type for ShodanAnalyzer: {dtype}.")
 
@@ -234,12 +248,16 @@ class ShodanAnalyzer(Analyzer):
             predicate="reputation",
             value=str(observable),
         )
-        envelope = {
+        full_report = {
             "observable": observable,
             "verdict": verdict,
             "taxonomy": [taxonomy.to_dict()],
             "source": "shodan",
             "data_type": dtype,
-            "details": full,
+            "details": details,
         }
-        self.report(envelope)
+        return self.report(full_report)
+
+    def run(self) -> None:
+        """Run analysis (side-effect only; use execute() for programmatic result)."""
+        self.execute()
