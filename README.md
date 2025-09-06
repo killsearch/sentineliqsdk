@@ -21,17 +21,29 @@ pip install sentineliqsdk
 Example usage:
 
 ```python
-from sentineliqsdk import Analyzer, Responder, Worker, Extractor, runner
+from __future__ import annotations
+
+import json
+
+from sentineliqsdk import Analyzer, Extractor, Worker, runner, WorkerInput
 
 
 class EchoAnalyzer(Analyzer):
-    def run(self) -> None:
-        data = self.get_data()
-        self.report({"echo": data})
+    def execute(self):
+        value = self.get_data()
+        return self.report({"echo": value})
+
+    def run(self):
+        return self.execute()
 
 
 if __name__ == "__main__":
-    runner(EchoAnalyzer)
+    # Option A: instantiate directly
+    report = EchoAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4")).run()
+    print(json.dumps(report.full_report, ensure_ascii=False))
+
+    # Option B: use runner with input_data
+    runner(EchoAnalyzer, WorkerInput(data_type="ip", data="8.8.8.8"))
 ```
 
 Internal structure (for maintainers):

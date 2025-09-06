@@ -19,6 +19,13 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 [0.1.0]: https://github.com/killsearch/sentineliqsdk/releases/tag/v0.1.0
 
+## v0.2.1 (2025-09-06)
+
+### Feat
+
+- **examples,scaffold**: add Shodan all-methods example and templates; use execute() in examples\n\n- Add scaffolding templates under examples/_templates and scripts/scaffold.py\n- Add Shodan client + analyzer all-methods examples\n- Switch analyzer examples to execute() for programmatic results\n- Fix mypy error in Shodan analyzer example (func-returns-value)\n- Update AGENTS.md and DEVELOPMENT_RULES.md; prune outdated docs\n- Tweak pyproject config to align with current tooling
+- **axur**: add AxurClient + AxurAnalyzer with dynamic route support; example with dry-run by default
+
 ## v0.2.0 (2025-09-06)
 
 ### Feat

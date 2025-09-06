@@ -1,24 +1,23 @@
 # SentinelIQ SDK — Agent Guide
 
-This guide explains how to build analyzers and responders with the SentinelIQ SDK in
-`src/sentineliqsdk`. It follows a sequential flow: setup → concepts → input/output → build
-analyzers/responders → extraction → programmatic usage → CI/release.
+This document is the single source of truth for building analyzers, responders, and
+detectors with the SentinelIQ SDK under `src/sentineliqsdk`. It reflects the current
+implementation in this repository.
 
 Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
 
 ## Mandatory Examples (Agent Rule)
 
-- Always create a runnable example in `examples/` whenever you add a new Analyzer, Responder,
-  or Detector.
-- Preferred naming: `examples/<kind>/<name>_example.py` where `<kind>` is one of
-  `analyzers`, `responders`, or `detectors`.
+- Always add a runnable example in `examples/` when you introduce a new Analyzer,
+  Responder, or Detector.
+- Naming: `examples/<kind>/<name>_example.py` where `<kind>` ∈ {`analyzers`, `responders`,
+  `detectors`}.
 - The example must:
-  - Be executable locally without extra deps (only stdlib + SDK).
   - Use dataclass input (`WorkerInput`) and call `.run()` (or `.execute()` when provided).
-  - Print a compact result to STDOUT. Network calls should default to dry‑run and require an
-    `--execute` flag for real calls. For impactful operations (e.g., scans), gate behind an
-    `--include-dangerous` flag.
-- Link or reference the example in README or docs as appropriate.
+  - Be runnable locally with only stdlib + SDK.
+  - Print a compact result to STDOUT. Network calls default to dry‑run and require `--execute`.
+    Impactful operations (e.g., scans) must be gated behind `--include-dangerous`.
+- Reference your example from README or docs when helpful.
 
 ## Scaffolding (Poe tasks)
 
@@ -28,17 +27,54 @@ Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 
   - Responder: `poe new-responder -- --name BlockIp`
   - Detector: `poe new-detector -- --name MyType`
 
-Outputs (examples + code):
+Outputs (code + example):
 - Analyzer: `src/sentineliqsdk/analyzers/<snake>.py` and `examples/analyzers/<snake>_example.py`
 - Responder: `src/sentineliqsdk/responders/<snake>.py` and `examples/responders/<snake>_example.py`
-- Detector: `src/sentineliqsdk/extractors/custom/<snake>_detector.py` and `examples/detectors/<snake>_example.py`
+- Detector: `src/sentineliqsdk/extractors/custom/<snake>_detector.py` and
+  `examples/detectors/<snake>_example.py`
 
 ## Quick Start
 
+Minimal analyzer using dataclasses:
+
+```python
+from __future__ import annotations
+
+import json
+
+from sentineliqsdk import Analyzer, WorkerInput
+from sentineliqsdk.models import AnalyzerReport
+
+
+class ReputationAnalyzer(Analyzer):
+    """Marks 1.2.3.4 as malicious, others as safe."""
+
+    def execute(self) -> AnalyzerReport:
+        observable = self.get_data()
+        verdict = "malicious" if observable == "1.2.3.4" else "safe"
+        tax = self.build_taxonomy(level=verdict, namespace="reputation", predicate="static",
+                                  value=str(observable))
+        return self.report({
+            "observable": observable,
+            "verdict": verdict,
+            "taxonomy": [tax.to_dict()],
+        })
+
+    def run(self) -> AnalyzerReport:
+        return self.execute()
+
+
+if __name__ == "__main__":
+    report = ReputationAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4")).run()
+    print(json.dumps(report.full_report, ensure_ascii=False))
+```
+
+Run examples directly, e.g. `python examples/analyzers/shodan_analyzer_all_methods.py --help`.
+
 ## Development Rules — Creating New Analyzer/Responder/Detector
 
-Follow these rules to implement new components consistently. Each recipe includes a
-checklist, file layout, and a minimal, programmatic skeleton.
+Follow these rules for consistent components. Each recipe lists the file layout, class
+naming, and a minimal skeleton aligned with this SDK.
 
 ### Analyzer
 
@@ -47,20 +83,18 @@ checklist, file layout, and a minimal, programmatic skeleton.
   - Example: `examples/analyzers/<name>_example.py`
   - Tests: `tests/analyzers/test_<name>.py`
 - Class name: `<Name>Analyzer` extending `sentineliqsdk.analyzers.Analyzer`.
-- Imports: absolute; always `from __future__ import annotations`.
-- Return a report programmatically: implement `execute() -> AnalyzerReport` and make
-  `run()` return the result of `execute()`.
-- Use dataclasses: accept `WorkerInput` in the constructor (inherited behavior).
-- Build taxonomy via `self.build_taxonomy(...)` and call `self.report(full_report)`.
-- Respect TLP/PAP and proxy handling (already enforced by `Worker`).
-- Example must default to dry‑run when performing network calls and support `--execute`.
+- Imports: absolute; always `from __future__ import annotations` first.
+- Implement `execute() -> AnalyzerReport` and make `run()` return `self.execute()`.
+- Build taxonomy via `self.build_taxonomy(...)`; include `taxonomy.to_dict()` in your payload.
+- Use dataclasses only (`WorkerInput` is required). TLP/PAP and proxies are enforced by `Worker`.
+- Examples should be dry‑run by default and support `--execute` for real calls.
 
 Skeleton:
 
 ```python
 from __future__ import annotations
 
-from sentineliqsdk import Analyzer, WorkerInput
+from sentineliqsdk import Analyzer
 from sentineliqsdk.models import AnalyzerReport
 
 
@@ -68,26 +102,20 @@ class MyAnalyzer(Analyzer):
     def execute(self) -> AnalyzerReport:
         observable = self.get_data()
         taxonomy = self.build_taxonomy("safe", "namespace", "predicate", str(observable))
-        full_report = {"observable": observable, "verdict": "safe", "taxonomy": [taxonomy.to_dict()]}
-        return self.report(full_report)
+        full = {"observable": observable, "verdict": "safe", "taxonomy": [taxonomy.to_dict()]}
+        return self.report(full)
 
     def run(self) -> AnalyzerReport:
         return self.execute()
-
-
-if __name__ == "__main__":
-    # Programmatic use
-    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
-    print(MyAnalyzer(input_data).run())
 ```
 
 Checklist:
 
-- Naming, imports, and types compliant.
-- `execute()` implemented; `run()` retorna `AnalyzerReport`.
-- Builds taxonomy and calls `self.report(...)` with a dict.
-- Example in `examples/analyzers/` created and runnable.
-- Tests added; lint and types passing.
+- Naming and imports compliant; class ends with `Analyzer`.
+- `execute()` implemented; `run()` returns `AnalyzerReport`.
+- Calls `self.report(...)` with a dict; taxonomy included.
+- Example under `examples/analyzers/` runnable and prints a compact result.
+- Tests added; `poe lint` and `poe test` pass.
 
 ### Responder
 
@@ -97,14 +125,14 @@ Checklist:
   - Tests: `tests/responders/test_<name>.py`
 - Class name: `<Name>Responder` extending `sentineliqsdk.responders.Responder`.
 - Implement `execute() -> ResponderReport` and make `run()` return it.
-- Build operations via `self.build_operation(...)` and call `self.report(full_report)`.
+- Build operations with `self.build_operation(...)` and call `self.report(full_report)`.
 
 Skeleton:
 
 ```python
 from __future__ import annotations
 
-from sentineliqsdk import Responder, WorkerInput
+from sentineliqsdk import Responder
 from sentineliqsdk.models import ResponderReport
 
 
@@ -117,41 +145,36 @@ class MyResponder(Responder):
 
     def run(self) -> ResponderReport:
         return self.execute()
-
-
-if __name__ == "__main__":
-    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
-    print(MyResponder(input_data).run())
 ```
 
 Checklist:
 
-- Naming/paths corretos; imports absolutos.
-- `execute()` e `run()` retornando `ResponderReport`.
-- Operações criadas via `build_operation` e reportadas.
-- Exemplo em `examples/responders/` criado e testes adicionados.
+- Naming/paths correct; absolute imports.
+- `execute()` and `run()` return `ResponderReport`.
+- Operations created via `build_operation` and reported.
+- Example under `examples/responders/` runnable and prints compact result.
 
 ### Detector
 
 - Files:
-  - Detector code: extend `src/sentineliqsdk/extractors/detectors.py` (preferível), ou criar um
-    detector custom e registrá‑lo via `Extractor.register_detector(...)` no seu analyzer.
+  - Core: extend `src/sentineliqsdk/extractors/detectors.py` (preferred for official types), or
+    create a custom detector under `src/sentineliqsdk/extractors/custom/<name>_detector.py` and
+    register it via `Extractor.register_detector(...)` in your analyzer.
   - Example: `examples/detectors/<name>_example.py`
   - Tests: `tests/extractors/test_<name>_detector.py`
-- Implementa o protocolo `Detector` com atributos: `name: str` e método `matches(value: str) -> bool`.
-- Para incluir no core (tipo oficial):
-  - Adicione o novo literal em `sentineliqsdk.models.DataType`.
-  - Importe e adicione o detector na lista de precedência em `Extractor` (`regex.py`).
-  - Considere normalização/flags expostos por `DetectionContext` quando aplicável.
-- Para uso local (sem tocar no core):
-  - Registre via `Extractor.register_detector(MyDetector(), before="hash")`, por exemplo.
+- Protocol: `Detector` with attribute `name: str` and method `matches(value: str) -> bool`.
+- To include in core (official type):
+  - Add the literal to `sentineliqsdk.models.DataType`.
+  - Import/add the detector in the precedence list in `Extractor` (`extractors/regex.py`).
+  - Consider normalization/flags exposed by `DetectionContext` when relevant.
+- For local-only use (without touching the core):
+  - Register via `Extractor.register_detector(MyDetector(), before="hash")`, for example.
 
-Skeleton (core):
+Skeleton (custom):
 
 ```python
 from __future__ import annotations
 from dataclasses import dataclass
-from sentineliqsdk.extractors.detectors import Detector
 
 
 @dataclass
@@ -164,63 +187,37 @@ class MyDetector:
 
 Checklist:
 
-- Tipo incluído em `DataType` (quando for do core) e precedência ajustada no `Extractor`.
-- Testes cobrindo positivos/negativos; sem falsos‑positivos óbvios.
-- Exemplo em `examples/detectors/` mostrando `Extractor.check_string/iterable`.
-
-- Install and open the repo.
-- Create an analyzer (example below) and run it with either a job directory or STDIN.
-- Use dataclasses for input; legacy dicts remain supported.
-
-Minimal runnable analyzer (dataclasses):
-
-```python
-from __future__ import annotations
-from sentineliqsdk import Analyzer, WorkerInput
-
-class ReputationAnalyzer(Analyzer):
-    def run(self) -> None:
-        observable = self.get_data()
-        verdict = "malicious" if observable == "1.2.3.4" else "safe"
-        taxonomy = self.build_taxonomy("malicious" if verdict == "malicious" else "safe",
-                                       "reputation", "static", str(observable))
-        self.report({
-            "observable": observable,
-            "verdict": verdict,
-            "taxonomy": [taxonomy.to_dict()],
-        })
-
-if __name__ == "__main__":
-    ReputationAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4")).run()
-```
-
-Run with job dir: `python my_agent.py /job` or via STDIN: `cat input.json | python my_agent.py`.
+- Type included in `DataType` (if core) and precedence adjusted in `Extractor`.
+- Tests cover positives/negatives; avoid obvious false positives.
+- Example in `examples/detectors/` demonstrating `Extractor.check_string/iterable`.
 
 ## Modules Overview
 
-- `sentineliqsdk.Worker`: common base for analyzers/responders (IO, config, reporting).
-- `sentineliqsdk.Analyzer`: base class for analyzers; auto‑extraction support.
-- `sentineliqsdk.Responder`: base class for responders.
-- `sentineliqsdk.Extractor`: stdlib‑based IOC extractor (ip/url/hash/...).
-- `sentineliqsdk.runner(worker_cls)`: helper to instantiate and run a worker.
-- `sentineliqsdk.models`: dataclasses for type-safe data structures.
+- `sentineliqsdk.Worker`: common base for analyzers/responders (config, env, reporting hooks).
+- `sentineliqsdk.Analyzer`: base class for analyzers; includes auto‑extraction helpers.
+- `sentineliqsdk.Responder`: base class for responders; simpler envelope.
+- `sentineliqsdk.Extractor`: stdlib‑guided IOC extractor (ip/url/domain/hash/...).
+- `sentineliqsdk.runner(worker_cls, input_data)`: convenience to instantiate and run.
+- `sentineliqsdk.models`: dataclasses for type‑safe structures.
 
 Internal layout (for maintainers):
-- `sentineliqsdk/core/worker.py` implements `Worker` (composition over helpers).
-- `sentineliqsdk/analyzers/base.py` implements `Analyzer`.
-- `sentineliqsdk/responders/base.py` implements `Responder`.
-- `sentineliqsdk/extractors/regex.py` implements `Extractor`.
-- `sentineliqsdk/core/config/proxy.py` sets env proxies (`EnvProxyConfigurator`).
-- `sentineliqsdk/core/config/secrets.py` sanitizes error payload config.
+- `src/sentineliqsdk/core/worker.py` implements `Worker`.
+- `src/sentineliqsdk/analyzers/base.py` implements `Analyzer`.
+- `src/sentineliqsdk/responders/base.py` implements `Responder`.
+- `src/sentineliqsdk/extractors/regex.py` implements `Extractor`.
+- `src/sentineliqsdk/core/config/proxy.py` sets env proxies (`EnvProxyConfigurator`).
+- `src/sentineliqsdk/core/config/secrets.py` sanitizes error payload config.
 
 ## Input/Output Contract
 
-Workers receive input data as dataclasses (recommended) or dictionaries (backward compatibility) and output results to STDOUT or return them in memory.
+Workers receive input data as dataclasses and return results in memory. This SDK has
+removed legacy dictionary input from the public API in this repository.
 
-- Input: Data is passed as `WorkerInput` dataclass or dictionary to the worker constructor.
-- Output: Structured data is returned in memory via `report()`.
+- Input: pass a `WorkerInput` dataclass to the worker constructor.
+- Output: `Analyzer.report(...)` returns `AnalyzerReport`; `Responder.report(...)` returns
+  `ResponderReport`. Examples can print compact JSON to STDOUT explicitly.
 
-### Modern Input (Dataclasses)
+### Input (Dataclasses)
 
 ```python
 from sentineliqsdk import WorkerInput, WorkerConfig, ProxyConfig
@@ -245,125 +242,95 @@ input_data = WorkerInput(
 )
 ```
 
-### Legacy Input (Dictionaries)
-
-```python
-input_data = {
-    "dataType": "ip",
-    "data": "1.2.3.4",
-    "tlp": 2,
-    "pap": 2,
-    "config": {
-        "check_tlp": True,
-        "max_tlp": 2,
-        "auto_extract": True,
-        "proxy": {
-            "http": "http://proxy:8080",
-            "https": "https://proxy:8080"
-        }
-    }
-}
-```
-
 Common input fields:
 
-- `data_type`/`dataType`: one of `ip`, `url`, `domain`, `hash`, `file`, ...
-- `data` or `filename`: observable value or filename for `dataType == "file"`.
-- `tlp` and `pap`: numbers; optionally enforced via config (see below).
-- `config.*`: agent configuration, including:
+- `data_type`: one of `ip`, `url`, `domain`, `fqdn`, `hash`, `mail`, `user-agent`, `uri_path`,
+  `registry`, `file`, `other`, `asn`, `cve`, `ip_port`, `mac`, `cidr`.
+- `data` or `filename`: observable value or filename for `data_type == "file"`.
+- `tlp` and `pap`: numbers enforced via config when enabled.
+- `config.*` includes:
   - `config.check_tlp` / `config.max_tlp`
   - `config.check_pap` / `config.max_pap`
   - `config.proxy.http` / `config.proxy.https` (exported to env as `http_proxy`/`https_proxy`)
   - `config.auto_extract` for analyzers
 
-On error, sensitive keys in `config` containing any of `key`, `password`, `secret` are
-replaced with `"REMOVED"` in the error payload.
+On error, sensitive keys in `config` containing any of `key`, `password`, `secret`, `token`
+are replaced with `"REMOVED"` in the error payload.
 
 ## Core Concepts: Worker
 
-Signature: `Worker(job_directory: str | None, secret_phrases: tuple[str, ...] | None)`
+Signature: `Worker(input_data: WorkerInput, secret_phrases: tuple[str, ...] | None)`
 
-- `get_param(name: str, default=None, message: str | None = None) -> Any`:
-  dotted access into the input JSON; exits with `error(message)` if missing and `message` set.
-- `get_env(key: str, default=None, message: str | None = None) -> str | None`:
-  reads environment variables; can exit with `error` when `message` is provided.
+- `get_param(name, default=None, message=None)`: not used in this repository (dataclasses only).
+- `get_env(key, default=None, message=None)`: read environment variables.
 - `get_data() -> Any`: returns the observable value (overridden in subclasses).
-- `build_operation(op_type: str, **parameters) -> dict`: describe follow‑up operations.
-- `operations(raw: Any) -> list[dict]`: hook returning a list of operations; default `[]`.
-- `summary(raw: Any) -> dict`: short summary hook; default `{}`.
-- `artifacts(raw: Any) -> list[dict]`: artifact hook; default `[]` (Analyzer overrides).
-- `report(output: dict, ensure_ascii: bool = False) -> None`: write output JSON.
-- `error(message: str, ensure_ascii: bool = False) -> NoReturn`: write error JSON and exit(1).
+- `build_operation(op_type: str, **parameters) -> Operation`: describe follow‑up operations.
+- `operations(raw) -> list[Operation]`: hook for follow‑up work; default `[]`.
+- `summary(raw) -> dict`: short summary; default `{}`.
+- `artifacts(raw) -> list[Artifact]`: analyzer override performs auto-extraction when enabled.
+- `report(output: dict) -> dict | AnalyzerReport | ResponderReport`: returns result in memory.
+- `error(message: str, ensure_ascii: bool = False) -> NoReturn`: print error JSON and exit(1).
 - `run() -> None`: your main logic (override in subclasses).
 
 TLP/PAP enforcement:
 
 - Enable with `config.check_tlp`/`config.check_pap`; set `config.max_tlp`/`config.max_pap`.
-- If exceeded, the worker calls `error("TLP is higher than allowed.")` or PAP equivalent.
+- If exceeded, the worker calls `error("TLP is higher than allowed.")` or the PAP equivalent.
 
 ## Analyzer
 
 `Analyzer` extends `Worker` with analyzer‑specific behavior:
 
-- `get_data()`: returns filename when `dataType == "file"`, otherwise the `data` field.
-- `get_param("file")`: when `dataType == "file"` and running with a job directory, resolves
-  to an absolute path under `<job_dir>/input/<file>` if the file exists.
-- `auto_extract`: enabled by default unless `config.auto_extract` is `false`.
-- `artifacts(raw)`: when `auto_extract` is enabled, uses `Extractor(ignore=self.get_data())`
-  to extract IOCs from the full report.
-- `build_taxonomy(level, namespace, predicate, value) -> dict`: helper for taxonomy entries
-  where `level` is one of `info|safe|suspicious|malicious`.
-- `build_artifact(data_type, data, **kwargs) -> dict | None`:
-  - For `data_type == "file"`, copies the file into `<job_dir>/output/` and returns a dict
-    with `dataType`, `file`, `filename`, plus extra fields in `kwargs`.
-  - For other types, returns `{"dataType": data_type, "data": data, **kwargs}`.
-- `report(full_report: dict, ensure_ascii: bool = False)` wraps output as:
-  `{"success": true, "summary": ..., "artifacts": ..., "operations": ..., "full": ...}`.
+- `get_data()`: returns `filename` when `data_type == "file"`, otherwise the `data` field.
+- `auto_extract`: enabled by default unless `config.auto_extract` is `False`.
+- `artifacts(raw)`: when enabled, uses `Extractor(ignore=self.get_data())` and returns a
+  `list[Artifact]` dataclass collection for the full report.
+- `build_taxonomy(level, namespace, predicate, value) -> TaxonomyEntry`: helper for taxonomy
+  entries where `level` is one of `info|safe|suspicious|malicious`.
+- `build_artifact(data_type, data, **kwargs) -> Artifact`: build an artifact dataclass.
+- `report(full_report: dict) -> AnalyzerReport`: returns an envelope with
+  `success/summary/artifacts/operations/full_report`.
 
-Note: Legacy compatibility helpers have been removed. Use the modern API only:
-- Use `get_data()` instead of `getData()`.
-- Use `get_param()` instead of `getParam(...)`.
-- TLP/PAP checks run automatically; do not use `checkTlp(...)`.
-- Handle unsupported datatypes with `error(...)` as needed.
-
-### Migration Notes
-
-- Import from top-level: `from sentineliqsdk import Analyzer, Responder, Worker, Extractor`.
-- The legacy modules `sentineliqsdk.analyzer`, `sentineliqsdk.responder`,
-  `sentineliqsdk.worker`, and `sentineliqsdk.extractor` were removed.
-- Replace `config.auto_extract_artifacts` by `config.auto_extract`.
+Notes:
+- Legacy helpers like `getData`/`checkTlp` are removed; use the modern API only.
+- TLP/PAP checks run automatically in `Worker.__init__`.
 
 ## Responder
 
-`Responder` mirrors `Analyzer` but with a simpler `report` shape:
+`Responder` mirrors `Analyzer` with a simpler envelope:
 
 - `get_data()`: returns the `data` field.
-- `report(full_report, ensure_ascii=False)` writes
-  `{"success": true, "full": full_report, "operations": [...]}`.
+- `report(full_report) -> ResponderReport` with `success/full_report/operations`.
 
 ## Extractor
 
-IOC extractor using Python's standard library helpers (e.g., `ipaddress`, `urllib.parse`,
-`email.utils`) instead of complex regexes. Typical types detected:
+IOC extractor using Python stdlib helpers (e.g., `ipaddress`, `urllib.parse`, `email.utils`)
+instead of complex regexes. Typical types detected include:
 
-- `ip` (IPv4 and IPv6), `url`, `domain`, `fqdn`, `hash` (MD5/SHA1/SHA256), `mail`,
-  `user-agent`, `uri_path`, `registry`.
+- `ip` (IPv4 and IPv6), `cidr`, `url`, `domain`, `fqdn`, `hash` (MD5/SHA1/SHA256), `mail`,
+  `user-agent`, `uri_path`, `registry`, `mac`, `asn`, `cve`, `ip_port`.
 
 API:
 
-- `Extractor(ignore: str | None = None)`
-- `check_string(value: str) -> str`: returns a data type or empty string.
-- `check_iterable(iterable: list | dict | str) -> list[dict]`: returns
-  `[ {"dataType": <type>, "data": <value>}, ... ]` with de‑duplicated results.
+- `Extractor(ignore: str | None = None, strict_dns: bool = False, normalize_domains: bool = False,
+  normalize_urls: bool = False, support_mailto: bool = False, max_string_length: int = 10000,
+  max_iterable_depth: int = 100)`
+- `check_string(value: str) -> str`: returns a data type name or empty string.
+- `check_iterable(iterable: list | dict | str | tuple | set) -> list[ExtractorResult]`:
+  returns a de‑duplicated list of dataclass results.
+
+Precedence order (first match wins): ip → cidr → url → domain → hash → user-agent → uri_path →
+registry → mail → mac → asn → cve → ip_port → fqdn. Use
+`Extractor.register_detector(detector, before=..., after=...)` to customize.
 
 ## Minimal Analyzer Example
 
-### Modern Approach (Dataclasses)
+### Dataclasses
 
 ```python
 from __future__ import annotations
 
-from sentineliqsdk import Analyzer, WorkerInput, runner
+from sentineliqsdk import Analyzer, WorkerInput
 
 
 class ReputationAnalyzer(Analyzer):
@@ -373,7 +340,7 @@ class ReputationAnalyzer(Analyzer):
         observable = self.get_data()
 
         verdict = "malicious" if observable == "1.2.3.4" else "safe"
-        
+
         # Build taxonomy using dataclass
         taxonomy = self.build_taxonomy(
             level=verdict,
@@ -381,7 +348,7 @@ class ReputationAnalyzer(Analyzer):
             predicate="static",
             value=str(observable),
         )
-        
+
         full = {
             "observable": observable,
             "verdict": verdict,
@@ -392,50 +359,13 @@ class ReputationAnalyzer(Analyzer):
 
 
 if __name__ == "__main__":
-    # Using dataclass input
     input_data = WorkerInput(data_type="ip", data="1.2.3.4")
-    analyzer = ReputationAnalyzer(input_data)
-    analyzer.run()
-```
-
-### Legacy Approach (Dictionaries)
-
-```python
-from __future__ import annotations
-
-from sentineliqsdk import Analyzer, runner
-
-
-class ReputationAnalyzer(Analyzer):
-    """Toy analyzer that marks "1.2.3.4" as malicious and others as safe."""
-
-    def run(self) -> None:
-        observable = self.get_data()
-
-        verdict = "malicious" if observable == "1.2.3.4" else "safe"
-        full = {
-            "observable": observable,
-            "verdict": verdict,
-            "taxonomy": [
-                self.build_taxonomy(
-                    level=verdict,
-                    namespace="reputation",
-                    predicate="static",
-                    value=str(observable),
-                )
-            ],
-        }
-
-        self.report(full)
-
-
-if __name__ == "__main__":
-    runner(ReputationAnalyzer)
+    ReputationAnalyzer(input_data).run()
 ```
 
 ## Minimal Responder Example
 
-### Modern Approach (Dataclasses)
+### Dataclasses
 
 ```python
 from __future__ import annotations
@@ -446,68 +376,25 @@ from sentineliqsdk import Responder, WorkerInput
 class BlockIpResponder(Responder):
     def run(self) -> None:
         ip = self.get_data()
-        
-        # Build operations using dataclass
-        operations = [
-            self.build_operation("block", target=ip, duration="24h"),
-            self.build_operation("alert", severity="high")
-        ]
-        
+
         result = {
-            "action": "block", 
-            "target": ip, 
+            "action": "block",
+            "target": ip,
             "status": "ok",
-            "operations": [operation.to_dict() for operation in operations]
         }
         self.report(result)
 
 
 if __name__ == "__main__":
-    # Using dataclass input
     input_data = WorkerInput(data_type="ip", data="1.2.3.4")
-    responder = BlockIpResponder(input_data)
-    responder.run()
-```
-
-### Legacy Approach (Dictionaries)
-
-```python
-from __future__ import annotations
-
-from sentineliqsdk import Responder, runner
-
-
-class BlockIpResponder(Responder):
-    def run(self) -> None:
-        ip = self.get_data()
-        # Here you would call your firewall API
-        result = {"action": "block", "target": ip, "status": "ok"}
-        self.report(result)
-
-
-if __name__ == "__main__":
-    runner(BlockIpResponder)
+    BlockIpResponder(input_data).run()
 ```
 
 ## Example Input and Output
 
-Input (`<job_dir>/input/input.json`):
+Input (programmatic): `WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)`
 
-```json
-{
-  "dataType": "ip",
-  "data": "1.2.3.4",
-  "tlp": 2,
-  "pap": 2,
-  "config": {
-    "check_tlp": true,
-    "max_tlp": 2,
-    "auto_extract": true
-  }
-}
-```
-
-Analyzer output (`<job_dir>/output/output.json`):
+Analyzer programmatic result (`AnalyzerReport` dataclass):
 
 ```json
 {
@@ -515,22 +402,17 @@ Analyzer output (`<job_dir>/output/output.json`):
   "summary": {},
   "artifacts": [],
   "operations": [],
-  "full": {
+  "full_report": {
     "observable": "1.2.3.4",
     "verdict": "malicious",
     "taxonomy": [
-      {
-        "level": "malicious",
-        "namespace": "reputation",
-        "predicate": "static",
-        "value": "1.2.3.4"
-      }
+      {"level": "malicious", "namespace": "reputation", "predicate": "static", "value": "1.2.3.4"}
     ]
   }
 }
 ```
 
-On an error, the worker writes:
+On an error, the worker prints to STDOUT and exits with code 1:
 
 ```json
 { "success": false, "input": { ... }, "errorMessage": "<reason>" }
@@ -547,18 +429,20 @@ On an error, the worker writes:
 
 ## Running and Debugging
 
-- Job directory mode: `python my_agent.py /job` with `input/input.json` present.
-- STDIN mode: `cat input.json | python my_agent.py`.
-- Proxies: set `config.proxy.http` / `config.proxy.https` or environment variables.
+- Run examples directly under `examples/` with `python ...`.
+- Use `--execute` for real network calls; otherwise remain in dry‑run.
+- Use `--include-dangerous` to enable impactful actions when applicable.
+- Proxies: set `WorkerInput.config.proxy.http` / `.https` or env vars `http_proxy`/`https_proxy`.
 
 ## Programmatic Usage (No File I/O)
 
-You can use the SDK directly in your code without file I/O by passing input data directly to the constructor:
+Use the SDK directly by passing `WorkerInput` to the constructor and printing as needed.
 
-### Modern Approach (Dataclasses)
+### Dataclasses
 
 ```python
 from sentineliqsdk import Analyzer, WorkerInput
+
 
 class MyAnalyzer(Analyzer):
     def run(self) -> None:
@@ -566,54 +450,27 @@ class MyAnalyzer(Analyzer):
         # Your analysis logic here
         result = {"observable": observable, "verdict": "safe"}
         self.report(result)
+
 
 # Create input data using dataclass
 input_data = WorkerInput(
     data_type="ip",
     data="1.2.3.4",
     tlp=2,
-    pap=2
+    pap=2,
 )
 
-# Use analyzer without file I/O
-analyzer = MyAnalyzer(input_data=input_data)
-analyzer.run()
-```
-
-### Legacy Approach (Dictionaries)
-
-```python
-from sentineliqsdk import Analyzer
-
-class MyAnalyzer(Analyzer):
-    def run(self) -> None:
-        observable = self.get_data()
-        # Your analysis logic here
-        result = {"observable": observable, "verdict": "safe"}
-        self.report(result)
-
-# Create input data directly
-input_data = {
-    "dataType": "ip",
-    "data": "1.2.3.4",
-    "tlp": 2,
-    "pap": 2,
-    "config": {"auto_extract": True}
-}
-
-# Use analyzer without file I/O
 analyzer = MyAnalyzer(input_data=input_data)
 analyzer.run()
 ```
 
 ### In-Memory Results
 
-To get results in memory instead of writing to files, use `report()`:
+To get results in memory, call `execute()` (or `run()` if your class returns the report):
 
 ```python
-# Get result directly in memory
-result = analyzer.report(full_report)
-print(f"Analysis result: {result}")
+report = analyzer.execute()  # or analyzer.run() if run() returns the report
+print(report.full_report)
 ```
 
 ### Batch Processing
@@ -631,47 +488,37 @@ for obs in observables:
         data_type="ip",
         data=obs,
         tlp=2,
-        pap=2
+        pap=2,
     )
-    
+
     analyzer = MyAnalyzer(input_data=input_data)
     # Process and get result in memory
-    result = analyzer.report(full_report)
+    result = analyzer.execute()
     results.append(result)
 ```
 
 ## Dataclasses and Type Safety
 
-The SDK now provides dataclasses for better type safety and developer experience:
+The SDK provides dataclasses for better type safety and developer experience:
 
-### Available Dataclasses
-
-- **`WorkerInput`**: Input data for workers
-- **`WorkerConfig`**: Worker configuration (TLP/PAP, proxy, etc.)
-- **`ProxyConfig`**: HTTP/HTTPS proxy configuration
-- **`TaxonomyEntry`**: Taxonomy entries for analyzers
-- **`Artifact`**: Extracted artifacts
-- **`Operation`**: Follow-up operations
-- **`AnalyzerReport`**: Complete analyzer report
-- **`ResponderReport`**: Complete responder report
-- **`WorkerError`**: Error responses
-- **`ExtractorResult`**: Individual extraction results
-- **`ExtractorResults`**: Collection of extraction results
-
-### Benefits
-
-- **Type Safety**: Catch errors at development time
-- **IDE Support**: Better autocomplete and error detection
-- **Immutability**: Data structures are frozen and cannot be accidentally modified
-- **Clear Contracts**: Well-defined data structures
-- **Backward Compatibility**: Still accepts dictionary inputs
+- `WorkerInput`: Input data for workers
+- `WorkerConfig`: Worker configuration (TLP/PAP, proxy, etc.)
+- `ProxyConfig`: HTTP/HTTPS proxy configuration
+- `TaxonomyEntry`: Taxonomy entries for analyzers
+- `Artifact`: Extracted artifacts
+- `Operation`: Follow‑up operations
+- `AnalyzerReport`: Complete analyzer report
+- `ResponderReport`: Complete responder report
+- `WorkerError`: Error responses
+- `ExtractorResult`: Individual extraction results
+- `ExtractorResults`: Collection of extraction results
 
 ### Example Usage
 
 ```python
 from sentineliqsdk import (
-    WorkerInput, WorkerConfig, ProxyConfig, 
-    TaxonomyEntry, Artifact, Operation
+    WorkerInput, WorkerConfig, ProxyConfig,
+    TaxonomyEntry, Artifact, Operation,
 )
 
 # Create structured input
@@ -681,8 +528,8 @@ input_data = WorkerInput(
     config=WorkerConfig(
         check_tlp=True,
         max_tlp=2,
-        proxy=ProxyConfig(http="http://proxy:8080")
-    )
+        proxy=ProxyConfig(http="http://proxy:8080"),
+    ),
 )
 
 # Create taxonomy entry
@@ -690,7 +537,7 @@ taxonomy = TaxonomyEntry(
     level="malicious",
     namespace="reputation",
     predicate="static",
-    value="1.2.3.4"
+    value="1.2.3.4",
 )
 
 # Create artifact
@@ -698,30 +545,30 @@ artifact = Artifact(
     data_type="ip",
     data="8.8.8.8",
     tlp=2,
-    extra={"confidence": 0.9}
+    extra={"confidence": 0.9},
 )
 
 # Create operation
 operation = Operation(
     operation_type="hunt",
-    parameters={"target": "1.2.3.4", "priority": "high"}
+    parameters={"target": "1.2.3.4", "priority": "high"},
 )
 
 # Convert to dict for JSON serialization
+# Note: use dataclasses.asdict for dataclasses without custom to_dict()
+from dataclasses import asdict
 json_data = {
     "taxonomy": [taxonomy.to_dict()],
-    "artifacts": [artifact.to_dict()],
-    "operations": [operation.to_dict()]
+    "artifacts": [asdict(artifact)],
+    "operations": [asdict(operation)],
 }
 ```
 
-For more detailed information about dataclasses, see `DATACLASS_MIGRATION.md`.
-
 ## Project and CI Tips
 
-- Lint and type check: `poe lint` (ruff + mypy).
+- Lint and type check: `poe lint` (pre-commit with ruff/mypy configured).
 - Tests: `poe test` (pytest with coverage to `reports/`).
-- Docs: `poe docs` generates API docs to `docs/`.
+- Docs: `poe docs` builds MkDocs site to `docs/` (see `.github/workflows/docs.yml`).
 - Build: `uv build`; publish via CI on GitHub release.
 
 ## Releases (CI/CD)
@@ -757,7 +604,7 @@ Release checklist (maintainers):
    - CLI: `gh release create vX.Y.Z --title "vX.Y.Z" --notes-file CHANGELOG.md --latest`
 5. CI publishes to PyPI
    - The "Publish" workflow runs and calls `uv publish` using OIDC.
-   - Acompanhe em Actions → Publish (ou `gh run list --workflow=Publish`).
+   - Track in Actions → Publish (or `gh run list --workflow=Publish`).
 6. Verify the release
    - `pip install sentineliqsdk==X.Y.Z`
    - `python -c "import importlib.metadata as m; print(m.version('sentineliqsdk'))"`

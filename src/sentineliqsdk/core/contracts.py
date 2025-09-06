@@ -1,6 +1,7 @@
 """Contracts and protocols used across the SDK core.
 
 These help organize responsibilities following SOLID, enabling composition and testing.
+The contracts here are generic and do not imply any specific file-based job directory model.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ class OutputWriter(Protocol):
     """Contract for writing worker outputs to some destination."""
 
     def write(self, data: dict[str, Any], job_directory: str | None, *, ensure_ascii: bool) -> None:
-        """Persist `data` to STDOUT or a job directory depending on context."""
+        """Persist `data` to an output sink (e.g., STDOUT or an external destination)."""
         ...
 
 
