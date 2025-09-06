@@ -18,6 +18,7 @@ from typing import Any, NoReturn
 
 from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, EXIT_ERROR
 from sentineliqsdk.core.config.proxy import EnvProxyConfigurator
+from sentineliqsdk.core.config.secrets import sanitize_config
 from sentineliqsdk.models import Artifact, Operation, WorkerError, WorkerInput
 
 
@@ -110,6 +111,22 @@ class Worker(ABC):
         # Create error response using dataclass
         error_response = WorkerError(success=False, error_message=message, input_data=self._input)
 
+        # Convert config to dict for sanitization
+        config_dict = {
+            "check_tlp": self._input.config.check_tlp,
+            "max_tlp": self._input.config.max_tlp,
+            "check_pap": self._input.config.check_pap,
+            "max_pap": self._input.config.max_pap,
+            "auto_extract": self._input.config.auto_extract,
+            "proxy": {
+                "http": self._input.config.proxy.http,
+                "https": self._input.config.proxy.https,
+            },
+        }
+
+        # Sanitize config to remove sensitive information
+        sanitized_config = sanitize_config(config_dict, self.secret_phrases)
+
         # Convert to dict for JSON output
         error_dict = {
             "success": error_response.success,
@@ -120,17 +137,7 @@ class Worker(ABC):
                 "filename": self._input.filename,
                 "tlp": self._input.tlp,
                 "pap": self._input.pap,
-                "config": {
-                    "check_tlp": self._input.config.check_tlp,
-                    "max_tlp": self._input.config.max_tlp,
-                    "check_pap": self._input.config.check_pap,
-                    "max_pap": self._input.config.max_pap,
-                    "auto_extract": self._input.config.auto_extract,
-                    "proxy": {
-                        "http": self._input.config.proxy.http,
-                        "https": self._input.config.proxy.https,
-                    },
-                },
+                "config": sanitized_config,
             },
         }
 

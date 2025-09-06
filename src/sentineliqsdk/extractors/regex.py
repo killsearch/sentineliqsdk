@@ -7,31 +7,50 @@ keeping behavior aligned with the test suite.
 
 from __future__ import annotations
 
+import encodings.idna
 import ipaddress
 import string
-from collections.abc import Callable
-from email.utils import parseaddr
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from sentineliqsdk.constants import (
-    DOMAIN_PARTS,
     HASH_LENGTHS,
-    MIN_FQDN_LABELS,
     USER_AGENT_PREFIXES,
+)
+from sentineliqsdk.extractors.detectors import (
+    DetectionContext,
+    Detector,
+    DomainDetector,
+    FqdnDetector,
+    HashDetector,
+    IpDetector,
+    MailDetector,
+    RegistryDetector,
+    UriPathDetector,
+    UrlDetector,
+    UserAgentDetector,
 )
 from sentineliqsdk.models import ExtractorResult, ExtractorResults
 
 # Precomputed character sets to avoid rebuilding per call
 ALLOWED_LABEL_CHARS = frozenset(string.ascii_letters + string.digits + "_-")
+ALLOWED_LABEL_CHARS_STRICT = frozenset(string.ascii_letters + string.digits + "-")
 HEX_DIGITS = frozenset(string.hexdigits)
+
+# Size limits for DoS protection
+MAX_STRING_LENGTH = 10000  # Maximum string length to process
+MAX_ITERABLE_DEPTH = 100  # Maximum nesting depth for iterables
+
+# Default ports for URL normalization
+DEFAULT_HTTP_PORT = 80
+DEFAULT_HTTPS_PORT = 443
 
 
 class ExtractionError(Exception):
     """Extraction error raised for invalid inputs."""
 
 
-class Extractor:
+class Extractor(DetectionContext):
     """Detect IOC attribute types using stdlib-backed heuristics.
 
     Two functions are provided:
@@ -42,24 +61,73 @@ class Extractor:
     Note: not a full-text search; IOC values must appear as isolated strings.
 
     :param ignore: String to ignore when matching artifacts to type
+    :param strict_dns: If True, enforce RFC-compliant DNS validation (no underscores)
+    :param normalize_domains: If True, normalize domains using IDNA/punycode
+    :param normalize_urls: If True, normalize URLs (lowercase host, remove default ports)
+    :param support_mailto: If True, accept mailto: prefix in email detection
+    :param max_string_length: Maximum string length to process (DoS protection)
+    :param max_iterable_depth: Maximum nesting depth for iterables (DoS protection)
     """
 
-    def __init__(self, ignore: str | None = None):
+    def __init__(
+        self,
+        ignore: str | None = None,
+        strict_dns: bool = False,
+        normalize_domains: bool = False,
+        normalize_urls: bool = False,
+        support_mailto: bool = False,
+        max_string_length: int = MAX_STRING_LENGTH,
+        max_iterable_depth: int = MAX_ITERABLE_DEPTH,
+    ):
         self.ignore = ignore
+        self.strict_dns = strict_dns
+        self.normalize_domains = normalize_domains
+        self.normalize_urls = normalize_urls
+        self.support_mailto = support_mailto
+        self.max_string_length = max_string_length
+        self.max_iterable_depth = max_iterable_depth
+
         # Small per-instance cache to avoid repeated classification work.
         self._cache: dict[tuple[str | None, str], str] = {}
-        # Pre-bind predicate checks to avoid rebuilding on every call
-        self._checks: list[tuple[Callable[[str], bool], str]] = [
-            (self._is_ip, "ip"),
-            (self._is_url, "url"),
-            (self._is_domain, "domain"),
-            (self._is_hash, "hash"),
-            (self._is_user_agent, "user-agent"),
-            (self._is_uri_path, "uri_path"),
-            (self._is_registry, "registry"),
-            (self._is_mail, "mail"),
-            (self._is_fqdn, "fqdn"),
+
+        # Detectors compose classification in precedence order.
+        self._detectors: list[Detector] = [
+            IpDetector(),
+            UrlDetector(self),
+            DomainDetector(self),
+            HashDetector(),
+            UserAgentDetector(),
+            UriPathDetector(),
+            RegistryDetector(),
+            MailDetector(self),
+            FqdnDetector(self),
         ]
+
+    # --- Extensibility helpers ---
+    def register_detector(
+        self, detector: Detector, *, before: str | None = None, after: str | None = None
+    ) -> None:
+        """Register a custom detector.
+
+        - If neither ``before`` nor ``after`` is provided, appends to the end.
+        - If ``before`` is provided, inserts before the first detector with that name.
+        - If ``after`` is provided, inserts after the first detector with that name.
+        """
+        if before and after:
+            raise ValueError("Use only one of 'before' or 'after'.")
+
+        if before:
+            for i, det in enumerate(self._detectors):
+                if det.name == before:
+                    self._detectors.insert(i, detector)
+                    return
+        elif after:
+            for i, det in enumerate(self._detectors):
+                if det.name == after:
+                    self._detectors.insert(i + 1, detector)
+                    return
+
+        self._detectors.append(detector)
 
     # --- Type checks ---
     @staticmethod
@@ -70,26 +138,73 @@ class Extractor:
         except ValueError:
             return False
 
-    @staticmethod
-    def _is_url(value: str) -> bool:
-        if not value.startswith(("http://", "https://")):
-            return False
-        parsed = urlparse(value)
-        return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
+    def _is_url(self, value: str) -> bool:
+        return UrlDetector(self).matches(value)
 
-    @staticmethod
-    def _label_allowed(label: str) -> bool:
-        return bool(label) and all(c in ALLOWED_LABEL_CHARS for c in label)
+    def _label_allowed(self, label: str) -> bool:
+        """Check if a DNS label is allowed based on current strict mode."""
+        if not label:
+            return False
+        allowed_chars = ALLOWED_LABEL_CHARS_STRICT if self.strict_dns else ALLOWED_LABEL_CHARS
+        return all(c in allowed_chars for c in label)
 
-    @classmethod
-    def _is_domain(cls, value: str) -> bool:
-        if value.startswith(("http://", "https://")):
-            return False
-        parts = value.split(".")
-        if len(parts) != DOMAIN_PARTS:
-            return False
-        left, tld = parts
-        return cls._label_allowed(left) and tld.isalpha()
+    # DetectionContext adapters used by detectors
+    def label_allowed(self, label: str) -> bool:
+        """Public adapter for detectors to validate a single DNS label."""
+        return self._label_allowed(label)
+
+    def _normalize_domain(self, domain: str) -> str:
+        """Normalize domain using IDNA/punycode if enabled."""
+        if not self.normalize_domains:
+            return domain
+        try:
+            # Convert to IDNA encoding (punycode)
+            return encodings.idna.ToASCII(domain).decode("ascii")
+        except (UnicodeError, ValueError):
+            # If normalization fails, return original
+            return domain
+
+    def normalize_domain(self, domain: str) -> str:
+        """Public adapter for detectors to normalize domains according to settings."""
+        return self._normalize_domain(domain)
+
+    def _normalize_url(self, url: str) -> str:
+        """Normalize URL by lowercasing host and removing default ports."""
+        if not self.normalize_urls:
+            return url
+        try:
+            parsed = urlparse(url)
+            if not parsed.netloc:
+                return url
+
+            # Lowercase the hostname
+            hostname = parsed.hostname.lower() if parsed.hostname else parsed.netloc.lower()
+
+            # Remove default ports
+            port = parsed.port
+            if port and (
+                (parsed.scheme == "http" and port == DEFAULT_HTTP_PORT)
+                or (parsed.scheme == "https" and port == DEFAULT_HTTPS_PORT)
+            ):
+                port = None
+
+            # Reconstruct netloc
+            netloc = f"{hostname}:{port}" if port else hostname
+
+            # Reconstruct URL
+            return urlunparse(
+                (parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment)
+            )
+        except (ValueError, AttributeError):
+            # If normalization fails, return original
+            return url
+
+    def normalize_url(self, url: str) -> str:
+        """Public adapter for detectors to normalize URLs according to settings."""
+        return self._normalize_url(url)
+
+    def _is_domain(self, value: str) -> bool:
+        return DomainDetector(self).matches(value)
 
     @staticmethod
     def _is_hash(value: str) -> bool:
@@ -103,40 +218,17 @@ class Extractor:
 
     @staticmethod
     def _is_uri_path(value: str) -> bool:
-        # Consider non-HTTP(S) URI schemes like ftp://, file://, etc.
-        if value.startswith(("http://", "https://")):
-            return False
-        if "://" not in value:
-            return False
-        parsed = urlparse(value)
-        return bool(parsed.scheme)
+        return UriPathDetector().matches(value)
 
     @staticmethod
     def _is_registry(value: str) -> bool:
-        prefixes = ("HKEY", "HKLM", "HKCU", "HKCR", "HKCC")
-        if not value.startswith(prefixes):
-            return False
-        return "\\" in value
+        return RegistryDetector().matches(value)
 
-    @staticmethod
-    def _is_mail(value: str) -> bool:
-        name, addr = parseaddr(value)
-        if addr != value:
-            return False
-        if "@" not in addr:
-            return False
-        local, _, domain = addr.partition("@")
-        return bool(local and domain and "." in domain)
+    def _is_mail(self, value: str) -> bool:
+        return MailDetector(self).matches(value)
 
-    @classmethod
-    def _is_fqdn(cls, value: str) -> bool:
-        if value.startswith(("http://", "https://")):
-            return False
-        parts = value.split(".")
-        if len(parts) < MIN_FQDN_LABELS:
-            return False
-        *labels, tld = parts
-        return all(cls._label_allowed(lbl) for lbl in labels) and tld.isalpha()
+    def _is_fqdn(self, value: str) -> bool:
+        return FqdnDetector(self).matches(value)
 
     def __checktype(self, value: Any) -> str:
         """Check if the given value is a known datatype.
@@ -152,14 +244,18 @@ class Extractor:
             return ""
 
         if isinstance(value, str):
+            # Check string length limit for DoS protection
+            if len(value) > self.max_string_length:
+                return ""
+
             key = (self.ignore, value)
             if key in self._cache:
                 return self._cache[key]
 
             dtype = ""
-            for predicate, dtype_name in self._checks:
-                if predicate(value):
-                    dtype = dtype_name
+            for detector in self._detectors:
+                if detector.matches(value):
+                    dtype = detector.name
                     break
 
             self._cache[key] = dtype
@@ -192,13 +288,19 @@ class Extractor:
         if not isinstance(iterable, str | list | dict | tuple | set):
             raise TypeError("Not supported type.")
 
-        stack: list[Any] = [iterable]
+        # Use depth tracking for DoS protection
+        stack: list[tuple[Any, int]] = [(iterable, 0)]
         while stack:
-            item = stack.pop()
+            item, depth = stack.pop()
+
+            # Check depth limit
+            if depth > self.max_iterable_depth:
+                continue
+
             if isinstance(item, dict):
-                stack.extend(item.values())
+                stack.extend((v, depth + 1) for v in item.values())
             elif isinstance(item, list | tuple | set):
-                stack.extend(item)
+                stack.extend((v, depth + 1) for v in item)
             elif isinstance(item, str):
                 dt = self.__checktype(item)
                 if dt:

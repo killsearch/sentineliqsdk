@@ -16,11 +16,32 @@ theme:
 
 nav:
   - Home: index.md
-  - Guide: guide.md
-  - API Reference: reference.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - First Analyzer: getting-started/first-analyzer.md
+  - Tutorials:
+    - Building Analyzers: tutorials/building-analyzers.md
+    - Building Responders: tutorials/building-responders.md
+    - File Processing: tutorials/file-processing.md
+  - Examples:
+    - Threat Intelligence: examples/threat-intelligence.md
+    - Malware Analysis: examples/malware-analysis.md
+  - Guides:
+    - Agent Guide: guides/guide.md
+  - Reference:
+    - API Reference: reference/api/worker.md
+  - Architecture:
+    - Overview: architecture/overview.md
+  - Development:
+    - Contributing: development/contributing.md
+  - Troubleshooting:
+    - Common Issues: troubleshooting/common-issues.md
+    - FAQ: troubleshooting/faq.md
 
 plugins:
   - search
+  - mermaid2
   - mkdocstrings:
       default_handler: python
       handlers:

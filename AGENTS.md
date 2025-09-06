@@ -1,10 +1,40 @@
 # SentinelIQ SDK — Agent Guide
 
-This document shows how to build analyzers and responders using the SentinelIQ SDK in
-`src/sentineliqsdk`. It summarizes the public API and provides usage examples you can copy
-into your own agents.
+This guide explains how to build analyzers and responders with the SentinelIQ SDK in
+`src/sentineliqsdk`. It follows a sequential flow: setup → concepts → input/output → build
+analyzers/responders → extraction → programmatic usage → CI/release.
 
-> Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
+Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
+
+## Quick Start
+
+- Install and open the repo.
+- Create an analyzer (example below) and run it with either a job directory or STDIN.
+- Use dataclasses for input; legacy dicts remain supported.
+
+Minimal runnable analyzer (dataclasses):
+
+```python
+from __future__ import annotations
+from sentineliqsdk import Analyzer, WorkerInput
+
+class ReputationAnalyzer(Analyzer):
+    def run(self) -> None:
+        observable = self.get_data()
+        verdict = "malicious" if observable == "1.2.3.4" else "safe"
+        taxonomy = self.build_taxonomy("malicious" if verdict == "malicious" else "safe",
+                                       "reputation", "static", str(observable))
+        self.report({
+            "observable": observable,
+            "verdict": verdict,
+            "taxonomy": [taxonomy.to_dict()],
+        })
+
+if __name__ == "__main__":
+    ReputationAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4")).run()
+```
+
+Run with job dir: `python my_agent.py /job` or via STDIN: `cat input.json | python my_agent.py`.
 
 ## Modules Overview
 
@@ -89,7 +119,7 @@ Common input fields:
 On error, sensitive keys in `config` containing any of `key`, `password`, `secret` are
 replaced with `"REMOVED"` in the error payload.
 
-## Core Base: Worker
+## Core Concepts: Worker
 
 Signature: `Worker(job_directory: str | None, secret_phrases: tuple[str, ...] | None)`
 

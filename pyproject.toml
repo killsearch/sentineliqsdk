@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]  # https://packaging.python.org/en/latest/specifications/pyproject-toml/
 name = "sentineliqsdk"
-version = "0.1.2"
+version = "0.1.3"
 description = "A Python library of utility classes for SentinelIQ analyzers and responders"
 readme = "README.md"
 authors = [
@@ -12,6 +12,7 @@ authors = [
 ]
 requires-python = ">=3.13,<4.0"
 dependencies = [
+    "mkdocs-mermaid2-plugin>=1.2.2",
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
@@ -91,7 +92,25 @@ ignore = ["D203", "D213", "E501", "PGH002", "PGH003", "RET504", "S101", "S307"]
 unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D100", "D101", "D102", "D103", "PLR2004"]
+"tests/**/*.py" = [
+  "D100", "D101", "D102", "D103",  # docstrings not required in tests
+  "D401",  # allow non-imperative docstrings in tests
+  "F841",  # allow unused locals in tests
+  "PLC0415",  # allow local imports in tests
+  "SIM112",  # allow lowercased env var names in tests
+  "SIM117",  # allow nested with in tests
+  "W505",  # allow longer comment lines in tests
+  "PLR2004",  # magic numbers are fine in tests
+]
+
+"test_*.py" = [
+  "D100", "D101", "D102", "D103",  # tests at repo root
+  "D401", "F841", "PLC0415", "SIM112", "SIM117", "W505", "PLR2004"
+]
+
+"src/sentineliqsdk/extractors/regex.py" = [
+  "PLR0913",  # constructor with many options is part of API
+]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

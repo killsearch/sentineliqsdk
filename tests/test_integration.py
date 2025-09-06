@@ -188,7 +188,15 @@ class TestExtractorIntegration:
 
     def test_extractor_with_complex_data(self):
         """Test extractor with complex nested data."""
-        extractor = Extractor()
+        extractor = Extractor(
+            ignore=None,
+            strict_dns=False,
+            normalize_domains=False,
+            normalize_urls=False,
+            support_mailto=False,
+            max_string_length=10000,
+            max_iterable_depth=100,
+        )
 
         # Complex data structure with various IOCs
         data = {
@@ -245,7 +253,15 @@ class TestExtractorIntegration:
 
     def test_extractor_with_ignore_parameter(self):
         """Test extractor with ignore parameter."""
-        extractor = Extractor(ignore="1.2.3.4")
+        extractor = Extractor(
+            ignore="1.2.3.4",
+            strict_dns=False,
+            normalize_domains=False,
+            normalize_urls=False,
+            support_mailto=False,
+            max_string_length=10000,
+            max_iterable_depth=100,
+        )
 
         data = {
             "observable": "1.2.3.4",  # Should be ignored
@@ -265,7 +281,15 @@ class TestExtractorIntegration:
 
     def test_extractor_deduplication(self):
         """Test extractor deduplication functionality."""
-        extractor = Extractor()
+        extractor = Extractor(
+            ignore=None,
+            strict_dns=False,
+            normalize_domains=False,
+            normalize_urls=False,
+            support_mailto=False,
+            max_string_length=10000,
+            max_iterable_depth=100,
+        )
 
         # Data with duplicates
         data = [
