@@ -1,8 +1,26 @@
 """IOC extractor utilities used by analyzers to auto-extract artifacts.
 
-This version prefers Python's standard library helpers over complex regular
-expressions where feasible (e.g., ipaddress, urllib.parse, email.utils),
-keeping behavior aligned with the test suite.
+This extractor prioritizes Python stdlib helpers over complex regexes (e.g.,
+``ipaddress``, ``urllib.parse``, ``email.utils``) while keeping behavior aligned with tests.
+
+Detector order (first match wins):
+  1. ip
+  2. cidr
+  3. url
+  4. domain
+  5. hash
+  6. user-agent
+  7. uri_path
+  8. registry
+  9. mail
+ 10. mac
+ 11. asn
+ 12. cve
+ 13. ip_port
+ 14. fqdn
+
+You can customize detection precedence via ``register_detector(detector, before=..., after=...)``.
+Only one of ``before`` or ``after`` is allowed. If neither is provided, the detector is appended.
 """
 
 from __future__ import annotations
@@ -10,7 +28,7 @@ from __future__ import annotations
 import encodings.idna
 import ipaddress
 import string
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse, urlunparse
 
 from sentineliqsdk.constants import (
@@ -18,19 +36,24 @@ from sentineliqsdk.constants import (
     USER_AGENT_PREFIXES,
 )
 from sentineliqsdk.extractors.detectors import (
+    AsnDetector,
+    CidrDetector,
+    CveDetector,
     DetectionContext,
     Detector,
     DomainDetector,
     FqdnDetector,
     HashDetector,
     IpDetector,
+    IpPortDetector,
+    MacDetector,
     MailDetector,
     RegistryDetector,
     UriPathDetector,
     UrlDetector,
     UserAgentDetector,
 )
-from sentineliqsdk.models import ExtractorResult, ExtractorResults
+from sentineliqsdk.models import DataType, ExtractorResult, ExtractorResults
 
 # Precomputed character sets to avoid rebuilding per call
 ALLOWED_LABEL_CHARS = frozenset(string.ascii_letters + string.digits + "_-")
@@ -93,6 +116,7 @@ class Extractor(DetectionContext):
         # Detectors compose classification in precedence order.
         self._detectors: list[Detector] = [
             IpDetector(),
+            CidrDetector(),
             UrlDetector(self),
             DomainDetector(self),
             HashDetector(),
@@ -100,6 +124,10 @@ class Extractor(DetectionContext):
             UriPathDetector(),
             RegistryDetector(),
             MailDetector(self),
+            MacDetector(),
+            AsnDetector(),
+            CveDetector(),
+            IpPortDetector(),
             FqdnDetector(self),
         ]
 
@@ -121,7 +149,7 @@ class Extractor(DetectionContext):
                 if det.name == before:
                     self._detectors.insert(i, detector)
                     return
-        elif after:
+        elif after:  # pragma: no branch
             for i, det in enumerate(self._detectors):
                 if det.name == after:
                     self._detectors.insert(i + 1, detector)
@@ -301,10 +329,11 @@ class Extractor(DetectionContext):
                 stack.extend((v, depth + 1) for v in item.values())
             elif isinstance(item, list | tuple | set):
                 stack.extend((v, depth + 1) for v in item)
-            elif isinstance(item, str):
+            elif isinstance(item, str):  # pragma: no branch
                 dt = self.__checktype(item)
                 if dt:
-                    results.add_result(dt, item)
+                    # Narrow dtype to the declared DataType Literal for type checkers
+                    results.add_result(cast(DataType, dt), item)
 
         # Deduplicate and return as list of ExtractorResult objects
         deduped = results.deduplicate()
@@ -322,3 +351,19 @@ class Extractor(DetectionContext):
             seen.add(key)
             dedup_list.append(obj)
         return dedup_list
+
+    @staticmethod
+    def deduplicate_results(results: list[ExtractorResult]) -> list[ExtractorResult]:
+        """Deduplicate ``ExtractorResult`` items by ``data_type`` and ``data``.
+
+        This mirrors ``deduplicate`` but works with the modern dataclass API.
+        """
+        seen: set[tuple[str, str]] = set()
+        unique: list[ExtractorResult] = []
+        for r in results:
+            key = (r.data_type, r.data)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(r)
+        return unique

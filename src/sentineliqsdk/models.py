@@ -6,7 +6,9 @@ throughout the SDK, improving type safety and developer experience.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Literal
 
 from sentineliqsdk.constants import DEFAULT_PAP, DEFAULT_TLP
@@ -25,6 +27,12 @@ DataType = Literal[
     "registry",
     "file",
     "other",
+    # Extended types supported by detectors
+    "asn",
+    "cve",
+    "ip_port",
+    "mac",
+    "cidr",
 ]
 
 
@@ -34,6 +42,8 @@ class ProxyConfig:
 
     http: str | None = None
     https: str | None = None
+    # Optional NO_PROXY support (comma-separated hosts/domains)
+    no_proxy: str | None = None
 
 
 @dataclass(frozen=True)
@@ -52,7 +62,7 @@ class WorkerConfig:
 class WorkerInput:
     """Input data structure for workers."""
 
-    data_type: str
+    data_type: DataType
     data: str
     filename: str | None = None
     tlp: int = DEFAULT_TLP
@@ -83,13 +93,18 @@ class TaxonomyEntry:
 class Artifact:
     """Artifact extracted from analysis."""
 
-    data_type: str
+    data_type: DataType
     data: str
     filename: str | None = None
     tlp: int | None = None
     pap: int | None = None
     # Additional fields can be added as needed
-    extra: dict[str, Any] = field(default_factory=dict)
+    extra: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:  # type: ignore[override]
+        # Wrap mutable mappings in an immutable proxy to ensure deep immutability
+        if isinstance(self.extra, dict):
+            object.__setattr__(self, "extra", MappingProxyType(dict(self.extra)))
 
 
 @dataclass(frozen=True)
@@ -97,7 +112,11 @@ class Operation:
     """Follow-up operation for workers."""
 
     operation_type: str
-    parameters: dict[str, Any] = field(default_factory=dict)
+    parameters: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:  # type: ignore[override]
+        if isinstance(self.parameters, dict):
+            object.__setattr__(self, "parameters", MappingProxyType(dict(self.parameters)))
 
 
 @dataclass(frozen=True)
@@ -133,7 +152,7 @@ class ResponderReport:
 class ExtractorResult:
     """Result from IOC extraction."""
 
-    data_type: str
+    data_type: DataType
     data: str
 
 
@@ -143,7 +162,7 @@ class ExtractorResults:
 
     results: list[ExtractorResult] = field(default_factory=list)
 
-    def add_result(self, data_type: str, data: str) -> None:
+    def add_result(self, data_type: DataType, data: str) -> None:
         """Add a new extraction result."""
         self.results.append(ExtractorResult(data_type=data_type, data=data))
 

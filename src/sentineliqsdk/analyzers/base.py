@@ -7,7 +7,14 @@ from typing import Any
 
 from sentineliqsdk.core import Worker
 from sentineliqsdk.extractors import Extractor
-from sentineliqsdk.models import AnalyzerReport, Artifact, TaxonomyEntry, TaxonomyLevel, WorkerInput
+from sentineliqsdk.models import (
+    AnalyzerReport,
+    Artifact,
+    DataType,
+    TaxonomyEntry,
+    TaxonomyLevel,
+    WorkerInput,
+)
 
 
 class Analyzer(Worker):
@@ -54,7 +61,7 @@ class Analyzer(Worker):
             return [Artifact(data_type=r.data_type, data=r.data) for r in results]
         return []
 
-    def build_artifact(self, data_type: str, data: Any, **kwargs: Any) -> Artifact:
+    def build_artifact(self, data_type: DataType, data: Any, **kwargs: Any) -> Artifact:
         """Build an artifact dataclass.
 
         For file types, returns metadata without copying files.

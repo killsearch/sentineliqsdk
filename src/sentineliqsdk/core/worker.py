@@ -102,7 +102,7 @@ class Worker(ABC):
             self.error(message)
         return default
 
-    def error(self, message: str) -> NoReturn:
+    def error(self, message: str, *, ensure_ascii: bool | None = None) -> NoReturn:
         """
         Stop analyzer with an error message.
 
@@ -141,7 +141,14 @@ class Worker(ABC):
             },
         }
 
-        print(json.dumps(error_dict))
+        # Preserve Unicode by default per JSON_ENSURE_ASCII, allow override via parameter
+        from sentineliqsdk.constants import JSON_ENSURE_ASCII
+
+        print(
+            json.dumps(
+                error_dict, ensure_ascii=JSON_ENSURE_ASCII if ensure_ascii is None else ensure_ascii
+            )
+        )
         sys.exit(EXIT_ERROR)
 
     def summary(self, raw: Any) -> dict[str, Any]:

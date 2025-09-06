@@ -14,10 +14,13 @@ DEFAULT_TLP = 2
 DEFAULT_PAP = 2
 
 # Hash validation constants
-HASH_LENGTHS = {32, 40, 64}  # MD5, SHA1, SHA256
+# Supported lengths: MD5 (32), SHA1 (40), SHA256 (64)
+# Note: SHA512 (128) is intentionally excluded to match current extractor behavior/tests.
+HASH_LENGTHS = {32, 40, 64}
 MD5_LENGTH = 32
 SHA1_LENGTH = 40
 SHA256_LENGTH = 64
+SHA512_LENGTH = 128
 
 # Domain validation constants
 DOMAIN_PARTS = 2
@@ -31,4 +34,5 @@ EXIT_SUCCESS = 0
 EXIT_ERROR = 1
 
 # JSON serialization
+# When True, json.dumps escapes non-ASCII characters; when False, preserves Unicode.
 JSON_ENSURE_ASCII = False

@@ -9,6 +9,7 @@ focused on orchestration.
 from __future__ import annotations
 
 import ipaddress
+import re
 from dataclasses import dataclass
 from email.utils import parseaddr
 from typing import Protocol
@@ -192,3 +193,92 @@ class FqdnDetector:
             return False
         *labels, tld = parts
         return all(self.ctx.label_allowed(lbl) for lbl in labels) and tld.isalpha()
+
+
+# --- Additional detectors (opt-in via extractor registration order) ---
+
+
+@dataclass
+class CidrDetector:
+    """Detect IPv4/IPv6 CIDR notations like ``1.2.3.4/24`` or ``2001:db8::/48``."""
+
+    name: str = "cidr"
+
+    def matches(self, value: str) -> bool:
+        """Return True when value is a valid network with an explicit prefix length."""
+        if "/" not in value:
+            return False
+        try:
+            # strict=False accepts host bits set but requires a prefix length
+            ipaddress.ip_network(value, strict=False)
+            return True
+        except ValueError:
+            return False
+
+
+@dataclass
+class MacDetector:
+    """Detect MAC addresses in common notations.
+
+    Supported forms:
+      - ``aa:bb:cc:dd:ee:ff``
+      - ``aa-bb-cc-dd-ee-ff``
+      - ``aabb.ccdd.eeff``
+    """
+
+    name: str = "mac"
+
+    # Precompiled regexes to avoid false positives and keep performance reasonable
+    _colon = re.compile(r"^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
+    _dash = re.compile(r"^[0-9A-Fa-f]{2}(-[0-9A-Fa-f]{2}){5}$")
+    _dot = re.compile(r"^[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}$")
+
+    def matches(self, value: str) -> bool:
+        v = value.strip()
+        return bool(self._colon.match(v) or self._dash.match(v) or self._dot.match(v))
+
+
+@dataclass
+class AsnDetector:
+    """Detect Autonomous System Numbers like ``AS13335``."""
+
+    name: str = "asn"
+
+    _asn = re.compile(r"^(?i:AS)[0-9]{1,10}$")
+
+    def matches(self, value: str) -> bool:
+        return bool(self._asn.match(value))
+
+
+@dataclass
+class CveDetector:
+    """Detect CVE identifiers like ``CVE-2023-12345``."""
+
+    name: str = "cve"
+
+    _cve = re.compile(r"^CVE-\d{4}-\d{4,}$", re.IGNORECASE)
+
+    def matches(self, value: str) -> bool:
+        return bool(self._cve.match(value))
+
+
+@dataclass
+class IpPortDetector:
+    """Detect IPv4 with TCP/UDP port like ``1.2.3.4:443``."""
+
+    name: str = "ip_port"
+
+    _ip_port = re.compile(r"^(\d{1,3}\.){3}\d{1,3}:(\d{1,5})$")
+
+    def matches(self, value: str) -> bool:
+        m = self._ip_port.match(value)
+        if not m:
+            return False
+        # Validate IP and port ranges using stdlib
+        host, _, port_str = value.rpartition(":")
+        try:
+            ipaddress.IPv4Address(host)
+            port = int(port_str)
+            return 0 < port <= 65535
+        except (ValueError, ipaddress.AddressValueError):
+            return False
