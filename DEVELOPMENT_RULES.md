@@ -178,6 +178,22 @@ def report(self, output: dict, ensure_ascii: bool = False) -> None:
 
 ---
 
+## 📚 Exemplos Obrigatórios (Regra do Agente)
+
+- Sempre que criar um novo Analyzer, Responder ou Detector, adicione um exemplo executável em
+  `examples/`.
+- Estrutura sugerida: `examples/<tipo>/<nome>_example.py` onde `<tipo>` ∈ {`analyzers`,
+  `responders`, `detectors`}.
+- O exemplo deve:
+  - Usar dataclasses (`WorkerInput`) e chamar `.run()` (ou `.execute()` quando existir).
+  - Imprimir um resultado compacto no STDOUT (JSON resumido).
+  - Por padrão, ser “dry‑run” para chamadas de rede; habilitar execução real com `--execute`.
+  - Operações potencialmente impactantes (e.g., scans) exigem `--include-dangerous`.
+- Evite criar pastas alternativas (ex.: `exemplo/`); padronize em `examples/`.
+- Atualize README/docs para referenciar o novo exemplo quando aplicável.
+
+---
+
 ## 📁 Estrutura de Arquivos
 
 ### Organização do Projeto
@@ -765,6 +781,7 @@ git commit -m "feat: add nova funcionalidade"
 - [ ] Type hints em métodos públicos
 - [ ] Docstrings em classes/métodos públicos
 - [ ] Testes para nova funcionalidade
+- [ ] Exemplo adicionado em `examples/` (Analyzer/Responder/Detector)
 - [ ] Imports absolutos
 - [ ] Linting sem erros
 

@@ -150,3 +150,19 @@ cmd = """
     --cov-report=term-missing:skip-covered \
     --cov-report=xml:reports/coverage.xml
   """
+
+  [tool.poe.tasks.new]
+  help = "Scaffold a new analyzer/responder/detector"
+  cmd = "python scripts/scaffold.py"
+
+  [tool.poe.tasks.new-analyzer]
+  help = "Scaffold a new analyzer"
+  cmd = "python scripts/scaffold.py --kind analyzer"
+
+  [tool.poe.tasks.new-responder]
+  help = "Scaffold a new responder"
+  cmd = "python scripts/scaffold.py --kind responder"
+
+  [tool.poe.tasks.new-detector]
+  help = "Scaffold a new detector"
+  cmd = "python scripts/scaffold.py --kind detector"

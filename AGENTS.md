@@ -6,7 +6,167 @@ analyzers/responders → extraction → programmatic usage → CI/release.
 
 Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
 
+## Mandatory Examples (Agent Rule)
+
+- Always create a runnable example in `examples/` whenever you add a new Analyzer, Responder,
+  or Detector.
+- Preferred naming: `examples/<kind>/<name>_example.py` where `<kind>` is one of
+  `analyzers`, `responders`, or `detectors`.
+- The example must:
+  - Be executable locally without extra deps (only stdlib + SDK).
+  - Use dataclass input (`WorkerInput`) and call `.run()` (or `.execute()` when provided).
+  - Print a compact result to STDOUT. Network calls should default to dry‑run and require an
+    `--execute` flag for real calls. For impactful operations (e.g., scans), gate behind an
+    `--include-dangerous` flag.
+- Link or reference the example in README or docs as appropriate.
+
+## Scaffolding (Poe tasks)
+
+- Generic: `poe new -- --kind <analyzer|responder|detector> --name <Name> [--force]`
+- Shortcuts:
+  - Analyzer: `poe new-analyzer -- --name Shodan`
+  - Responder: `poe new-responder -- --name BlockIp`
+  - Detector: `poe new-detector -- --name MyType`
+
+Outputs (examples + code):
+- Analyzer: `src/sentineliqsdk/analyzers/<snake>.py` and `examples/analyzers/<snake>_example.py`
+- Responder: `src/sentineliqsdk/responders/<snake>.py` and `examples/responders/<snake>_example.py`
+- Detector: `src/sentineliqsdk/extractors/custom/<snake>_detector.py` and `examples/detectors/<snake>_example.py`
+
 ## Quick Start
+
+## Development Rules — Creating New Analyzer/Responder/Detector
+
+Follow these rules to implement new components consistently. Each recipe includes a
+checklist, file layout, and a minimal, programmatic skeleton.
+
+### Analyzer
+
+- Files:
+  - Code: `src/sentineliqsdk/analyzers/<name>.py`
+  - Example: `examples/analyzers/<name>_example.py`
+  - Tests: `tests/analyzers/test_<name>.py`
+- Class name: `<Name>Analyzer` extending `sentineliqsdk.analyzers.Analyzer`.
+- Imports: absolute; always `from __future__ import annotations`.
+- Return a report programmatically: implement `execute() -> AnalyzerReport` and make
+  `run()` return the result of `execute()`.
+- Use dataclasses: accept `WorkerInput` in the constructor (inherited behavior).
+- Build taxonomy via `self.build_taxonomy(...)` and call `self.report(full_report)`.
+- Respect TLP/PAP and proxy handling (already enforced by `Worker`).
+- Example must default to dry‑run when performing network calls and support `--execute`.
+
+Skeleton:
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Analyzer, WorkerInput
+from sentineliqsdk.models import AnalyzerReport
+
+
+class MyAnalyzer(Analyzer):
+    def execute(self) -> AnalyzerReport:
+        observable = self.get_data()
+        taxonomy = self.build_taxonomy("safe", "namespace", "predicate", str(observable))
+        full_report = {"observable": observable, "verdict": "safe", "taxonomy": [taxonomy.to_dict()]}
+        return self.report(full_report)
+
+    def run(self) -> AnalyzerReport:
+        return self.execute()
+
+
+if __name__ == "__main__":
+    # Programmatic use
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
+    print(MyAnalyzer(input_data).run())
+```
+
+Checklist:
+
+- Naming, imports, and types compliant.
+- `execute()` implemented; `run()` retorna `AnalyzerReport`.
+- Builds taxonomy and calls `self.report(...)` with a dict.
+- Example in `examples/analyzers/` created and runnable.
+- Tests added; lint and types passing.
+
+### Responder
+
+- Files:
+  - Code: `src/sentineliqsdk/responders/<name>.py`
+  - Example: `examples/responders/<name>_example.py`
+  - Tests: `tests/responders/test_<name>.py`
+- Class name: `<Name>Responder` extending `sentineliqsdk.responders.Responder`.
+- Implement `execute() -> ResponderReport` and make `run()` return it.
+- Build operations via `self.build_operation(...)` and call `self.report(full_report)`.
+
+Skeleton:
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Responder, WorkerInput
+from sentineliqsdk.models import ResponderReport
+
+
+class MyResponder(Responder):
+    def execute(self) -> ResponderReport:
+        target = self.get_data()
+        ops = [self.build_operation("block", target=target)]
+        full = {"action": "block", "target": target}
+        return self.report(full)
+
+    def run(self) -> ResponderReport:
+        return self.execute()
+
+
+if __name__ == "__main__":
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
+    print(MyResponder(input_data).run())
+```
+
+Checklist:
+
+- Naming/paths corretos; imports absolutos.
+- `execute()` e `run()` retornando `ResponderReport`.
+- Operações criadas via `build_operation` e reportadas.
+- Exemplo em `examples/responders/` criado e testes adicionados.
+
+### Detector
+
+- Files:
+  - Detector code: extend `src/sentineliqsdk/extractors/detectors.py` (preferível), ou criar um
+    detector custom e registrá‑lo via `Extractor.register_detector(...)` no seu analyzer.
+  - Example: `examples/detectors/<name>_example.py`
+  - Tests: `tests/extractors/test_<name>_detector.py`
+- Implementa o protocolo `Detector` com atributos: `name: str` e método `matches(value: str) -> bool`.
+- Para incluir no core (tipo oficial):
+  - Adicione o novo literal em `sentineliqsdk.models.DataType`.
+  - Importe e adicione o detector na lista de precedência em `Extractor` (`regex.py`).
+  - Considere normalização/flags expostos por `DetectionContext` quando aplicável.
+- Para uso local (sem tocar no core):
+  - Registre via `Extractor.register_detector(MyDetector(), before="hash")`, por exemplo.
+
+Skeleton (core):
+
+```python
+from __future__ import annotations
+from dataclasses import dataclass
+from sentineliqsdk.extractors.detectors import Detector
+
+
+@dataclass
+class MyDetector:
+    name: str = "my_type"
+
+    def matches(self, value: str) -> bool:
+        return value.startswith("MY:")
+```
+
+Checklist:
+
+- Tipo incluído em `DataType` (quando for do core) e precedência ajustada no `Extractor`.
+- Testes cobrindo positivos/negativos; sem falsos‑positivos óbvios.
+- Exemplo em `examples/detectors/` mostrando `Extractor.check_string/iterable`.
 
 - Install and open the repo.
 - Create an analyzer (example below) and run it with either a job directory or STDIN.

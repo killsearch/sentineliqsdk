@@ -6,7 +6,7 @@ Usage example:
     from sentineliqsdk.analyzers.shodan import ShodanAnalyzer
 
     input_data = WorkerInput(data_type="ip", data="1.2.3.4")
-    result = ShodanAnalyzer(input_data).run()  # returns AnalyzerReport
+    report = ShodanAnalyzer(input_data).execute()  # returns AnalyzerReport
 
 Configuration:
 - Provide API key via environment variable `SHODAN_API_KEY`.

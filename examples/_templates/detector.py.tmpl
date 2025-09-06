@@ -1,0 +1,16 @@
+"""Custom detector scaffold for {CLASS_NAME}."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass
+class {CLASS_NAME}:
+    """Return True for strings starting with 'MY:' (example)."""
+
+    name: str = "{SNAKE_NAME}"
+
+    def matches(self, value: str) -> bool:
+        return value.startswith("MY:")
+

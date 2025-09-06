@@ -1,0 +1,22 @@
+"""Responder scaffold for {CLASS_NAME}."""
+
+from __future__ import annotations
+
+from sentineliqsdk import Responder
+from sentineliqsdk.models import ResponderReport
+
+
+class {CLASS_NAME}(Responder):
+    """Responder: add logic in execute()."""
+
+    def execute(self) -> ResponderReport:
+        target = self.get_data()
+        full_report = {
+            "action": "noop",
+            "target": target,
+        }
+        return self.report(full_report)
+
+    def run(self) -> ResponderReport:
+        return self.execute()
+

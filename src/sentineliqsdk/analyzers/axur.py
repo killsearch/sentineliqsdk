@@ -7,7 +7,7 @@ Usage example (programmatic):
 
     payload = {"method": "customers", "params": {}}
     input_data = WorkerInput(data_type="other", data=json.dumps(payload))
-    report = AxurAnalyzer(input_data).run()
+    report = AxurAnalyzer(input_data).execute()
 
 Configuration:
 - Provide API token via environment variable `AXUR_API_TOKEN`.

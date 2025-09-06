@@ -1,0 +1,19 @@
+from __future__ import annotations
+
+import json
+import sys
+
+from sentineliqsdk import WorkerInput
+from sentineliqsdk.analyzers.{SNAKE_NAME} import {CLASS_NAME}
+
+
+def main(argv: list[str]) -> int:
+    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
+    report = {CLASS_NAME}(input_data).run()
+    print(json.dumps(report.full_report, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
+
