@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sentineliqsdk.models import WorkerInput
+from sentineliqsdk.models import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.smtp_gmail import GmailSmtpResponder
 
 
@@ -39,19 +39,24 @@ class DummySMTP:
 
 
 def test_gmail_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Ensure dry-run: gates disabled
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "0")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "0")
-    monkeypatch.setenv("EMAIL_SUBJECT", "Test")
-    monkeypatch.setenv("EMAIL_BODY", "Body")
-    monkeypatch.setenv("EMAIL_FROM", "sender@example.com")
+    # Ensure dry-run: gates disabled, set content via params
 
     # Guard against any SMTP usage
     import smtplib as _smtp
 
     monkeypatch.setattr(_smtp, "SMTP", MagicMock(side_effect=AssertionError("should not send")))
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@example.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@example.com",
+        config=WorkerConfig(
+            params={
+                "email": {"from": "sender@example.com", "subject": "Test", "body": "Body"},
+                "execute": False,
+                "include_dangerous": False,
+            }
+        ),
+    )
     report = GmailSmtpResponder(input_data).execute()
     assert report.full_report["dry_run"] is True
     assert report.full_report["from"] == "sender@example.com"
@@ -60,13 +65,7 @@ def test_gmail_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_gmail_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Gates enabled and credentials provided
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("GMAIL_SMTP_USER", "user@example.com")
-    monkeypatch.setenv("GMAIL_SMTP_PASSWORD", "apppass")
-    monkeypatch.setenv("EMAIL_SUBJECT", "Hello")
-    monkeypatch.setenv("EMAIL_BODY", "World")
+    # Gates enabled and credentials provided via secrets/params
 
     # Swap SMTP with dummy to avoid network
     import smtplib as _smtp
@@ -74,16 +73,24 @@ def test_gmail_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
     dummy = DummySMTP("", 0)
     monkeypatch.setattr(_smtp, "SMTP", lambda *a, **k: DummySMTP(*a, **k))
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@example.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@example.com",
+        config=WorkerConfig(
+            params={
+                "email": {"subject": "Hello", "body": "World"},
+                "execute": True,
+                "include_dangerous": True,
+            },
+            secrets={"gmail": {"username": "user@example.com", "password": "apppass"}},
+        ),
+    )
     report = GmailSmtpResponder(input_data).execute()
     assert report.full_report["dry_run"] is False
     assert report.full_report.get("status") == "sent"
 
 
 def test_gmail_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-
     # Force SMTP to raise
     import smtplib as _smtp
 
@@ -92,15 +99,17 @@ def test_gmail_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(_smtp, "SMTP", _boom)
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@example.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@example.com",
+        config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
+    )
     with pytest.raises(SystemExit):
         GmailSmtpResponder(input_data).execute()
 
 
 def test_gmail_execute_no_login_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
     # Execute with gates enabled but without credentials → no login branch
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
 
     import smtplib as _smtp
 
@@ -113,7 +122,11 @@ def test_gmail_execute_no_login_and_run(monkeypatch: pytest.MonkeyPatch) -> None
 
     monkeypatch.setattr(_smtp, "SMTP", _factory)
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@example.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@example.com",
+        config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
+    )
     # Call run() to cover delegating path
     GmailSmtpResponder(input_data).run()
     # Ensure no login happened

@@ -1,24 +1,23 @@
 """Axur Analyzer example: generic caller for Axur API routes.
 
 Defaults to dry-run (prints the planned request). Use --execute to perform real calls.
-Requires AXUR_API_TOKEN (or pass --token).
+Requires --token (no environment fallback).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from typing import Any
 
-from sentineliqsdk import WorkerInput
+from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.axur import AxurAnalyzer
 
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Axur Analyzer example (generic API caller)")
-    ap.add_argument("--token", default=os.getenv("AXUR_API_TOKEN"))
+    ap.add_argument("--token", required=True)
     ap.add_argument(
         "--method",
         default="call",
@@ -39,10 +38,6 @@ def main(argv: list[str]) -> int:
     )
     ap.add_argument("--execute", action="store_true", help="perform the HTTP call")
     args = ap.parse_args(argv)
-
-    if not args.token:
-        print("Missing AXUR_API_TOKEN (env or --token)", file=sys.stderr)
-        return 2
 
     # Prepare payload for analyzer (data_type=other with JSON payload)
     method = args.method
@@ -99,11 +94,12 @@ def main(argv: list[str]) -> int:
             # For example: --method=ticket_create --json '{"reference": ..., ...}'
             params = jb
 
-    # Inject token into env for the analyzer
-    os.environ["AXUR_API_TOKEN"] = args.token
-
     payload = {"method": method, "params": params}
-    input_data = WorkerInput(data_type="other", data=json.dumps(payload))
+    input_data = WorkerInput(
+        data_type="other",
+        data=json.dumps(payload),
+        config=WorkerConfig(secrets={"axur": {"api_token": args.token}}),
+    )
     # For programmatic result, call execute(); run() performs side-effect only
     report = AxurAnalyzer(input_data).execute()
     print(json.dumps(report.full_report, ensure_ascii=False))

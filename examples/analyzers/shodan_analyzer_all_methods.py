@@ -1,12 +1,11 @@
 """Execute ShodanAnalyzer.run() for all supported methods.
 
 This example iterates over all methods allowed by the analyzer’s dynamic
-interface, setting SHODAN_METHOD and SHODAN_PARAMS and calling .run().
+interface using config.params (no environment variables) and calling .execute().
 
 Usage:
-  export SHODAN_API_KEY=...  # or pass --api-key
-  python examples/analyzers/shodan_analyzer_all_methods.py           # dry-run (plan only)
-  python examples/analyzers/shodan_analyzer_all_methods.py --execute # perform calls
+  python examples/analyzers/shodan_analyzer_all_methods.py --api-key KEY           # dry-run (plan only)
+  python examples/analyzers/shodan_analyzer_all_methods.py --api-key KEY --execute # perform calls
 
 Flags:
   --only method1,method2     run a subset
@@ -18,10 +17,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from typing import Any
 
-from sentineliqsdk import WorkerInput
+from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.shodan import ALLOWED_METHODS, ShodanAnalyzer
 
 SAFE_DEFAULT_PARAMS: dict[str, dict[str, Any]] = {
@@ -118,7 +116,7 @@ DANGEROUS_METHODS = {
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Run ShodanAnalyzer for all supported methods")
-    ap.add_argument("--api-key", dest="api_key", default=os.getenv("SHODAN_API_KEY"))
+    ap.add_argument("--api-key", dest="api_key", required=True)
     ap.add_argument("--execute", action="store_true", help="perform API calls (else dry-run)")
     ap.add_argument("--only", default=None, help="comma-separated methods to include")
     ap.add_argument("--skip", default=None, help="comma-separated methods to skip")
@@ -129,15 +127,17 @@ def main(argv: list[str]) -> int:
     )
     args = ap.parse_args(argv)
 
-    if not args.api_key:
-        print("Missing SHODAN_API_KEY (env or --api-key)")
-        return 2
+    # api-key is required by argparse
 
     only = set(args.only.split(",")) if args.only else None
     skip = set(args.skip.split(",")) if args.skip else set()
 
-    # Prepare a base input; analyzer uses env-driven dynamic path first
-    input_data = WorkerInput(data_type="other", data="{}")
+    # Prepare a base input with API key via dataclass
+    input_data = WorkerInput(
+        data_type="other",
+        data="{}",
+        config=WorkerConfig(secrets={"shodan": {"api_key": args.api_key}}),
+    )
     analyzer = ShodanAnalyzer(input_data)
 
     total = 0
@@ -154,18 +154,22 @@ def main(argv: list[str]) -> int:
         total += 1
         print(f"==> run {method} with params={params}")
 
-        # Set env for dynamic call
-        os.environ["SHODAN_METHOD"] = method
-        if params:
-            os.environ["SHODAN_PARAMS"] = json.dumps(params)
-        else:
-            os.environ.pop("SHODAN_PARAMS", None)
+        # Inject dynamic method/params via config
+        input_data = WorkerInput(
+            data_type="other",
+            data="{}",
+            config=WorkerConfig(
+                secrets={"shodan": {"api_key": args.api_key}},
+                params={"shodan": {"method": method, "params": params}},
+            ),
+        )
 
         if not args.execute:
             continue
 
         try:
             # For programmatic result, use execute(); run() performs side-effects only
+            analyzer = ShodanAnalyzer(input_data)
             report = analyzer.execute()
             payload = {
                 "success": report.success,

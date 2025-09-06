@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Literal
 
-from sentineliqsdk.constants import DEFAULT_PAP, DEFAULT_TLP
+from sentineliqsdk.constants import DEFAULT_PAP, DEFAULT_TLP, SENTINELIQ_LICENSE
 
 # Type aliases for better readability
 TaxonomyLevel = Literal["info", "safe", "suspicious", "malicious"]
@@ -56,6 +56,17 @@ class WorkerConfig:
     max_pap: int = DEFAULT_PAP
     auto_extract: bool = True
     proxy: ProxyConfig = field(default_factory=ProxyConfig)
+    # Generic runtime parameters and secrets for programmatic configuration.
+    # Use dotted paths (e.g., "shodan.api_key", "webhook.method") when convenient.
+    params: Mapping[str, Any] = field(default_factory=dict)
+    secrets: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:  # type: ignore[override]
+        # Ensure mapping immutability for params and secrets
+        if isinstance(self.params, dict):
+            object.__setattr__(self, "params", MappingProxyType(dict(self.params)))
+        if isinstance(self.secrets, dict):
+            object.__setattr__(self, "secrets", MappingProxyType(dict(self.secrets)))
 
 
 @dataclass(frozen=True)
@@ -126,6 +137,41 @@ class WorkerError:
     success: bool = False
     error_message: str = ""
     input_data: WorkerInput | None = None
+
+
+# Version stage for module metadata
+ModuleVersionStage = Literal["DEVELOPER", "TESTING", "STABLE"]
+
+
+@dataclass(frozen=True)
+class ModuleMetadata:
+    """Descriptive metadata for modules (analyzers/responders).
+
+    Use this to declare authoring and documentation details that can be surfaced
+    programmatically or included in reports for traceability.
+    """
+
+    name: str
+    description: str
+    author: tuple[str, ...] = ()
+    license: str = SENTINELIQ_LICENSE
+    pattern: str = ""
+    doc_pattern: str = ""
+    doc: str = ""
+    version_stage: ModuleVersionStage = "DEVELOPER"
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to a dictionary using required external key names."""
+        return {
+            "Name": self.name,
+            "Description": self.description,
+            "Author": list(self.author),
+            "License": self.license,
+            "pattern": self.pattern,
+            "doc_pattern": self.doc_pattern,
+            "doc": self.doc,
+            "VERSION": self.version_stage,
+        }
 
 
 @dataclass(frozen=True)

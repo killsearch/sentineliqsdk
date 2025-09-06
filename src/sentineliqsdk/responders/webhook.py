@@ -4,7 +4,7 @@ import json
 import urllib.request
 from typing import Any
 
-from sentineliqsdk.models import ResponderReport
+from sentineliqsdk.models import ModuleMetadata, ResponderReport
 from sentineliqsdk.responders.base import Responder
 
 
@@ -18,35 +18,44 @@ def _as_bool(value: Any | None) -> bool:
 class WebhookResponder(Responder):
     """POST (or GET) to a webhook URL using stdlib only.
 
-    - Target URL: ``WorkerInput.data`` (``data_type='url'``) or ``WEBHOOK_URL`` env.
-    - Optional ``WEBHOOK_METHOD`` (POST|GET), default POST.
-    - Optional ``WEBHOOK_HEADERS`` (JSON), e.g. '{"Authorization": "Bearer ..."}'.
-    - Optional ``WEBHOOK_BODY`` (string or JSON). If JSON-like, sent as JSON.
-    - Gates: ``SENTINELIQ_EXECUTE`` and ``SENTINELIQ_INCLUDE_DANGEROUS`` must both be true.
+    Configuration via WorkerConfig.params (no environment variables):
+    - Target URL: ``WorkerInput.data`` (``data_type='url'``) or params ``webhook.url``.
+    - Method: ``webhook.method`` (POST|GET), default POST.
+    - Headers: ``webhook.headers`` (dict)
+    - Body: ``webhook.body`` (string or JSON-like dict)
+    - Safety gates: ``execute=True`` and ``include_dangerous=True``
     """
 
-    def execute(self) -> ResponderReport:
-        url = str(self.get_data() or self.get_env("WEBHOOK_URL", ""))
-        method = str(self.get_env("WEBHOOK_METHOD", "POST")).upper()
-        headers_raw = self.get_env("WEBHOOK_HEADERS")
-        body_raw = self.get_env("WEBHOOK_BODY", "")
+    METADATA = ModuleMetadata(
+        name="Webhook Responder",
+        description="POST/GET to a webhook URL using stdlib",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="webhook",
+        doc_pattern="MkDocs module page; customer-facing usage and API",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/webhook/",
+        version_stage="STABLE",
+    )
 
-        do_execute = _as_bool(self.get_env("SENTINELIQ_EXECUTE", "0"))
-        include_dangerous = _as_bool(self.get_env("SENTINELIQ_INCLUDE_DANGEROUS", "0"))
+    def execute(self) -> ResponderReport:
+        # Programmatic configuration via WorkerConfig.params only.
+        url = str(self.get_data() or self.get_config("webhook.url", ""))
+        method = str(self.get_config("webhook.method", "POST")).upper()
+        headers_cfg = self.get_config("webhook.headers")
+        body_raw = self.get_config("webhook.body", "")
+
+        do_execute = _as_bool(self.get_config("execute", False))
+        include_dangerous = _as_bool(self.get_config("include_dangerous", False))
         dry_run = not (do_execute and include_dangerous)
 
         headers: dict[str, str] = {}
-        if headers_raw:
-            try:
-                headers = json.loads(headers_raw)
-            except Exception:
-                headers = {}
+        if isinstance(headers_cfg, dict):
+            headers = dict(headers_cfg)
 
         data_bytes: bytes | None = None
         content_type = None
         if body_raw:
             try:
-                parsed = json.loads(body_raw)
+                parsed = json.loads(body_raw) if isinstance(body_raw, str) else body_raw
                 data_bytes = json.dumps(parsed).encode("utf-8")
                 content_type = "application/json"
             except Exception:
@@ -59,6 +68,7 @@ class WebhookResponder(Responder):
             "method": method,
             "headers": headers,
             "dry_run": dry_run,
+            "metadata": self.METADATA.to_dict(),
         }
 
         if dry_run:

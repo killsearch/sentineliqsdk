@@ -10,7 +10,7 @@ Usage example (programmatic):
     report = AxurAnalyzer(input_data).execute()
 
 Configuration:
-- Provide API token via environment variable `AXUR_API_TOKEN`.
+- Provide API token via WorkerConfig.secrets: `secrets['axur']['api_token']`.
 - HTTP proxies honored via `WorkerConfig.proxy` or environment.
 - For generic/raw calls, use method "call" with params: {"http_method", "path",
   "query"?, "json"?, "data"?, "headers"?, "dry_run"?}
@@ -25,7 +25,7 @@ from typing import Any
 
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.clients.axur import AxurClient
-from sentineliqsdk.models import AnalyzerReport
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
 # Allowlist of AxurClient methods exposed for dynamic calls
 ALLOWED_METHODS: set[str] = {
@@ -50,9 +50,21 @@ ALLOWED_METHODS: set[str] = {
 class AxurAnalyzer(Analyzer):
     """Analyzer that calls Axur Platform API endpoints programmatically."""
 
+    METADATA = ModuleMetadata(
+        name="Axur Analyzer",
+        description="Dynamic wrapper for Axur Platform API endpoints",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="platform",
+        doc_pattern="MkDocs module page; programmatic usage documented",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/axur/",
+        version_stage="STABLE",
+    )
+
     def _client(self) -> AxurClient:
-        token = self.get_env("AXUR_API_TOKEN", message="Missing AXUR_API_TOKEN in environment.")
-        return AxurClient(api_token=token)
+        token = self.get_secret("axur.api_token")
+        if not token:
+            self.error("Missing Axur API token (set config.secrets['axur']['api_token'])")
+        return AxurClient(api_token=str(token))
 
     def _call_dynamic(self, method: str, params: Mapping[str, Any] | None = None) -> Any:
         client = self._client()
@@ -99,19 +111,13 @@ class AxurAnalyzer(Analyzer):
         """
         observable = self.get_data()
 
-        # 1) Dynamic call via environment variables
-        env_method = self.get_env("AXUR_METHOD")
+        # 1) Dynamic call via programmatic params
+        env_method = self.get_config("axur.method")
         if env_method:
             params: dict[str, Any] = {}
-            env_params = self.get_env("AXUR_PARAMS")
-            if env_params:
-                try:
-                    parsed = json.loads(env_params)
-                except json.JSONDecodeError:
-                    self.error("Invalid AXUR_PARAMS (must be valid JSON).")
-                if not isinstance(parsed, Mapping):
-                    self.error("AXUR_PARAMS must be a JSON object.")
-                params = dict(parsed)
+            cfg_params = self.get_config("axur.params")
+            if isinstance(cfg_params, Mapping):
+                params = dict(cfg_params)
 
             details = {
                 "method": env_method,
@@ -131,6 +137,7 @@ class AxurAnalyzer(Analyzer):
                 "source": "axur",
                 "data_type": self.data_type,
                 "details": details,
+                "metadata": self.METADATA.to_dict(),
             }
             return self.report(full_report)
 
@@ -171,6 +178,7 @@ class AxurAnalyzer(Analyzer):
                 "source": "axur",
                 "data_type": self.data_type,
                 "details": details,
+                "metadata": self.METADATA.to_dict(),
             }
             return self.report(full_report)
 

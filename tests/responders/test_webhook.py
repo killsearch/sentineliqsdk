@@ -4,16 +4,11 @@ import json
 
 import pytest
 
-from sentineliqsdk.models import WorkerInput
+from sentineliqsdk.models import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.webhook import WebhookResponder
 
 
 def test_webhook_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "0")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "0")
-    monkeypatch.setenv("WEBHOOK_METHOD", "GET")
-    monkeypatch.setenv("WEBHOOK_HEADERS", json.dumps({"X-Test": "1"}))
-
     called = {"urlopen": False}
 
     import urllib.request as _r
@@ -24,7 +19,17 @@ def test_webhook_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(_r, "urlopen", _no_call)
 
-    input_data = WorkerInput(data_type="url", data="https://example.com/webhook")
+    input_data = WorkerInput(
+        data_type="url",
+        data="https://example.com/webhook",
+        config=WorkerConfig(
+            params={
+                "webhook": {"method": "GET", "headers": {"X-Test": "1"}},
+                "execute": False,
+                "include_dangerous": False,
+            }
+        ),
+    )
     report = WebhookResponder(input_data).execute()
     assert report.full_report["dry_run"] is True
     assert report.full_report["method"] == "GET"
@@ -32,12 +37,6 @@ def test_webhook_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_webhook_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("WEBHOOK_METHOD", "POST")
-    monkeypatch.setenv("WEBHOOK_HEADERS", json.dumps({"X-Token": "abc"}))
-    monkeypatch.setenv("WEBHOOK_BODY", json.dumps({"ok": True}))
-
     import urllib.request as _r
 
     captured = {}
@@ -59,7 +58,21 @@ def test_webhook_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(_r, "urlopen", _fake_urlopen)
 
-    input_data = WorkerInput(data_type="url", data="https://httpbin.org/post")
+    input_data = WorkerInput(
+        data_type="url",
+        data="https://httpbin.org/post",
+        config=WorkerConfig(
+            params={
+                "webhook": {
+                    "method": "POST",
+                    "headers": {"X-Token": "abc"},
+                    "body": {"ok": True},
+                },
+                "execute": True,
+                "include_dangerous": True,
+            }
+        ),
+    )
     report = WebhookResponder(input_data).execute()
     assert report.full_report["dry_run"] is False
     assert report.full_report.get("status") == "delivered"
@@ -71,9 +84,6 @@ def test_webhook_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_webhook_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-
     import urllib.request as _r
 
     def _boom(*a, **k):
@@ -81,17 +91,17 @@ def test_webhook_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(_r, "urlopen", _boom)
 
-    input_data = WorkerInput(data_type="url", data="https://example.com")
+    input_data = WorkerInput(
+        data_type="url",
+        data="https://example.com",
+        config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
+    )
     with pytest.raises(SystemExit):
         WebhookResponder(input_data).execute()
 
 
 def test_webhook_plain_text_and_invalid_headers_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Execute with invalid headers JSON and plain-text body; also call run()
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("WEBHOOK_HEADERS", "not-json")
-    monkeypatch.setenv("WEBHOOK_BODY", "plain text")
+    # Execute with plain-text body; also call run()
 
     import urllib.request as _r
 
@@ -113,7 +123,17 @@ def test_webhook_plain_text_and_invalid_headers_and_run(monkeypatch: pytest.Monk
 
     monkeypatch.setattr(_r, "urlopen", _fake_urlopen)
 
-    input_data = WorkerInput(data_type="url", data="https://example.com/hook")
+    input_data = WorkerInput(
+        data_type="url",
+        data="https://example.com/hook",
+        config=WorkerConfig(
+            params={
+                "webhook": {"headers": {}, "body": "plain text"},
+                "execute": True,
+                "include_dangerous": True,
+            }
+        ),
+    )
     WebhookResponder(input_data).run()
     assert captured["headers"]["content-type"] == "text/plain"
     assert captured["data"].decode("utf-8") == "plain text"

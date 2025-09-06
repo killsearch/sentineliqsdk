@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 from unittest.mock import patch
 
 import pytest
 
 from sentineliqsdk.analyzers.shodan import ShodanAnalyzer
-from sentineliqsdk.models import DataType, WorkerInput
+from sentineliqsdk.models import DataType, WorkerConfig, WorkerInput
 
 
 class DummyShodanClient:
@@ -38,8 +37,8 @@ class DummyShodanClient:
 
 
 def build_analyzer(dtype: DataType, data: str) -> ShodanAnalyzer:
-    os.environ["SHODAN_API_KEY"] = "key"
-    return ShodanAnalyzer(WorkerInput(data_type=dtype, data=data))
+    cfg = WorkerConfig(secrets={"shodan": {"api_key": "key"}})
+    return ShodanAnalyzer(WorkerInput(data_type=dtype, data=data, config=cfg))
 
 
 def test_ip_analysis_malicious() -> None:
@@ -95,27 +94,29 @@ def test_other_payload_missing_method_and_bad_params() -> None:
         analyzer2.execute()
 
 
-def test_env_params_invalid_json(monkeypatch) -> None:
-    monkeypatch.setenv("SHODAN_METHOD", "ports")
-    monkeypatch.setenv("SHODAN_PARAMS", "not-json")
-    analyzer = build_analyzer("ip", "8.8.8.8")
+def test_config_params_not_mapping() -> None:
+    cfg = WorkerConfig(
+        secrets={"shodan": {"api_key": "k"}},
+        params={"shodan": {"method": "ports", "params": [1, 2]}},
+    )
+    analyzer = ShodanAnalyzer(WorkerInput(data_type="ip", data="8.8.8.8", config=cfg))
     with pytest.raises(SystemExit):
         analyzer.execute()
 
 
-def test_dynamic_env_call_tokens() -> None:
-    os.environ["SHODAN_METHOD"] = "search_host_tokens"
-    os.environ["SHODAN_PARAMS"] = json.dumps({"query": "ssl"})
+def test_dynamic_config_call_tokens() -> None:
+    cfg = WorkerConfig(
+        secrets={"shodan": {"api_key": "key"}},
+        params={"shodan": {"method": "search_host_tokens", "params": {"query": "ssl"}}},
+    )
     payload = json.dumps({"method": "ignored", "params": {}})
     with patch("sentineliqsdk.analyzers.shodan.ShodanClient", DummyShodanClient):
-        analyzer = build_analyzer("other", payload)
+        analyzer = ShodanAnalyzer(WorkerInput(data_type="other", data=payload, config=cfg))
         rep = analyzer.execute()
         assert rep.full_report["details"]["method"] == "search_host_tokens"
 
 
 def test_unsupported_dtype_error() -> None:
-    os.environ.pop("SHODAN_METHOD", None)
-    os.environ.pop("SHODAN_PARAMS", None)
     with patch("sentineliqsdk.analyzers.shodan.ShodanClient", DummyShodanClient):
         analyzer = build_analyzer("hash", "deadbeef")
         with pytest.raises(SystemExit):

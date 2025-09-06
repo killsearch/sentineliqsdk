@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 
-from sentineliqsdk import WorkerInput
+from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.smtp_gmail import GmailSmtpResponder
 
 
@@ -25,18 +24,29 @@ def main() -> None:
         help="Acknowledge impactful action (required to actually send)",
     )
 
-    # Credentials via env: GMAIL_SMTP_USER, GMAIL_SMTP_PASSWORD
+    parser.add_argument("--username", default=None, help="Gmail username (optional; else env)")
+    parser.add_argument("--password", default=None, help="Gmail app password (optional; else env)")
+    # Credentials via env still supported: GMAIL_SMTP_USER, GMAIL_SMTP_PASSWORD
     args = parser.parse_args()
 
-    # Gate execution via env so the responder can read it
-    os.environ["SENTINELIQ_EXECUTE"] = "1" if args.execute else "0"
-    os.environ["SENTINELIQ_INCLUDE_DANGEROUS"] = "1" if args.include_dangerous else "0"
-    os.environ["EMAIL_SUBJECT"] = args.subject
-    os.environ["EMAIL_BODY"] = args.body
-    if args.from_addr:
-        os.environ["EMAIL_FROM"] = args.from_addr
+    # Prefer programmatic config via WorkerConfig
+    secrets: dict[str, dict[str, str]] = {}
+    if args.username:
+        secrets.setdefault("gmail", {})["username"] = args.username
+    if args.password:
+        secrets.setdefault("gmail", {})["password"] = args.password
 
-    input_data = WorkerInput(data_type="mail", data=args.to)
+    params = {
+        "email": {"from": args.from_addr, "subject": args.subject, "body": args.body},
+        "execute": bool(args.execute),
+        "include_dangerous": bool(args.include_dangerous),
+    }
+
+    input_data = WorkerInput(
+        data_type="mail",
+        data=args.to,
+        config=WorkerConfig(params=params, secrets=secrets),
+    )
     report = GmailSmtpResponder(input_data).execute()
     print(json.dumps(report.full_report, ensure_ascii=False))
 

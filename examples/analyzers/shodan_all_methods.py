@@ -1,7 +1,7 @@
 """Examples: call all ShodanClient methods in a single script.
 
 Dry-run by default (prints the request plan). Use --execute to actually call
-the API. Requires SHODAN_API_KEY (or pass --api-key).
+the API. Pass --api-key (no environment fallback).
 
 This script demonstrates programmatic usage with the low-level ShodanClient.
 It catches HTTP/URL errors so all calls are attempted without stopping.
@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import sys
 from typing import Any
 
 from sentineliqsdk.clients.shodan import ShodanClient
@@ -89,7 +87,7 @@ def build_examples() -> list[tuple[str, tuple[Any, ...], dict[str, Any]]]:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Call all ShodanClient methods (demo)")
-    ap.add_argument("--api-key", dest="api_key", default=os.getenv("SHODAN_API_KEY"))
+    ap.add_argument("--api-key", dest="api_key", required=True)
     ap.add_argument("--base-url", dest="base_url", default="https://api.shodan.io")
     ap.add_argument("--timeout", dest="timeout", type=float, default=10.0)
     ap.add_argument("--execute", dest="execute", action="store_true", help="perform calls")
@@ -107,9 +105,7 @@ def main(argv: list[str]) -> int:
     )
     args = ap.parse_args(argv)
 
-    if not args.api_key:
-        print("Missing SHODAN_API_KEY (env or --api-key)", file=sys.stderr)
-        return 2
+    # api_key is required by argparse
 
     client = ShodanClient(api_key=args.api_key, base_url=args.base_url, timeout=args.timeout)
 

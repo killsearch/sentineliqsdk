@@ -26,6 +26,9 @@ Keep the documentation in sync whenever you add or change behavior:
 - Update pages under `docs/` (Guides, Tutorials, Examples, Reference) to reflect the current
   behavior, flags, and safety gates (`--execute`, `--include-dangerous`).
 - Link new examples in the relevant pages (`docs/examples/*.md`) and, when helpful, in README.
+- Add a programmatic usage page for each module under `docs/modulos/<kind>/<name>.md`.
+  The page must show dataclass input (`WorkerInput`) and calling `.execute()` (or `.run()`),
+  using only stdlib + SDK. Update the navigation in `mkdocs.yml` under the "Modules" section.
 - If you add new public API or modules, ensure mkdocstrings pages exist and the navigation in
   `mkdocs.yml` is updated.
 - Validate locally with `poe docs` (or preview with `poe docs-serve`).
@@ -130,6 +133,7 @@ Checklist:
 - Tests added; `poe lint` and `poe test` pass.
 - Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
   `poe docs` passes locally.
+- Programmatic docs page added: `docs/modulos/analyzers/<name>.md`.
 
 ### Responder
 
@@ -169,6 +173,7 @@ Checklist:
 - Example under `examples/responders/` runnable and prints compact result.
 - Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
   `poe docs` passes locally.
+- Programmatic docs page added: `docs/modulos/responders/<name>.md`.
 
 ### Detector
 
@@ -208,6 +213,7 @@ Checklist:
 - Example in `examples/detectors/` demonstrating `Extractor.check_string/iterable`.
 - Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
   `poe docs` passes locally.
+- Programmatic docs page added: `docs/modulos/detectors/<name>.md`.
 
 ## Modules Overview
 
@@ -269,8 +275,10 @@ Common input fields:
 - `config.*` includes:
   - `config.check_tlp` / `config.max_tlp`
   - `config.check_pap` / `config.max_pap`
-  - `config.proxy.http` / `config.proxy.https` (exported to env as `http_proxy`/`https_proxy`)
+  - `config.proxy.http` / `config.proxy.https` (exported internally for stdlib clients)
   - `config.auto_extract` for analyzers
+  - `config.params` (dict/mapping): parâmetros programáticos por módulo
+  - `config.secrets` (dict/mapping): segredos/credenciais por módulo
 
 On error, sensitive keys in `config` containing any of `key`, `password`, `secret`, `token`
 are replaced with `"REMOVED"` in the error payload.
@@ -281,6 +289,10 @@ Signature: `Worker(input_data: WorkerInput, secret_phrases: tuple[str, ...] | No
 
 - `get_param(name, default=None, message=None)`: not used in this repository (dataclasses only).
 - `get_env(key, default=None, message=None)`: read environment variables.
+- `get_config(path, default=None)`: lê de `WorkerConfig.params` via caminho pontuado
+  (ex.: `"shodan.method"`, `"webhook.headers"`).
+- `get_secret(path, default=None, message=None)`: lê de `WorkerConfig.secrets` via
+  caminho pontuado (ex.: `"shodan.api_key"`, `"smtp.password"`).
 - `get_data() -> Any`: returns the observable value (overridden in subclasses).
 - `build_operation(op_type: str, **parameters) -> Operation`: describe follow‑up operations.
 - `operations(raw) -> list[Operation]`: hook for follow‑up work; default `[]`.
@@ -450,7 +462,7 @@ On an error, the worker prints to STDOUT and exits with code 1:
 - Run examples directly under `examples/` with `python ...`.
 - Use `--execute` for real network calls; otherwise remain in dry‑run.
 - Use `--include-dangerous` to enable impactful actions when applicable.
-- Proxies: set `WorkerInput.config.proxy.http` / `.https` or env vars `http_proxy`/`https_proxy`.
+- Proxies: set `WorkerInput.config.proxy.http` / `.https`.
 
 ## Programmatic Usage (No File I/O)
 

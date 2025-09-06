@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 from unittest.mock import patch
 
 import pytest
 
 from sentineliqsdk.analyzers.axur import AxurAnalyzer
-from sentineliqsdk.models import DataType, WorkerInput
+from sentineliqsdk.models import DataType, WorkerConfig, WorkerInput
 
 
 class DummyAxurClient:
@@ -23,17 +22,17 @@ class DummyAxurClient:
 
 
 def build_analyzer(data: str = "payload", data_type: DataType = "other") -> AxurAnalyzer:
-    os.environ["AXUR_API_TOKEN"] = "tok"
-    return AxurAnalyzer(WorkerInput(data_type=data_type, data=data))
+    cfg = WorkerConfig(secrets={"axur": {"api_token": "tok"}})
+    return AxurAnalyzer(WorkerInput(data_type=data_type, data=data, config=cfg))
 
 
-def test_execute_with_env_method(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
-    monkeypatch.setenv("AXUR_METHOD", "customers")
-    monkeypatch.delenv("AXUR_PARAMS", raising=False)
-
+def test_execute_with_config_method() -> None:
+    cfg = WorkerConfig(
+        secrets={"axur": {"api_token": "tok"}},
+        params={"axur": {"method": "customers", "params": {}}},
+    )
     with patch("sentineliqsdk.analyzers.axur.AxurClient", DummyAxurClient):
-        analyzer = build_analyzer(data_type="ip", data="1.2.3.4")
+        analyzer = AxurAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4", config=cfg))
         rep = analyzer.execute()
         assert rep.success is True
         assert rep.full_report["details"]["method"] == "customers"
@@ -41,7 +40,6 @@ def test_execute_with_env_method(monkeypatch) -> None:
 
 
 def test_execute_with_payload_call_dry_run(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
     payload = {
         "method": "call",
         "params": {"http_method": "GET", "path": "tickets-api/tickets", "dry_run": True},
@@ -54,17 +52,17 @@ def test_execute_with_payload_call_dry_run(monkeypatch) -> None:
         assert "tickets-api/tickets" in details["result"]["url"]
 
 
-def test_execute_invalid_params_json(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
-    monkeypatch.setenv("AXUR_METHOD", "customers")
-    monkeypatch.setenv("AXUR_PARAMS", "not-json")
-    analyzer = build_analyzer(data_type="ip", data="1.2.3.4")
+def test_execute_config_params_not_mapping() -> None:
+    cfg = WorkerConfig(
+        secrets={"axur": {"api_token": "tok"}},
+        params={"axur": {"method": "customers", "params": [1, 2]}},
+    )
+    analyzer = AxurAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4", config=cfg))
     with pytest.raises(SystemExit):
         analyzer.execute()
 
 
 def test_execute_payload_missing_method(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
     payload = {"no_method": True}
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
     with pytest.raises(SystemExit):
@@ -72,7 +70,6 @@ def test_execute_payload_missing_method(monkeypatch) -> None:
 
 
 def test_execute_payload_params_not_mapping(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
     payload = {"method": "customers", "params": [1, 2, 3]}  # invalid params type
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
     with pytest.raises(SystemExit):
@@ -80,7 +77,6 @@ def test_execute_payload_params_not_mapping(monkeypatch) -> None:
 
 
 def test_execute_call_missing_path(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
     payload = {"method": "call", "params": {"http_method": "GET"}}  # missing path
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
     with pytest.raises(SystemExit):
@@ -88,7 +84,6 @@ def test_execute_call_missing_path(monkeypatch) -> None:
 
 
 def test_execute_unsupported_method(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
     payload = {"method": "not_allowed", "params": {}}
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
     with pytest.raises(SystemExit):
@@ -96,7 +91,6 @@ def test_execute_unsupported_method(monkeypatch) -> None:
 
 
 def test_run_returns_none(monkeypatch) -> None:
-    monkeypatch.setenv("AXUR_API_TOKEN", "tok")
     payload = {"method": "call", "params": {"path": "x"}}
     with patch("sentineliqsdk.analyzers.axur.AxurClient", DummyAxurClient):
         analyzer = build_analyzer(json.dumps(payload), data_type="other")

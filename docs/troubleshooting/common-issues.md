@@ -13,16 +13,16 @@
   - Fix: lower `tlp`/`pap` in `WorkerInput` or increase `max_tlp`/`max_pap` in `WorkerConfig`.
 
 - Network behind proxy
-  - Set `http_proxy`/`https_proxy` env vars or configure `WorkerInput.config.proxy`.
-  - The Worker applies proxies to the environment on init.
+  - Configure `WorkerInput.config.proxy` (preferred). The Worker exports these to the process
+    environment for stdlib HTTP clients.
 
 - Example prints plan only (no network)
   - Add `--execute` to perform real network calls.
   - Some operations also require `--include-dangerous`.
 
 - Missing credentials
-  - Shodan: set `SHODAN_API_KEY` or pass `--api-key` to the example.
-  - Axur: set `AXUR_API_TOKEN` or pass `--token`.
+  - Shodan: use `WorkerConfig.secrets['shodan']['api_key']` or pass `--api-key` to the example.
+  - Axur: use `WorkerConfig.secrets['axur']['api_token']` or pass `--token`.
 
 - MkDocs build errors
   - Ensure dev dependencies are installed: `pip install -e .[dev]` or `uv sync --dev`.

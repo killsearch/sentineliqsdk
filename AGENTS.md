@@ -6,6 +6,39 @@ implementation in this repository.
 
 Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
 
+## Module Metadata (New)
+
+- Every Analyzer/Responder must declare a `METADATA` attribute using
+  `sentineliqsdk.models.ModuleMetadata` and include it in the `full_report` under the
+  `metadata` key.
+- Required fields (keys when serialized via `to_dict()`):
+  - `Name`, `Description`, `Author` (list of "Name <email>"), `License`
+  - `pattern` (ex.: "smtp", "webhook", "kafka", "threat-intel")
+  - `doc_pattern` (curta descrição do formato da documentação)
+  - `doc` (URL pública da documentação do módulo — site do SentinelIQ)
+  - `VERSION` (um de: `DEVELOPER`, `TESTING`, `STABLE`)
+
+Example:
+
+```python
+from sentineliqsdk.models import ModuleMetadata
+
+class MyResponder(Responder):
+    METADATA = ModuleMetadata(
+        name="My Responder",
+        description="Does something useful",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="webhook",
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/my_responder/",
+        version_stage="TESTING",
+    )
+
+    def execute(self) -> ResponderReport:
+        full = {"action": "noop", "metadata": self.METADATA.to_dict()}
+        return self.report(full)
+```
+
 ## Mandatory Examples (Agent Rule)
 
 - Always add a runnable example in `examples/` when you introduce a new Analyzer,
@@ -26,6 +59,9 @@ Keep the documentation in sync with any code change or new capability:
 - Update docs under `docs/` (Guides, Tutorials, Examples, Reference) to reflect behavior,
   flags, and safety gates (`--execute`, `--include-dangerous`).
 - Link new examples in the relevant pages (`docs/examples/*.md`) and, when helpful, in README.
+- Add a programmatic usage page for each module under `docs/modulos/<kind>/<name>.md`.
+  The page must show dataclass input (`WorkerInput`) and calling `.execute()` (or `.run()`),
+  using only stdlib + SDK. Update the navigation in `mkdocs.yml` under the "Modules" section.
 - If you add new public API or modules, ensure mkdocstrings pages exist and navigation in
   `mkdocs.yml` is updated.
 - Run `poe docs` (or `poe docs-serve`) to validate the site locally before merging.
@@ -129,6 +165,7 @@ Checklist:
 - Tests added; `poe lint` and `poe test` pass.
 - Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
   `poe docs` passes locally.
+- Programmatic docs page added: `docs/modulos/analyzers/<name>.md`.
 
 ### Responder
 
@@ -168,6 +205,7 @@ Checklist:
 - Example under `examples/responders/` runnable and prints compact result.
 - Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
   `poe docs` passes locally.
+- Programmatic docs page added: `docs/modulos/responders/<name>.md`.
 
 ### Detector
 
@@ -207,6 +245,7 @@ Checklist:
 - Example in `examples/detectors/` demonstrating `Extractor.check_string/iterable`.
 - Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
   `poe docs` passes locally.
+- Programmatic docs page added: `docs/modulos/detectors/<name>.md`.
 
 ## Modules Overview
 

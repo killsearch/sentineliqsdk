@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 
-from sentineliqsdk import WorkerInput
+from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.kafka_rest import KafkaResponder
 
 
@@ -27,17 +26,26 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-    os.environ["SENTINELIQ_EXECUTE"] = "1" if args.execute else "0"
-    os.environ["SENTINELIQ_INCLUDE_DANGEROUS"] = "1" if args.include_dangerous else "0"
-    os.environ["KAFKA_REST_URL"] = args.rest_url
-    os.environ["KAFKA_TOPIC"] = args.topic
-    os.environ["KAFKA_VALUE"] = args.message
-    if args.headers:
-        os.environ["KAFKA_HEADERS"] = args.headers
-    if args.auth:
-        os.environ["KAFKA_REST_AUTH"] = args.auth
 
-    input_data = WorkerInput(data_type="other", data=args.message)
+    params = {
+        "kafka": {
+            "base_url": args.rest_url,
+            "topic": args.topic,
+            "value": args.message,
+            "headers": json.loads(args.headers) if args.headers else {},
+        },
+        "execute": bool(args.execute),
+        "include_dangerous": bool(args.include_dangerous),
+    }
+    secrets: dict[str, dict[str, str]] = {}
+    if args.auth:
+        secrets.setdefault("kafka", {})["basic_auth"] = args.auth
+
+    input_data = WorkerInput(
+        data_type="other",
+        data=args.message,
+        config=WorkerConfig(params=params, secrets=secrets),
+    )
     report = KafkaResponder(input_data).execute()
     print(json.dumps(report.full_report, ensure_ascii=False))
 

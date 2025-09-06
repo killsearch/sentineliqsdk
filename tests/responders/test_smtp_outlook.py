@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sentineliqsdk.models import WorkerInput
+from sentineliqsdk.models import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.smtp_outlook import OutlookSmtpResponder
 
 
@@ -36,18 +36,22 @@ class DummySMTP:
 
 
 def test_outlook_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "0")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "0")
-    monkeypatch.setenv("EMAIL_FROM", "sender@contoso.com")
-    monkeypatch.setenv("EMAIL_SUBJECT", "Subj")
-    monkeypatch.setenv("EMAIL_BODY", "Body")
-
     # Guard against SMTP usage
     import smtplib as _smtp
 
     monkeypatch.setattr(_smtp, "SMTP", MagicMock(side_effect=AssertionError("no send expected")))
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@contoso.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@contoso.com",
+        config=WorkerConfig(
+            params={
+                "email": {"from": "sender@contoso.com", "subject": "Subj", "body": "Body"},
+                "execute": False,
+                "include_dangerous": False,
+            }
+        ),
+    )
     report = OutlookSmtpResponder(input_data).execute()
     assert report.full_report["dry_run"] is True
     assert report.full_report["from"] == "sender@contoso.com"
@@ -56,38 +60,38 @@ def test_outlook_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_outlook_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("OUTLOOK_SMTP_USER", "user@contoso.com")
-    monkeypatch.setenv("OUTLOOK_SMTP_PASSWORD", "password")
-
     import smtplib as _smtp
 
     monkeypatch.setattr(_smtp, "SMTP", lambda *a, **k: DummySMTP(*a, **k))
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@contoso.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@contoso.com",
+        config=WorkerConfig(
+            params={"execute": True, "include_dangerous": True},
+            secrets={"outlook": {"username": "user@contoso.com", "password": "password"}},
+        ),
+    )
     report = OutlookSmtpResponder(input_data).execute()
     assert report.full_report["dry_run"] is False
     assert report.full_report.get("status") == "sent"
 
 
 def test_outlook_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-
     import smtplib as _smtp
 
     monkeypatch.setattr(_smtp, "SMTP", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@contoso.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@contoso.com",
+        config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
+    )
     with pytest.raises(SystemExit):
         OutlookSmtpResponder(input_data).execute()
 
 
 def test_outlook_execute_no_login_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-
     import smtplib as _smtp
 
     instances: list[DummySMTP] = []
@@ -99,6 +103,10 @@ def test_outlook_execute_no_login_and_run(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr(_smtp, "SMTP", _factory)
 
-    input_data = WorkerInput(data_type="mail", data="rcpt@contoso.com")
+    input_data = WorkerInput(
+        data_type="mail",
+        data="rcpt@contoso.com",
+        config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
+    )
     OutlookSmtpResponder(input_data).run()
     assert instances and instances[0].logged_in is None

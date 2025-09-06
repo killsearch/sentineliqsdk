@@ -3,20 +3,30 @@
 from __future__ import annotations
 
 from sentineliqsdk import Responder
-from sentineliqsdk.models import ResponderReport
+from sentineliqsdk.models import ModuleMetadata, ResponderReport
 
 
 class {CLASS_NAME}(Responder):
     """Responder: add logic in execute()."""
+
+    METADATA = ModuleMetadata(
+        name="{CLASS_NAME}",
+        description="Responder scaffold",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="example",
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="",
+        version_stage="DEVELOPER",
+    )
 
     def execute(self) -> ResponderReport:
         target = self.get_data()
         full_report = {
             "action": "noop",
             "target": target,
+            "metadata": self.METADATA.to_dict(),
         }
         return self.report(full_report)
 
     def run(self) -> ResponderReport:
         return self.execute()
-

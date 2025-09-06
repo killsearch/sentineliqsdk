@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 
-from sentineliqsdk import WorkerInput
+from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.webhook import WebhookResponder
 
 
@@ -27,15 +26,23 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-    os.environ["SENTINELIQ_EXECUTE"] = "1" if args.execute else "0"
-    os.environ["SENTINELIQ_INCLUDE_DANGEROUS"] = "1" if args.include_dangerous else "0"
-    os.environ["WEBHOOK_METHOD"] = args.method
-    if args.headers:
-        os.environ["WEBHOOK_HEADERS"] = args.headers
-    if args.body is not None:
-        os.environ["WEBHOOK_BODY"] = args.body
 
-    input_data = WorkerInput(data_type="url", data=args.url)
+    headers = json.loads(args.headers) if args.headers else {}
+    body = None
+    if args.body is not None:
+        # Try to parse JSON, fallback to plain string
+        try:
+            body = json.loads(args.body)
+        except Exception:
+            body = args.body
+
+    params = {
+        "webhook": {"url": args.url, "method": args.method, "headers": headers, "body": body},
+        "execute": bool(args.execute),
+        "include_dangerous": bool(args.include_dangerous),
+    }
+
+    input_data = WorkerInput(data_type="url", data=args.url, config=WorkerConfig(params=params))
     report = WebhookResponder(input_data).execute()
     print(json.dumps(report.full_report, ensure_ascii=False))
 

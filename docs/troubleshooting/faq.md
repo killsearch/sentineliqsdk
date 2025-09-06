@@ -24,5 +24,5 @@
     precedence list in `extractors/regex.py`.
 
 - I’m behind a corporate proxy. How do I configure it?
-  - Set `http_proxy`/`https_proxy` env vars or use `WorkerInput.config.proxy`. The Worker exports
-    these to the environment at init.
+  - Use `WorkerInput.config.proxy` (preferred). The Worker exports these to the process environment
+    at init so stdlib HTTP clients respect them.

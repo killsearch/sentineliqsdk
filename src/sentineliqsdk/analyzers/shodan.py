@@ -9,8 +9,8 @@ Usage example:
     report = ShodanAnalyzer(input_data).execute()  # returns AnalyzerReport
 
 Configuration:
-- Provide API key via environment variable `SHODAN_API_KEY`.
-- HTTP proxies honored via `WorkerConfig.proxy` or environment.
+- Provide API key via `WorkerConfig.secrets['shodan']['api_key']`.
+- HTTP proxies honored via `WorkerConfig.proxy`.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from typing import Any
 
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.clients import ShodanClient
-from sentineliqsdk.models import AnalyzerReport, TaxonomyLevel
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 # Allowlist of ShodanClient methods exposed for dynamic calls
 ALLOWED_METHODS: set[str] = {
@@ -77,16 +77,28 @@ ALLOWED_METHODS: set[str] = {
 class ShodanAnalyzer(Analyzer):
     """Analyzer that queries Shodan for information about IPs and domains."""
 
+    METADATA = ModuleMetadata(
+        name="Shodan Analyzer",
+        description="Query Shodan for IP/domain intel and dynamic API calls",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="threat-intel",
+        doc_pattern="MkDocs module page; programmatic usage documented",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/shodan/",
+        version_stage="STABLE",
+    )
+
     def _client(self) -> ShodanClient:
-        api_key = self.get_env("SHODAN_API_KEY", message="Missing SHODAN_API_KEY in environment.")
-        # Proxies are already exported to env by Worker; urllib will respect them.
-        return ShodanClient(api_key=api_key)
+        api_key = self.get_secret("shodan.api_key")
+        if not api_key:
+            self.error("Missing Shodan API key (set config.secrets['shodan']['api_key'])")
+        return ShodanClient(api_key=str(api_key))
 
     def _call_dynamic(self, method: str, params: Mapping[str, Any] | None = None) -> Any:
         """Call any supported ShodanClient method using kwargs.
 
         This enables full API coverage from the analyzer via either:
-        - Environment: `SHODAN_METHOD` and optional `SHODAN_PARAMS` (JSON string)
+        - Programmatic config params: `config.params['shodan']['method']` and optional
+          `config.params['shodan']['params']`
         - Data payload when `data_type == "other"` and `data` is a JSON string
           like: {"method": "search_host", "params": {"query": "port:22"}}
         """
@@ -159,18 +171,15 @@ class ShodanAnalyzer(Analyzer):
         observable = self.get_data()
 
         # 1) Dynamic call via environment variables
-        env_method = self.get_env("SHODAN_METHOD")
+        # Programmatic dynamic call via params: shodan.method / shodan.params
+        env_method = self.get_config("shodan.method")
         if env_method:
             params: dict[str, Any] = {}
-            env_params = self.get_env("SHODAN_PARAMS")
-            if env_params:
-                try:
-                    parsed = json.loads(env_params)
-                except json.JSONDecodeError:
-                    self.error("Invalid SHODAN_PARAMS (must be valid JSON).")
-                if not isinstance(parsed, Mapping):
-                    self.error("SHODAN_PARAMS must be a JSON object.")
-                params = dict(parsed)
+            cfg_params = self.get_config("shodan.params")
+            if isinstance(cfg_params, Mapping):
+                params = dict(cfg_params)
+            elif cfg_params is not None:
+                self.error("Shodan params must be a JSON object.")
 
             details = {
                 "method": env_method,
@@ -190,6 +199,7 @@ class ShodanAnalyzer(Analyzer):
                 "source": "shodan",
                 "data_type": dtype,
                 "details": details,
+                "metadata": self.METADATA.to_dict(),
             }
             return self.report(full_report)
 
@@ -229,6 +239,7 @@ class ShodanAnalyzer(Analyzer):
                 "source": "shodan",
                 "data_type": dtype,
                 "details": details,
+                "metadata": self.METADATA.to_dict(),
             }
             return self.report(full_report)
 
@@ -255,6 +266,7 @@ class ShodanAnalyzer(Analyzer):
             "source": "shodan",
             "data_type": dtype,
             "details": details,
+            "metadata": self.METADATA.to_dict(),
         }
         return self.report(full_report)
 

@@ -10,15 +10,15 @@ explicitly acknowledge impactful actions.
   - `python examples/responders/gmail_smtp_example.py --help`
 - Dry-run:
   - `python examples/responders/gmail_smtp_example.py --to someone@example.com`
-- Execute (requires env `GMAIL_SMTP_USER`, `GMAIL_SMTP_PASSWORD`):
-  - `python examples/responders/gmail_smtp_example.py --to someone@example.com --execute --include-dangerous`
+- Execute (pass creds via flags or pre-config):
+  - `python examples/responders/gmail_smtp_example.py --to someone@example.com --username user --password APPPASS --execute --include-dangerous`
 
 ### Outlook/Office365 SMTP
 
 - Dry-run:
   - `python examples/responders/outlook_smtp_example.py --to someone@example.com`
-- Execute (requires env `OUTLOOK_SMTP_USER`, `OUTLOOK_SMTP_PASSWORD`):
-  - `python examples/responders/outlook_smtp_example.py --to someone@example.com --execute --include-dangerous`
+- Execute (pass creds via flags or pre-config):
+  - `python examples/responders/outlook_smtp_example.py --to someone@example.com --username user --password PASS --execute --include-dangerous`
 
 ### Webhook
 
@@ -44,5 +44,5 @@ explicitly acknowledge impactful actions.
 Notes:
 - All examples are stdlib-only (no extra dependencies). Network calls require `--execute`.
 - Impactful operations are gated by `--include-dangerous`.
-- Credentials and extra configuration are read from environment variables as noted in each example.
-
+- Configure programaticamente via `WorkerConfig.params` e `WorkerConfig.secrets`; não há suporte
+  por variáveis de ambiente para estes módulos.

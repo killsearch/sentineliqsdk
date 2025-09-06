@@ -3,11 +3,21 @@
 from __future__ import annotations
 
 from sentineliqsdk import Analyzer
-from sentineliqsdk.models import AnalyzerReport
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
 
 class {CLASS_NAME}(Analyzer):
     """Analyzer: add logic in execute()."""
+
+    METADATA = ModuleMetadata(
+        name="{CLASS_NAME}",
+        description="Analyzer scaffold",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="example",
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="",
+        version_stage="DEVELOPER",
+    )
 
     def execute(self) -> AnalyzerReport:
         observable = self.get_data()
@@ -16,9 +26,9 @@ class {CLASS_NAME}(Analyzer):
             "observable": observable,
             "verdict": "safe",
             "taxonomy": [taxonomy.to_dict()],
+            "metadata": self.METADATA.to_dict(),
         }
         return self.report(full_report)
 
     def run(self) -> AnalyzerReport:
         return self.execute()
-

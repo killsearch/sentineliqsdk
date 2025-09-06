@@ -4,37 +4,33 @@ import json
 
 import pytest
 
-from sentineliqsdk.models import WorkerInput
+from sentineliqsdk.models import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.kafka_rest import KafkaResponder
 
 
 def test_kafka_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "0")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "0")
-    monkeypatch.setenv("KAFKA_REST_URL", "http://localhost:8082")
-    monkeypatch.setenv("KAFKA_TOPIC", "demo")
-    monkeypatch.setenv("KAFKA_VALUE", "hello")
-
     # Guard network
     import urllib.request as _r
 
     monkeypatch.setattr(_r, "urlopen", lambda *a, **k: (_ for _ in ()).throw(AssertionError))
 
-    input_data = WorkerInput(data_type="other", data="hello")
+    input_data = WorkerInput(
+        data_type="other",
+        data="hello",
+        config=WorkerConfig(
+            params={
+                "kafka": {"base_url": "http://localhost:8082", "topic": "demo", "value": "hello"},
+                "execute": False,
+                "include_dangerous": False,
+            }
+        ),
+    )
     report = KafkaResponder(input_data).execute()
     assert report.full_report["dry_run"] is True
     assert report.full_report["url"].endswith("/topics/demo")
 
 
 def test_kafka_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("KAFKA_REST_URL", "http://localhost:8082")
-    monkeypatch.setenv("KAFKA_TOPIC", "events")
-    monkeypatch.setenv("KAFKA_VALUE", "x")
-    monkeypatch.setenv("KAFKA_HEADERS", json.dumps({"X-Trace": "1"}))
-    monkeypatch.setenv("KAFKA_REST_AUTH", "user:pass")
-
     import urllib.request as _r
 
     captured = {}
@@ -56,7 +52,23 @@ def test_kafka_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(_r, "urlopen", _fake_urlopen)
 
-    input_data = WorkerInput(data_type="other", data="payload")
+    input_data = WorkerInput(
+        data_type="other",
+        data="payload",
+        config=WorkerConfig(
+            params={
+                "kafka": {
+                    "base_url": "http://localhost:8082",
+                    "topic": "events",
+                    "value": "x",
+                    "headers": {"X-Trace": "1"},
+                },
+                "execute": True,
+                "include_dangerous": True,
+            },
+            secrets={"kafka": {"basic_auth": "user:pass"}},
+        ),
+    )
     report = KafkaResponder(input_data).execute()
     assert report.full_report["dry_run"] is False
     assert report.full_report.get("status") == "published"
@@ -69,27 +81,26 @@ def test_kafka_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_kafka_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("KAFKA_REST_URL", "http://localhost:8082")
-    monkeypatch.setenv("KAFKA_TOPIC", "demo")
-
     import urllib.request as _r
 
     monkeypatch.setattr(_r, "urlopen", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
 
-    input_data = WorkerInput(data_type="other", data="payload")
+    input_data = WorkerInput(
+        data_type="other",
+        data="payload",
+        config=WorkerConfig(
+            params={
+                "kafka": {"base_url": "http://localhost:8082", "topic": "demo"},
+                "execute": True,
+                "include_dangerous": True,
+            }
+        ),
+    )
     with pytest.raises(SystemExit):
         KafkaResponder(input_data).execute()
 
 
 def test_kafka_invalid_headers_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SENTINELIQ_EXECUTE", "1")
-    monkeypatch.setenv("SENTINELIQ_INCLUDE_DANGEROUS", "1")
-    monkeypatch.setenv("KAFKA_REST_URL", "http://localhost:8082")
-    monkeypatch.setenv("KAFKA_TOPIC", "demo")
-    monkeypatch.setenv("KAFKA_HEADERS", "not-json")
-
     import urllib.request as _r
 
     class DummyResp:
@@ -103,5 +114,15 @@ def test_kafka_invalid_headers_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(_r, "urlopen", lambda *a, **k: DummyResp())
 
-    input_data = WorkerInput(data_type="other", data="msg")
+    input_data = WorkerInput(
+        data_type="other",
+        data="msg",
+        config=WorkerConfig(
+            params={
+                "kafka": {"base_url": "http://localhost:8082", "topic": "demo", "headers": {}},
+                "execute": True,
+                "include_dangerous": True,
+            }
+        ),
+    )
     KafkaResponder(input_data).run()

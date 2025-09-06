@@ -14,6 +14,7 @@ import json
 import os
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import Any, NoReturn
 
 from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, EXIT_ERROR
@@ -102,6 +103,30 @@ class Worker(ABC):
             self.error(message)
         return default
 
+    # Programmatic configuration accessors
+    def _get_from_mapping(
+        self, mapping: Mapping[str, Any], path: str, default: Any | None = None
+    ) -> Any:
+        """Resolve dotted-path keys from a mapping, returning default when missing."""
+        cur: Any = mapping
+        for part in str(path).split("."):
+            if isinstance(cur, Mapping) and part in cur:
+                cur = cur[part]  # type: ignore[index]
+            else:
+                return default
+        return cur
+
+    def get_config(self, path: str, default: Any | None = None) -> Any:
+        """Get a value from WorkerConfig.params using a dotted path."""
+        return self._get_from_mapping(self._input.config.params, path, default)
+
+    def get_secret(self, path: str, default: Any | None = None, message: str | None = None) -> Any:
+        """Get a value from WorkerConfig.secrets using a dotted path, with optional error."""
+        val = self._get_from_mapping(self._input.config.secrets, path, default)
+        if val is None and message is not None:
+            self.error(message)
+        return val
+
     def error(self, message: str, *, ensure_ascii: bool | None = None) -> NoReturn:
         """
         Stop analyzer with an error message.
@@ -122,6 +147,9 @@ class Worker(ABC):
                 "http": self._input.config.proxy.http,
                 "https": self._input.config.proxy.https,
             },
+            # Include programmatic params/secrets for sanitization in error payloads
+            "params": dict(getattr(self._input.config, "params", {})),
+            "secrets": dict(getattr(self._input.config, "secrets", {})),
         }
 
         # Sanitize config to remove sensitive information

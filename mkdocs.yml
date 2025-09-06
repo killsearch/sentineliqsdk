@@ -30,6 +30,31 @@ nav:
     - Responders: examples/responders.md
   - Guides:
     - Agent Guide: guides/guide.md
+  - Modules:
+    - Analyzers:
+      - Shodan: modulos/analyzers/shodan.md
+      - Axur: modulos/analyzers/axur.md
+    - Responders:
+      - Webhook: modulos/responders/webhook.md
+      - Gmail SMTP: modulos/responders/gmail_smtp.md
+      - Outlook SMTP: modulos/responders/outlook_smtp.md
+      - Kafka REST: modulos/responders/kafka_rest.md
+      - RabbitMQ HTTP: modulos/responders/rabbitmq_http.md
+    - Detectors:
+      - ip: modulos/detectors/ip.md
+      - url: modulos/detectors/url.md
+      - domain: modulos/detectors/domain.md
+      - hash: modulos/detectors/hash.md
+      - user-agent: modulos/detectors/user-agent.md
+      - uri_path: modulos/detectors/uri_path.md
+      - registry: modulos/detectors/registry.md
+      - mail: modulos/detectors/mail.md
+      - fqdn: modulos/detectors/fqdn.md
+      - cidr: modulos/detectors/cidr.md
+      - mac: modulos/detectors/mac.md
+      - asn: modulos/detectors/asn.md
+      - cve: modulos/detectors/cve.md
+      - ip_port: modulos/detectors/ip_port.md
   - Reference:
     - Worker: reference/api/worker.md
     - Analyzer: reference/api/analyzer.md

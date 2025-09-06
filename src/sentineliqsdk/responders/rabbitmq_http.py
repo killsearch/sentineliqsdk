@@ -6,7 +6,7 @@ import urllib.request
 from base64 import b64encode
 from typing import Any
 
-from sentineliqsdk.models import ResponderReport
+from sentineliqsdk.models import ModuleMetadata, ResponderReport
 from sentineliqsdk.responders.base import Responder
 
 
@@ -20,29 +20,36 @@ def _as_bool(value: Any | None) -> bool:
 class RabbitMqResponder(Responder):
     """Publish to RabbitMQ via HTTP API.
 
-    Environment variables:
-    - ``RABBITMQ_API_URL``: base URL (e.g., http://localhost:15672)
-    - ``RABBITMQ_VHOST``: vhost (default "/")
-    - ``RABBITMQ_EXCHANGE``: exchange name
-    - ``RABBITMQ_ROUTING_KEY``: routing key (default "")
-    - ``RABBITMQ_USERNAME`` / ``RABBITMQ_PASSWORD``: basic auth
-    - ``RABBITMQ_PROPERTIES``: optional JSON properties
-    - ``RABBITMQ_MESSAGE``: override message value (defaults to ``WorkerInput.data``)
-    - Gates: ``SENTINELIQ_EXECUTE`` and ``SENTINELIQ_INCLUDE_DANGEROUS`` must both be true.
+    Configuration via WorkerConfig (no environment variables):
+    - Params: ``rabbitmq.api_url``, ``rabbitmq.vhost``, ``rabbitmq.exchange``,
+      ``rabbitmq.routing_key`` (optional), ``rabbitmq.message`` (default: ``WorkerInput.data``),
+      ``rabbitmq.properties`` (dict)
+    - Secrets: ``rabbitmq.username``, ``rabbitmq.password``
+    - Safety gates: ``execute=True`` and ``include_dangerous=True``
     """
 
-    def execute(self) -> ResponderReport:
-        base = str(self.get_env("RABBITMQ_API_URL", "").rstrip("/"))
-        vhost = str(self.get_env("RABBITMQ_VHOST", "/"))
-        exchange = str(self.get_env("RABBITMQ_EXCHANGE", ""))
-        routing_key = str(self.get_env("RABBITMQ_ROUTING_KEY", ""))
-        username = str(self.get_env("RABBITMQ_USERNAME", ""))
-        password = str(self.get_env("RABBITMQ_PASSWORD", ""))
-        message = self.get_env("RABBITMQ_MESSAGE", self.get_data())
-        props_raw = self.get_env("RABBITMQ_PROPERTIES")
+    METADATA = ModuleMetadata(
+        name="RabbitMQ HTTP Responder",
+        description="Publish messages to RabbitMQ via HTTP API",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="rabbitmq",
+        doc_pattern="MkDocs module page; customer-facing usage and API",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/rabbitmq_http/",
+        version_stage="STABLE",
+    )
 
-        do_execute = _as_bool(self.get_env("SENTINELIQ_EXECUTE", "0"))
-        include_dangerous = _as_bool(self.get_env("SENTINELIQ_INCLUDE_DANGEROUS", "0"))
+    def execute(self) -> ResponderReport:
+        base = str(self.get_config("rabbitmq.api_url", "").rstrip("/"))
+        vhost = str(self.get_config("rabbitmq.vhost", "/"))
+        exchange = str(self.get_config("rabbitmq.exchange", ""))
+        routing_key = str(self.get_config("rabbitmq.routing_key", ""))
+        username = str(self.get_secret("rabbitmq.username") or "")
+        password = str(self.get_secret("rabbitmq.password") or "")
+        message = self.get_config("rabbitmq.message", self.get_data())
+        props_cfg = self.get_config("rabbitmq.properties")
+
+        do_execute = _as_bool(self.get_config("execute", False))
+        include_dangerous = _as_bool(self.get_config("include_dangerous", False))
         dry_run = not (do_execute and include_dangerous)
 
         url = f"{base}/api/exchanges/{urllib.parse.quote(vhost, safe='')}/{exchange}/publish"
@@ -53,11 +60,8 @@ class RabbitMqResponder(Responder):
             headers["Authorization"] = f"Basic {token}"
 
         properties: dict[str, Any] = {}
-        if props_raw:
-            try:
-                properties = json.loads(props_raw)
-            except Exception:
-                properties = {}
+        if isinstance(props_cfg, dict):
+            properties = dict(props_cfg)
 
         payload = {
             "properties": properties,
@@ -73,6 +77,7 @@ class RabbitMqResponder(Responder):
             "exchange": exchange,
             "routing_key": routing_key,
             "dry_run": dry_run,
+            "metadata": self.METADATA.to_dict(),
         }
 
         if dry_run:

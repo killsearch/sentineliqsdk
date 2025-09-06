@@ -36,3 +36,6 @@ EXIT_ERROR = 1
 # JSON serialization
 # When True, json.dumps escapes non-ASCII characters; when False, preserves Unicode.
 JSON_ENSURE_ASCII = False
+
+# Project license identifier for module metadata
+SENTINELIQ_LICENSE = "SentinelIQ License"
