@@ -27,6 +27,7 @@ nav:
   - Examples:
     - Threat Intelligence: examples/threat-intelligence.md
     - Malware Analysis: examples/malware-analysis.md
+    - Responders: examples/responders.md
   - Guides:
     - Agent Guide: guides/guide.md
   - Reference:
