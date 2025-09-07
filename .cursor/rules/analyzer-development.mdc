@@ -1,0 +1,72 @@
+---
+globs: src/sentineliqsdk/analyzers/*.py,examples/analyzers/*.py,tests/analyzers/*.py
+description: Analyzer development patterns and requirements
+---
+
+# Analyzer Development Rules
+
+## Class Structure
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Analyzer
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+
+class MyAnalyzer(Analyzer):
+    METADATA = ModuleMetadata(
+        name="My Analyzer",
+        description="Does something useful",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="threat-intel",
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/my_analyzer/",
+        version_stage="TESTING",
+    )
+
+    def execute(self) -> AnalyzerReport:
+        observable = self.get_data()
+        taxonomy = self.build_taxonomy("safe", "namespace", "predicate", str(observable))
+        full = {
+            "observable": observable, 
+            "verdict": "safe", 
+            "taxonomy": [taxonomy.to_dict()],
+            "metadata": self.METADATA.to_dict()
+        }
+        return self.report(full)
+
+    def run(self) -> AnalyzerReport:
+        return self.execute()
+```
+
+## Key Requirements
+- **Class naming**: Must end with `Analyzer`
+- **Inheritance**: Extend `sentineliqsdk.analyzers.Analyzer`
+- **Imports**: Absolute imports only, `from __future__ import annotations` first
+- **Methods**: Implement `execute() -> AnalyzerReport` and make `run()` return `self.execute()`
+- **Metadata**: Include `METADATA` attribute and add to `full_report` under `metadata` key
+- **Taxonomy**: Use `self.build_taxonomy()` and include `taxonomy.to_dict()` in payload
+- **Input**: Use dataclasses only (`WorkerInput` is required)
+
+## Data Access
+- `self.get_data()`: Returns `filename` when `data_type == "file"`, otherwise the `data` field
+- `self.build_taxonomy(level, namespace, predicate, value)`: Helper for taxonomy entries
+- `self.build_artifact(data_type, data, **kwargs)`: Build artifact dataclass
+- `self.report(full_report: dict) -> AnalyzerReport`: Returns envelope with success/summary/artifacts/operations/full_report
+
+## Taxonomy Levels
+- `info`: Informational
+- `safe`: Safe/clean
+- `suspicious`: Suspicious but not malicious
+- `malicious`: Confirmed malicious
+
+## Auto-extraction
+- Enabled by default unless `config.auto_extract` is `False`
+- Uses `Extractor(ignore=self.get_data())` to detect IOCs in the report
+- Excludes the original observable value from extraction
+
+## Example Structure
+```python
+if __name__ == "__main__":
+    report = MyAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4")).run()
+    print(json.dumps(report.full_report, ensure_ascii=False))
+```

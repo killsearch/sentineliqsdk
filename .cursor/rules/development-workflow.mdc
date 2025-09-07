@@ -1,0 +1,96 @@
+---
+alwaysApply: true
+description: Development workflow and tooling requirements
+---
+
+# Development Workflow
+
+## Code Quality Requirements
+- **Linting**: `poe lint` (pre-commit with ruff/mypy configured)
+- **Testing**: `poe test` (pytest with coverage to `reports/`)
+- **Documentation**: `poe docs` builds MkDocs site to `docs/`
+- **Build**: `uv build`; publish via CI on GitHub release
+
+## Scaffolding Commands
+Use Poe tasks for creating new modules:
+
+### Generic Scaffolding
+```bash
+poe new -- --kind <analyzer|responder|detector> --name <Name> [--force]
+```
+
+### Shortcuts
+```bash
+# Analyzer
+poe new-analyzer -- --name Shodan
+
+# Responder  
+poe new-responder -- --name BlockIp
+
+# Detector
+poe new-detector -- --name MyType
+```
+
+### Outputs
+- **Analyzer**: `src/sentineliqsdk/analyzers/<snake>.py` and `examples/analyzers/<snake>_example.py`
+- **Responder**: `src/sentineliqsdk/responders/<snake>.py` and `examples/responders/<snake>_example.py`
+- **Detector**: `src/sentineliqsdk/extractors/custom/<snake>_detector.py` and `examples/detectors/<snake>_example.py`
+
+## Development Checklist
+For each new module:
+
+### Code Requirements
+- [ ] Naming and imports compliant
+- [ ] `execute()` implemented; `run()` returns appropriate Report
+- [ ] Calls `self.report(...)` with a dict
+- [ ] Taxonomy/operations included as appropriate
+- [ ] METADATA attribute declared and included in full_report
+
+### Testing
+- [ ] Tests added under `tests/<kind>/test_<name>.py`
+- [ ] `poe lint` passes
+- [ ] `poe test` passes
+
+### Examples
+- [ ] Example under `examples/<kind>/` runnable
+- [ ] Prints compact result to STDOUT
+- [ ] Supports `--execute` for real calls
+- [ ] Supports `--include-dangerous` for impactful operations
+
+### Documentation
+- [ ] Docs updated (Guide/Tutorials/Examples/Reference)
+- [ ] Links added to relevant pages
+- [ ] `mkdocs.yml` updated if needed
+- [ ] `poe docs` passes locally
+- [ ] Programmatic docs page added: `docs/modulos/<kind>/<name>.md`
+
+## Running Examples
+```bash
+# Run examples directly
+python examples/analyzers/shodan_analyzer_all_methods.py --help
+
+# With execution flags
+python examples/analyzers/shodan_analyzer_all_methods.py --execute --include-dangerous
+```
+
+## Proxy Configuration
+Set proxies via:
+- `WorkerInput.config.proxy.http` / `.https`
+- Environment variables `http_proxy`/`https_proxy`
+
+## Release Process
+1. Ensure `main` is green
+2. Bump version with Commitizen: `uv run cz bump`
+3. Push branch and tags: `git push origin main --follow-tags`
+4. Create GitHub Release for the new tag
+5. CI publishes to PyPI automatically
+6. Verify release: `pip install sentineliqsdk==X.Y.Z`
+
+## Key Tools
+- **uv**: Package management and building
+- **poe**: Task runner for common operations
+- **ruff**: Linting and formatting
+- **mypy**: Type checking
+- **pytest**: Testing framework
+- **MkDocs**: Documentation generation
+- **Commitizen**: Version bumping and changelog

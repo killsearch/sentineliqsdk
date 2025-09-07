@@ -1,0 +1,118 @@
+---
+globs: src/sentineliqsdk/**/*.py,examples/**/*.py
+description: Input/output patterns and dataclass usage
+---
+
+# Input/Output Patterns
+
+## Input Contract (Dataclasses Only)
+Workers receive input data as dataclasses. Legacy dictionary input has been removed from the public API.
+
+### WorkerInput Structure
+```python
+from sentineliqsdk import WorkerInput, WorkerConfig, ProxyConfig
+
+input_data = WorkerInput(
+    data_type="ip",
+    data="1.2.3.4",
+    filename=None,  # Optional, for file datatypes
+    tlp=2,
+    pap=2,
+    config=WorkerConfig(
+        check_tlp=True,
+        max_tlp=2,
+        check_pap=True,
+        max_pap=2,
+        auto_extract=True,
+        proxy=ProxyConfig(
+            http="http://proxy:8080",
+            https="https://proxy:8080"
+        )
+    )
+)
+```
+
+### Common Data Types
+- `ip`, `url`, `domain`, `fqdn`, `hash`, `mail`, `user-agent`
+- `uri_path`, `registry`, `file`, `other`, `asn`, `cve`
+- `ip_port`, `mac`, `cidr`
+
+### Configuration Fields
+- `config.check_tlp` / `config.max_tlp`: TLP enforcement
+- `config.check_pap` / `config.max_pap`: PAP enforcement  
+- `config.proxy.http` / `config.proxy.https`: Proxy settings
+- `config.auto_extract`: Auto-extraction for analyzers
+
+## Output Contract
+
+### Analyzer Output
+```python
+# AnalyzerReport structure
+{
+  "success": true,
+  "summary": {},
+  "artifacts": [],
+  "operations": [],
+  "full_report": {
+    "observable": "1.2.3.4",
+    "verdict": "malicious",
+    "taxonomy": [
+      {"level": "malicious", "namespace": "reputation", "predicate": "static", "value": "1.2.3.4"}
+    ],
+    "metadata": {...}
+  }
+}
+```
+
+### Responder Output
+```python
+# ResponderReport structure
+{
+  "success": true,
+  "full_report": {
+    "action": "block",
+    "target": "1.2.3.4",
+    "metadata": {...}
+  },
+  "operations": [...]
+}
+```
+
+## Error Handling
+On error, workers print to STDOUT and exit with code 1:
+```json
+{ "success": false, "input": { ... }, "errorMessage": "<reason>" }
+```
+
+Sensitive keys in `config` containing `key`, `password`, `secret`, `token` are replaced with `"REMOVED"` in error payloads.
+
+## Programmatic Usage
+```python
+# Create input
+input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)
+
+# Instantiate and run
+analyzer = MyAnalyzer(input_data=input_data)
+report = analyzer.execute()  # or analyzer.run() if run() returns the report
+
+# Access results
+print(report.full_report)
+```
+
+## Batch Processing
+```python
+observables = ["1.2.3.4", "8.8.8.8", "5.6.7.8"]
+results = []
+
+for obs in observables:
+    input_data = WorkerInput(data_type="ip", data=obs, tlp=2, pap=2)
+    analyzer = MyAnalyzer(input_data=input_data)
+    result = analyzer.execute()
+    results.append(result)
+```
+
+## TLP/PAP Enforcement
+- Enable with `config.check_tlp`/`config.check_pap`
+- Set `config.max_tlp`/`config.max_pap`
+- If exceeded, worker calls `error("TLP is higher than allowed.")`
+- Checks run automatically in `Worker.__init__`

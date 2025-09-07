@@ -1,0 +1,88 @@
+---
+globs: src/sentineliqsdk/analyzers/*.py,src/sentineliqsdk/responders/*.py
+description: Module metadata requirements for analyzers and responders
+---
+
+# Module Metadata Requirements
+
+Every Analyzer and Responder MUST declare a `METADATA` attribute using `sentineliqsdk.models.ModuleMetadata`.
+
+## Required Structure
+```python
+from sentineliqsdk.models import ModuleMetadata
+
+class MyModule(Worker):
+    METADATA = ModuleMetadata(
+        name="My Module",
+        description="Does something useful",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="threat-intel",  # or "smtp", "webhook", "kafka", etc.
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/my_module/",
+        version_stage="TESTING",  # or "DEVELOPER", "STABLE"
+    )
+```
+
+## Required Fields (when serialized via `to_dict()`)
+- **Name**: Human-readable module name
+- **Description**: Brief description of module functionality
+- **Author**: List of "Name <email>" strings
+- **License**: License information
+- **pattern**: Module pattern (e.g., "smtp", "webhook", "kafka", "threat-intel")
+- **doc_pattern**: Short description of documentation format
+- **doc**: Public URL of module documentation (SentinelIQ site)
+- **VERSION**: One of `DEVELOPER`, `TESTING`, `STABLE`
+
+## Version Stages
+- **DEVELOPER**: Development/experimental stage
+- **TESTING**: Testing stage, not production ready
+- **STABLE**: Production ready, stable release
+
+## Common Patterns
+- **threat-intel**: Threat intelligence modules
+- **smtp**: Email/SMTP related modules
+- **webhook**: Webhook-based modules
+- **kafka**: Kafka messaging modules
+- **file**: File processing modules
+- **network**: Network-related modules
+
+## Documentation URLs
+Follow the pattern: `https://killsearch.github.io/sentineliqsdk/modulos/<kind>/<name>/`
+- `<kind>`: `analyzers`, `responders`, or `detectors`
+- `<name>`: Module name in snake_case
+
+## Inclusion in Reports
+Always include metadata in the `full_report` under the `metadata` key:
+```python
+def execute(self) -> Report:
+    full = {
+        "action": "noop",
+        "metadata": self.METADATA.to_dict()
+    }
+    return self.report(full)
+```
+
+## Example Patterns
+```python
+# Analyzer metadata
+METADATA = ModuleMetadata(
+    name="Shodan Analyzer",
+    description="Analyzes IP addresses using Shodan API",
+    author=("SentinelIQ Team <team@sentineliq.com.br>",),
+    pattern="threat-intel",
+    doc_pattern="MkDocs module page; programmatic usage",
+    doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/shodan/",
+    version_stage="STABLE",
+)
+
+# Responder metadata
+METADATA = ModuleMetadata(
+    name="Block IP Responder",
+    description="Blocks IP addresses via firewall API",
+    author=("SentinelIQ Team <team@sentineliq.com.br>",),
+    pattern="webhook",
+    doc_pattern="MkDocs module page; programmatic usage", 
+    doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/block_ip/",
+    version_stage="TESTING",
+)
+```

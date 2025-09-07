@@ -1,0 +1,73 @@
+---
+globs: src/sentineliqsdk/responders/*.py,examples/responders/*.py,tests/responders/*.py
+description: Responder development patterns and requirements
+---
+
+# Responder Development Rules
+
+## Class Structure
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Responder
+from sentineliqsdk.models import ResponderReport, ModuleMetadata
+
+class MyResponder(Responder):
+    METADATA = ModuleMetadata(
+        name="My Responder",
+        description="Does something useful",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="webhook",
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/my_responder/",
+        version_stage="TESTING",
+    )
+
+    def execute(self) -> ResponderReport:
+        target = self.get_data()
+        ops = [self.build_operation("block", target=target)]
+        full = {
+            "action": "block", 
+            "target": target,
+            "metadata": self.METADATA.to_dict()
+        }
+        return self.report(full)
+
+    def run(self) -> ResponderReport:
+        return self.execute()
+```
+
+## Key Requirements
+- **Class naming**: Must end with `Responder`
+- **Inheritance**: Extend `sentineliqsdk.responders.Responder`
+- **Imports**: Absolute imports only, `from __future__ import annotations` first
+- **Methods**: Implement `execute() -> ResponderReport` and make `run()` return it
+- **Metadata**: Include `METADATA` attribute and add to `full_report` under `metadata` key
+- **Operations**: Build operations with `self.build_operation(...)` and call `self.report(full_report)`
+- **Input**: Use dataclasses only (`WorkerInput` is required)
+
+## Data Access
+- `self.get_data()`: Returns the `data` field
+- `self.build_operation(op_type: str, **parameters) -> Operation`: Describe follow-up operations
+- `self.report(full_report) -> ResponderReport`: Returns envelope with success/full_report/operations
+
+## Common Operation Types
+- `block`: Block a target (IP, domain, etc.)
+- `unblock`: Unblock a previously blocked target
+- `quarantine`: Quarantine a file or endpoint
+- `hunt`: Initiate threat hunting
+- `notify`: Send notification
+- `webhook`: Trigger webhook
+
+## Example Structure
+```python
+if __name__ == "__main__":
+    report = MyResponder(WorkerInput(data_type="ip", data="1.2.3.4")).run()
+    print(json.dumps(report.full_report, ensure_ascii=False))
+```
+
+## Safety Considerations
+- Examples should be dry-run by default
+- Support `--execute` for real network calls
+- Use `--include-dangerous` to enable impactful actions
+- Network calls default to dry-run and require `--execute`

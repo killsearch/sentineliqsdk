@@ -72,8 +72,29 @@ python examples/analyzers/autofocus_example.py \
 
 File: examples/analyzers/autofocus_example.py
 
+CIRCL Hashlookup (hash reputation and relationships):
+
+```bash
+# Basic hash lookup (dry-run)
+python examples/analyzers/circl_hashlookup_example.py
+
+# Execute all methods (no API key required - public service)
+python examples/analyzers/circl_hashlookup_example.py --execute
+
+# Run specific methods only
+python examples/analyzers/circl_hashlookup_example.py \
+  --execute --only lookup_md5,get_info
+
+# Include session methods (potentially stateful)
+python examples/analyzers/circl_hashlookup_example.py \
+  --execute --include-dangerous --only create_session,get_session
+```
+
+File: examples/analyzers/circl_hashlookup_example.py
+
 Notes:
 
 - Ensure proxies if required by your network: use `WorkerInput.config.proxy`.
 - Respect TLP/PAP defaults in your environment; see the Agent Guide for details.
 - AutoFocus requires a valid API key for real searches; use `--apikey` or set `AUTOFOCUS_API_KEY` environment variable.
+- CIRCL Hashlookup is a public service that doesn't require API keys; supports MD5, SHA1, SHA256, and SHA512 hashes.
