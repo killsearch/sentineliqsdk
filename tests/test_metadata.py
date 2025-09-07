@@ -122,4 +122,3 @@ def test_metadata_in_axur_analyzer_report(monkeypatch: pytest.MonkeyPatch) -> No
     inp = WorkerInput(data_type="other", data=json.dumps(payload))
     rep = AxurAnalyzer(inp).execute()
     _assert_metadata(rep.full_report)
-
