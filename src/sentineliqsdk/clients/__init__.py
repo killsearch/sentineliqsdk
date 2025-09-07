@@ -6,7 +6,7 @@ from contextlib import suppress
 
 # Optional client exports. Keep package import resilient when optional
 # integrations are not present in the environment or repo.
-__all__: list[str] = ["AxurClient", "Cluster25Client", "ShodanClient"]
+__all__: list[str] = ["AxurClient", "Cluster25Client", "CrowdSecClient", "ShodanClient"]
 
 with suppress(Exception):  # pragma: no cover - import guard
     from sentineliqsdk.clients.shodan import ShodanClient
@@ -16,3 +16,6 @@ with suppress(Exception):  # pragma: no cover - import guard
 
 with suppress(Exception):  # pragma: no cover - import guard
     from sentineliqsdk.clients.cluster25 import Cluster25Client
+
+with suppress(Exception):  # pragma: no cover - import guard
+    from sentineliqsdk.clients.crowdsec import CrowdSecClient

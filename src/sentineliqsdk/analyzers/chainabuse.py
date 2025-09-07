@@ -104,10 +104,11 @@ class ChainAbuseAnalyzer(Analyzer):
                 return {"data": [], "count": 0}
             except Exception as e:
                 self.error(f"Could not decode JSON response: {e!s}")
-        else:
-            self.error(
-                f"Failed to query ChainAbuse API. Status: {resp.status_code}, Content: {resp.text}"
-            )
+
+        # This line is unreachable due to self.error() calls above, but mypy needs it
+        self.error(
+            f"Failed to query ChainAbuse API. Status: {resp.status_code}, Content: {resp.text}"
+        )
 
     def _fetch_sanctioned_address(self, address: str) -> dict[str, Any]:
         """Fetch sanctioned address information."""
@@ -131,6 +132,8 @@ class ChainAbuseAnalyzer(Analyzer):
         if resp.status_code == HTTP_NOT_FOUND:
             # Address not found in sanctioned list
             return {"sanctioned": False, "data": None}
+
+        # This line is unreachable due to self.error() calls above, but mypy needs it
         self.error(
             f"Failed to query ChainAbuse sanctioned addresses. Status: {resp.status_code}, "
             f"Content: {resp.text}"

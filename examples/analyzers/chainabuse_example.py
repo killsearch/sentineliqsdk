@@ -17,11 +17,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from typing import Any
 
 from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.chainabuse import ChainAbuseAnalyzer
+from sentineliqsdk.models import DataType
 
 
 def print_result(title: str, result: Any) -> None:
@@ -142,8 +144,6 @@ def demo_batch_analysis(execute: bool, api_key: str) -> None:
     """Demonstrate batch analysis of multiple observables."""
     print("\n📊 Batch Analysis")
 
-    from sentineliqsdk.models import DataType
-
     observables: list[tuple[DataType, str]] = [
         ("ip", "8.8.8.8"),
         ("url", "https://google.com"),
@@ -230,8 +230,6 @@ def main() -> None:
     args = parser.parse_args()
 
     # Get API key
-    import os
-
     api_key = args.api_key or os.getenv("CHAINABUSE_API_KEY")
     if not api_key and args.execute:
         print("❌ Error: ChainAbuse API key is required for execution")
@@ -242,7 +240,11 @@ def main() -> None:
     print(f"Mode: {'EXECUTE' if args.execute else 'DRY-RUN'}")
     print(f"Dangerous operations: {'ENABLED' if args.include_dangerous else 'DISABLED'}")
     if api_key:
-        print(f"API Key: {'*' * (len(api_key) - 4) + api_key[-4:] if len(api_key) > 4 else '***'}")
+        # Constants for API key masking
+        min_key_length = 4
+        print(
+            f"API Key: {'*' * (len(api_key) - min_key_length) + api_key[-min_key_length:] if len(api_key) > min_key_length else '***'}"
+        )
     else:
         print("API Key: Not provided (dry-run mode)")
 

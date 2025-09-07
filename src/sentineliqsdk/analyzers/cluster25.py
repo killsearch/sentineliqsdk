@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any, Literal
 
 from sentineliqsdk import Analyzer
@@ -109,14 +110,14 @@ class Cluster25Analyzer(Analyzer):
         # Add score taxonomy with appropriate level
         if indicator_data.get("score") is not None:
             score = indicator_data.get("score")
-            if isinstance(score, (int, float)) and score < SAFE_SCORE_THRESHOLD:
+            if isinstance(score, int | float) and score < SAFE_SCORE_THRESHOLD:
                 level = "safe"
             elif (
-                isinstance(score, (int, float))
+                isinstance(score, int | float)
                 and SAFE_SCORE_THRESHOLD <= score < SUSPICIOUS_SCORE_THRESHOLD
             ):
                 level = "suspicious"
-            elif isinstance(score, (int, float)) and score >= SUSPICIOUS_SCORE_THRESHOLD:
+            elif isinstance(score, int | float) and score >= SUSPICIOUS_SCORE_THRESHOLD:
                 level = "malicious"
 
             taxonomies.append(self.build_taxonomy(level, namespace, "Score", str(score)))
@@ -138,9 +139,7 @@ class Cluster25Analyzer(Analyzer):
         return self.report(full_report)
 
     def run(self) -> None:
-        """Run the analyzer and return the report."""
+        """Run the analyzer and print the report."""
         report = self.execute()
         # Print the report in JSON format to stdout
-        import json
-
         print(json.dumps(report.full_report, ensure_ascii=False))

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cluster25 Analyzer Example
+Cluster25 Analyzer Example.
 
 This example demonstrates how to use the Cluster25 Analyzer to analyze
 various types of indicators using the Cluster25 threat intelligence platform.
@@ -111,6 +111,54 @@ def analyze_indicator(
         sys.exit(1)
 
 
+def print_basic_info(full_report: dict) -> None:
+    """Print basic analysis information."""
+    print(f"✅ Observable: {full_report.get('observable', 'N/A')}")
+
+
+def print_indicator_data(indicator_data: dict) -> None:
+    """Print indicator data if available."""
+    if indicator_data and "error" not in indicator_data:
+        print(f"📈 Score: {indicator_data.get('score', 'N/A')}")
+        print(f"🏷️  Type: {indicator_data.get('indicator_type', 'N/A')}")
+        print(f"🔍 Indicator: {indicator_data.get('indicator', 'N/A')}")
+    elif "error" in indicator_data:
+        print(f"❌ Error: {indicator_data['error']}")
+
+
+def print_taxonomy(taxonomy: list) -> None:
+    """Print taxonomy entries."""
+    if taxonomy:
+        print("\n📋 Taxonomy:")
+        for tax in taxonomy:
+            level = tax.get("level", "info")
+            namespace = tax.get("namespace", "unknown")
+            predicate = tax.get("predicate", "unknown")
+            value = tax.get("value", "unknown")
+            print(f"   • {level.upper()}: {namespace}/{predicate} = {value}")
+
+
+def print_metadata(metadata: dict) -> None:
+    """Print module metadata."""
+    if metadata:
+        print(f"\n📝 Module: {metadata.get('Name', 'Unknown')}")
+        print(f"   Version: {metadata.get('VERSION', 'Unknown')}")
+        print(f"   Author: {', '.join(metadata.get('Author', []))}")
+
+
+def print_artifacts_and_operations(report) -> None:
+    """Print artifacts and operations if any."""
+    if report.artifacts:
+        print(f"\n🔍 Artifacts found: {len(report.artifacts)}")
+        for artifact in report.artifacts:
+            print(f"   • {artifact.data_type}: {artifact.data}")
+
+    if report.operations:
+        print(f"\n⚡ Operations: {len(report.operations)}")
+        for op in report.operations:
+            print(f"   • {op.operation_type}: {op.parameters}")
+
+
 def print_result(report) -> None:
     """Print analysis result in a compact format."""
     print("📊 Analysis Result:")
@@ -118,57 +166,26 @@ def print_result(report) -> None:
 
     if report.success:
         full_report = report.full_report
+        print_basic_info(full_report)
 
-        # Print basic info
-        print(f"✅ Observable: {full_report.get('observable', 'N/A')}")
-
-        # Print indicator data if available
         indicator_data = full_report.get("indicator_data", {})
-        if indicator_data and "error" not in indicator_data:
-            print(f"📈 Score: {indicator_data.get('score', 'N/A')}")
-            print(f"🏷️  Type: {indicator_data.get('indicator_type', 'N/A')}")
-            print(f"🔍 Indicator: {indicator_data.get('indicator', 'N/A')}")
-        elif "error" in indicator_data:
-            print(f"❌ Error: {indicator_data['error']}")
+        print_indicator_data(indicator_data)
 
-        # Print taxonomy
         taxonomy = full_report.get("taxonomy", [])
-        if taxonomy:
-            print("\n📋 Taxonomy:")
-            for tax in taxonomy:
-                level = tax.get("level", "info")
-                namespace = tax.get("namespace", "unknown")
-                predicate = tax.get("predicate", "unknown")
-                value = tax.get("value", "unknown")
-                print(f"   • {level.upper()}: {namespace}/{predicate} = {value}")
+        print_taxonomy(taxonomy)
 
-        # Print metadata
         metadata = full_report.get("metadata", {})
-        if metadata:
-            print(f"\n📝 Module: {metadata.get('Name', 'Unknown')}")
-            print(f"   Version: {metadata.get('VERSION', 'Unknown')}")
-            print(f"   Author: {', '.join(metadata.get('Author', []))}")
+        print_metadata(metadata)
 
-        # Print artifacts if any
-        if report.artifacts:
-            print(f"\n🔍 Artifacts found: {len(report.artifacts)}")
-            for artifact in report.artifacts:
-                print(f"   • {artifact.data_type}: {artifact.data}")
-
-        # Print operations if any
-        if report.operations:
-            print(f"\n⚡ Operations: {len(report.operations)}")
-            for op in report.operations:
-                print(f"   • {op.operation_type}: {op.parameters}")
-
+        print_artifacts_and_operations(report)
     else:
         print("❌ Analysis failed")
         if hasattr(report, "error_message"):
             print(f"   Error: {report.error_message}")
 
 
-def main():
-    """Main function."""
+def main() -> None:
+    """Run the Cluster25 analyzer example."""
     parser = argparse.ArgumentParser(
         description="Cluster25 Analyzer Example",
         formatter_class=argparse.RawDescriptionHelpFormatter,

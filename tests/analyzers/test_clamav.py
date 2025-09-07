@@ -1,6 +1,4 @@
-"""
-Tests for ClamAV Analyzer
-"""
+"""Tests for ClamAV Analyzer."""
 
 from __future__ import annotations
 

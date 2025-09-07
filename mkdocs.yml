@@ -43,6 +43,7 @@ nav:
       - ChainAbuse: modulos/analyzers/chainabuse.md
       - ClamAV: modulos/analyzers/clamav.md
       - Cluster25: modulos/analyzers/cluster25.md
+      - CrowdSec: modulos/analyzers/crowdsec.md
       - AnyRun: modulos/analyzers/anyrun.md
       - AutoFocus: modulos/analyzers/autofocus.md
       - MCAP: modulos/analyzers/mcap.md

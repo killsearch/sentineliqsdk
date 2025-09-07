@@ -49,7 +49,7 @@ class Cluster25Client:
             return self.current_token
 
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Unable to retrieve token from Cluster25 platform: {e}")
+            raise Exception(f"Unable to retrieve token from Cluster25 platform: {e}") from e
 
     def investigate(self, indicator: str) -> dict[str, Any]:
         """Investigate an indicator using Cluster25 API."""
