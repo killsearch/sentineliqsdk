@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AutoFocus Analyzer Example
+"""AutoFocus Analyzer Example.
 
 This example demonstrates how to use the AutoFocus analyzer to query Palo Alto Networks
 AutoFocus for threat intelligence and sample analysis.
@@ -41,12 +41,8 @@ def create_input_data(
     if apikey:
         config_secrets["autofocus"] = {"apikey": apikey}
     elif execute:
-        # Try to get API key from environment
-        env_apikey = os.getenv("AUTOFOCUS_API_KEY")
-        if env_apikey:
-            config_secrets["autofocus"] = {"apikey": env_apikey}
-        else:
-            print("Warning: No API key provided. Use --apikey or set AUTOFOCUS_API_KEY env var")
+        print("Warning: No API key provided. Use --apikey to provide the API key")
+        print("Example: python autofocus_example.py --apikey YOUR_KEY --execute")
 
     config = WorkerConfig(
         params=config_params,
@@ -69,7 +65,7 @@ def create_input_data(
 
 
 def main() -> None:
-    """Main function to run the AutoFocus analyzer example."""
+    """Run the AutoFocus analyzer example."""
     parser = argparse.ArgumentParser(
         description="AutoFocus Analyzer Example",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -154,9 +150,7 @@ def main() -> None:
             print(f"  Data Type: {args.data_type}")
             print(f"  Data: {args.data}")
             print(f"  Service: {args.service}")
-            print(
-                f"  API Key: {'Provided' if args.apikey or os.getenv('AUTOFOCUS_API_KEY') else 'Not provided'}"
-            )
+            print(f"  API Key: {'Provided' if args.apikey else 'Not provided'}")
             print("\nUse --execute to perform real analysis (requires API key)")
 
             # Show what the result structure would look like

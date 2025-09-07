@@ -42,6 +42,14 @@ input_data = WorkerInput(
 - `config.check_pap` / `config.max_pap`: PAP enforcement  
 - `config.proxy.http` / `config.proxy.https`: Proxy settings
 - `config.auto_extract`: Auto-extraction for analyzers
+- `config.secrets`: Module-specific secrets (API keys, passwords, tokens)
+- `config.*`: Module-specific configuration parameters
+
+### Configuration Rules
+- **REQUIRED**: Use `WorkerConfig.secrets` for all credentials
+- **REQUIRED**: Use `WorkerConfig` for all module settings
+- **PROHIBITED**: Direct use of `os.environ` in modules
+- **ALLOWED**: `get_env()` only for system-level configuration
 
 ## Output Contract
 
@@ -88,8 +96,21 @@ Sensitive keys in `config` containing `key`, `password`, `secret`, `token` are r
 
 ## Programmatic Usage
 ```python
-# Create input
-input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)
+# Create input with configuration
+secrets = {
+    "my_module": {
+        "api_key": "secret_key",
+        "username": "user",
+        "password": "pass"
+    }
+}
+input_data = WorkerInput(
+    data_type="ip", 
+    data="1.2.3.4", 
+    tlp=2, 
+    pap=2,
+    config=WorkerConfig(secrets=secrets)
+)
 
 # Instantiate and run
 analyzer = MyAnalyzer(input_data=input_data)
@@ -104,8 +125,23 @@ print(report.full_report)
 observables = ["1.2.3.4", "8.8.8.8", "5.6.7.8"]
 results = []
 
+# Configure secrets once
+secrets = {
+    "my_module": {
+        "api_key": "secret_key",
+        "username": "user",
+        "password": "pass"
+    }
+}
+
 for obs in observables:
-    input_data = WorkerInput(data_type="ip", data=obs, tlp=2, pap=2)
+    input_data = WorkerInput(
+        data_type="ip", 
+        data=obs, 
+        tlp=2, 
+        pap=2,
+        config=WorkerConfig(secrets=secrets)
+    )
     analyzer = MyAnalyzer(input_data=input_data)
     result = analyzer.execute()
     results.append(result)

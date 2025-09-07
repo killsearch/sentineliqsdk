@@ -45,11 +45,33 @@ class MyResponder(Responder):
 - **Metadata**: Include `METADATA` attribute and add to `full_report` under `metadata` key
 - **Operations**: Build operations with `self.build_operation(...)` and call `self.report(full_report)`
 - **Input**: Use dataclasses only (`WorkerInput` is required)
+- **Configuration**: Use `WorkerConfig.secrets` for credentials, `WorkerConfig` for settings
+- **PROHIBITED**: Direct use of `os.environ` in modules
 
 ## Data Access
 - `self.get_data()`: Returns the `data` field
+- `self.get_secret(key, default=None, message=None)`: Read secrets from `WorkerConfig.secrets`
+- `self.get_config(key, default=None, message=None)`: Read configuration from `WorkerConfig`
 - `self.build_operation(op_type: str, **parameters) -> Operation`: Describe follow-up operations
 - `self.report(full_report) -> ResponderReport`: Returns envelope with success/full_report/operations
+
+## Configuration Access
+```python
+# CORRECT: Use WorkerConfig.secrets for credentials
+def __init__(self, input_data, secret_phrases=None):
+    super().__init__(input_data, secret_phrases)
+    api_key = self.get_secret("my_responder.api_key", message="API key required")
+    webhook_url = self.get_secret("my_responder.webhook_url")
+
+# CORRECT: Use WorkerConfig for settings
+def execute(self):
+    timeout = self.get_config("my_responder.timeout", 30)
+    retry_count = self.get_config("my_responder.retry_count", 3)
+
+# INCORRECT: Direct os.environ usage (PROHIBITED)
+import os
+api_key = os.environ["API_KEY"]  # DON'T DO THIS
+```
 
 ## Common Operation Types
 - `block`: Block a target (IP, domain, etc.)

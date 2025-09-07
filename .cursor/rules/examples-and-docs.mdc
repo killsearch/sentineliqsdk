@@ -20,18 +20,33 @@ Always add a runnable example in `examples/` when introducing a new Analyzer, Re
 - Network calls default to dry-run and require `--execute`
 - Impactful operations (e.g., scans) must be gated behind `--include-dangerous`
 - Reference examples from README or docs when helpful
+- **REQUIRED**: Use `WorkerConfig.secrets` for credentials, never `os.environ`
+- **PROHIBITED**: Direct use of `os.environ` in examples
 
 ### Example Structure
 ```python
 from __future__ import annotations
 import json
-from sentineliqsdk import Analyzer, WorkerInput
+from sentineliqsdk import Analyzer, WorkerInput, WorkerConfig
 
 class MyAnalyzer(Analyzer):
     # ... implementation ...
 
 if __name__ == "__main__":
-    report = MyAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4")).run()
+    # CORRECT: Use WorkerConfig.secrets for credentials
+    secrets = {
+        "my_module": {
+            "api_key": "secret_key",
+            "username": "user",
+            "password": "pass"
+        }
+    }
+    input_data = WorkerInput(
+        data_type="ip", 
+        data="1.2.3.4",
+        config=WorkerConfig(secrets=secrets)
+    )
+    report = MyAnalyzer(input_data).run()
     print(json.dumps(report.full_report, ensure_ascii=False))
 ```
 
@@ -47,9 +62,11 @@ Keep documentation in sync with any code change or new capability:
 
 ### Programmatic Usage Pages
 Each module must have a page at `docs/modulos/<kind>/<name>.md` that shows:
-- Dataclass input (`WorkerInput`)
+- Dataclass input (`WorkerInput`) with `WorkerConfig.secrets`
 - Calling `.execute()` (or `.run()`)
 - Using only stdlib + SDK
+- **REQUIRED**: Examples using `WorkerConfig.secrets` for credentials
+- **PROHIBITED**: Examples using `os.environ` directly
 - Update navigation in `mkdocs.yml`
 
 ### Documentation Structure
@@ -79,12 +96,28 @@ Examples must implement safety gates:
 ## Example Command Line Usage
 ```python
 import argparse
+from sentineliqsdk import WorkerInput, WorkerConfig
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true", help="Execute real API calls")
     parser.add_argument("--include-dangerous", action="store_true", help="Include dangerous operations")
     args = parser.parse_args()
+    
+    # CORRECT: Use WorkerConfig.secrets for credentials
+    secrets = {
+        "my_module": {
+            "api_key": "secret_key",
+            "username": "user",
+            "password": "pass"
+        }
+    }
+    
+    input_data = WorkerInput(
+        data_type="ip",
+        data="1.2.3.4",
+        config=WorkerConfig(secrets=secrets)
+    )
     
     # Use args.execute and args.include_dangerous to control behavior
 ```
@@ -94,6 +127,8 @@ def main():
 - [ ] Example is runnable with only stdlib + SDK
 - [ ] Example prints compact JSON result
 - [ ] Safety gates implemented (`--execute`, `--include-dangerous`)
+- [ ] **Configuration**: Uses `WorkerConfig.secrets` for credentials
+- [ ] **PROHIBITED**: No direct `os.environ` usage in examples
 - [ ] Documentation updated in `docs/`
 - [ ] Programmatic usage page added: `docs/modulos/<kind>/<name>.md`
 - [ ] Navigation updated in `mkdocs.yml`

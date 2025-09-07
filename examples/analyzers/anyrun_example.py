@@ -85,10 +85,11 @@ def main() -> None:
         sys.exit(1)
 
     # Get API token
-    token = args.token or os.getenv("ANYRUN_TOKEN")
+    token = args.token
     if not token and args.execute:
         print("Error: API token required for real analysis")
-        print("Set ANYRUN_TOKEN environment variable or use --token")
+        print("Use --token to provide the API token")
+        print("Example: python anyrun_example.py --token YOUR_TOKEN --execute")
         sys.exit(1)
 
     # Build configuration
