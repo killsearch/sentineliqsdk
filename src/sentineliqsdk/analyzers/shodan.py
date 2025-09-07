@@ -16,9 +16,10 @@ Configuration:
 from __future__ import annotations
 
 import json
-import urllib.error
 from collections.abc import Mapping
 from typing import Any
+
+import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.clients import ShodanClient
@@ -112,7 +113,7 @@ class ShodanAnalyzer(Analyzer):
         func = getattr(client, method)
         try:
             return func(**(dict(params) if params else {}))
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        except httpx.HTTPError as e:
             self.error(f"Shodan API call failed: {e}")
 
     def _analyze_ip(self, ip: str) -> dict[str, Any]:
@@ -123,7 +124,7 @@ class ShodanAnalyzer(Analyzer):
             ports = client.ports()
             protos = client.protocols()
             return {"host": host, "ports_catalog": ports, "protocols": protos}
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        except httpx.HTTPError as e:
             self.error(f"Shodan host lookup failed: {e}")
 
     def _analyze_domain(self, domain: str) -> dict[str, Any]:
@@ -137,10 +138,10 @@ class ShodanAnalyzer(Analyzer):
                 for host, ip in resolved.items():
                     try:
                         hosts[ip] = client.host_information(ip, minify=True)
-                    except (urllib.error.HTTPError, urllib.error.URLError):
+                    except httpx.HTTPError:
                         hosts[ip] = {"error": "lookup-failed"}
             return {"domain": dom, "resolved": resolved, "hosts": hosts}
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        except httpx.HTTPError as e:
             self.error(f"Shodan domain lookup failed: {e}")
 
     def _verdict_from_shodan(self, payload: dict[str, Any]) -> TaxonomyLevel:

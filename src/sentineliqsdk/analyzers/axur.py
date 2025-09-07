@@ -19,9 +19,10 @@ Configuration:
 from __future__ import annotations
 
 import json
-import urllib.error
 from collections.abc import Mapping
 from typing import Any
+
+import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.clients.axur import AxurClient
@@ -97,7 +98,7 @@ class AxurAnalyzer(Analyzer):
 
             func = getattr(client, method)
             return func(**kwargs)
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        except httpx.HTTPError as e:
             self.error(f"Axur API call failed: {e}")
 
     def execute(self) -> AnalyzerReport:

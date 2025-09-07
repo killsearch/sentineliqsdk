@@ -1,9 +1,9 @@
-"""Shodan REST API client (no external deps).
+"""Shodan REST API client (httpx).
 
 Implements all endpoints from https://developer.shodan.io/api/openapi.json
-using urllib from the Python standard library. This client automatically
-injects the API key as a `key` query parameter and respects HTTP proxies
-from the environment (set by the SDK Worker).
+using httpx (sync). This client automatically injects the API key as a
+`key` query parameter and respects HTTP proxies from the environment
+(set by the SDK Worker).
 
 Requirements: Python >= 3.13
 """
@@ -11,13 +11,12 @@ Requirements: Python >= 3.13
 from __future__ import annotations
 
 import json
-import ssl
-import urllib.error
 import urllib.parse
-import urllib.request
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
+
+import httpx
 
 
 def _merge_query(url: str, params: Mapping[str, Any] | None) -> str:
@@ -40,7 +39,7 @@ def _merge_query(url: str, params: Mapping[str, Any] | None) -> str:
 class ShodanClient:
     """Minimal Shodan HTTP client covering all documented endpoints.
 
-    - Uses standard library only (urllib.request)
+    - Uses httpx (sync client)
     - Respects environment proxies (`http_proxy`/`https_proxy`)
     - Adds `?key=...` to every request
     - Returns parsed JSON (dict/list/str) for 2xx responses; raises `URLError`/`HTTPError` otherwise
@@ -68,53 +67,36 @@ class ShodanClient:
         if query:
             q.update({k: v for k, v in query.items() if v is not None})
         url = _merge_query(url, q)
-
-        body: bytes | None = None
         req_headers = {"User-Agent": self.user_agent}
         if headers:
             req_headers.update(headers)
 
+        request_kwargs: dict[str, Any] = {"headers": req_headers}
         if json_body is not None:
-            body = json.dumps(json_body).encode("utf-8")
-            req_headers.setdefault("Content-Type", "application/json")
+            request_kwargs["json"] = json_body
         elif isinstance(data, (dict, tuple)):
-            body = urllib.parse.urlencode(data).encode("utf-8")
+            request_kwargs["data"] = urllib.parse.urlencode(data)
             req_headers.setdefault(
                 "Content-Type", "application/x-www-form-urlencoded; charset=utf-8"
             )
         elif isinstance(data, bytes):
-            body = data
+            request_kwargs["content"] = data
 
-        req = urllib.request.Request(url=url, method=method.upper(), headers=req_headers, data=body)
-
-        # Default SSL context (can be customized if needed)
-        context = ssl.create_default_context()
-
-        # Use default opener which respects env proxies
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout, context=context) as resp:
-                ctype = resp.headers.get("Content-Type", "application/json")
-                raw = resp.read()
-                if not raw:
-                    return None
-                # Shodan sometimes returns plain strings as JSON (e.g., /tools/myip)
-                if "application/json" in ctype or "json" in ctype:
-                    try:
-                        return json.loads(raw.decode("utf-8"))
-                    except json.JSONDecodeError:
-                        # Fallback: return text
-                        return raw.decode("utf-8", errors="replace")
-                return raw.decode("utf-8", errors="replace")
-        except urllib.error.HTTPError as e:
-            # Try to read JSON error payload if available
-            detail = None
-            try:
-                detail = e.read().decode("utf-8", errors="replace")
-            except Exception:
-                pass
-            if detail:
-                raise urllib.error.HTTPError(e.url, e.code, detail, e.headers, None)
-            raise
+        with httpx.Client(timeout=self.timeout) as client:
+            resp = client.request(method.upper(), url, **request_kwargs)
+            if resp.status_code >= 400:
+                # Include body text in error for easier debugging
+                msg = f"HTTP {resp.status_code} for {resp.request.method} {resp.request.url}: {resp.text}"
+                raise httpx.HTTPStatusError(msg, request=resp.request, response=resp)
+            ctype = resp.headers.get("Content-Type", "application/json")
+            if not resp.content:
+                return None
+            if "application/json" in ctype or "json" in ctype:
+                try:
+                    return resp.json()
+                except json.JSONDecodeError:
+                    return resp.text
+            return resp.text
 
     def _get(self, path: str, **kwargs: Any) -> Any:
         return self._request("GET", path, **kwargs)

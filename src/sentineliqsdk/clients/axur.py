@@ -1,10 +1,10 @@
-"""Axur Platform HTTP client (stdlib only).
+"""Axur Platform HTTP client (httpx).
 
 Covers all documented routes generically and common convenience wrappers
-from https://docs.axur.com/en/axur/api/openapi-axur.yaml using urllib.
+from https://docs.axur.com/en/axur/api/openapi-axur.yaml using httpx.
 
 Features:
-- Standard library only (urllib.request)
+- Uses httpx (sync client)
 - Respects environment proxies (set by Worker/SDK)
 - Injects Authorization: Bearer <token>
 - Returns parsed JSON for JSON responses; text otherwise
@@ -15,13 +15,12 @@ Requirements: Python >= 3.13
 from __future__ import annotations
 
 import json
-import ssl
-import urllib.error
 import urllib.parse
-import urllib.request
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
+
+import httpx
 
 
 def _merge_query(url: str, params: Mapping[str, Any] | None) -> str:
@@ -72,18 +71,6 @@ class AxurClient:
         if headers:
             req_headers.update(headers)
 
-        body: bytes | None = None
-        if json_body is not None:
-            body = json.dumps(json_body).encode("utf-8")
-            req_headers.setdefault("Content-Type", "application/json")
-        elif isinstance(data, (dict, tuple)):
-            body = urllib.parse.urlencode(data).encode("utf-8")
-            req_headers.setdefault(
-                "Content-Type", "application/x-www-form-urlencoded; charset=utf-8"
-            )
-        elif isinstance(data, bytes):
-            body = data
-
         # If dry-run, just return the request plan
         if dry_run:
             return {
@@ -98,29 +85,31 @@ class AxurClient:
                 ),
             }
 
-        req = urllib.request.Request(url=url, method=method.upper(), headers=req_headers, data=body)
-        context = ssl.create_default_context()
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout, context=context) as resp:
-                ctype = resp.headers.get("Content-Type", "application/json")
-                raw = resp.read()
-                if not raw:
-                    return None
-                if "json" in ctype:
-                    try:
-                        return json.loads(raw.decode("utf-8"))
-                    except json.JSONDecodeError:
-                        return raw.decode("utf-8", errors="replace")
-                return raw.decode("utf-8", errors="replace")
-        except urllib.error.HTTPError as e:
-            detail = None
-            try:
-                detail = e.read().decode("utf-8", errors="replace")
-            except Exception:
-                pass
-            if detail:
-                raise urllib.error.HTTPError(e.url, e.code, detail, e.headers, None)
-            raise
+        request_kwargs: dict[str, Any] = {"headers": req_headers}
+        if json_body is not None:
+            request_kwargs["json"] = json_body
+        elif isinstance(data, (dict, tuple)):
+            request_kwargs["data"] = urllib.parse.urlencode(data)
+            req_headers.setdefault(
+                "Content-Type", "application/x-www-form-urlencoded; charset=utf-8"
+            )
+        elif isinstance(data, bytes):
+            request_kwargs["content"] = data
+
+        with httpx.Client(timeout=self.timeout) as client:
+            resp = client.request(method.upper(), url, **request_kwargs)
+            if resp.status_code >= 400:
+                msg = f"HTTP {resp.status_code} for {resp.request.method} {resp.request.url}: {resp.text}"
+                raise httpx.HTTPStatusError(msg, request=resp.request, response=resp)
+            ctype = resp.headers.get("Content-Type", "application/json")
+            if not resp.content:
+                return None
+            if "json" in ctype:
+                try:
+                    return resp.json()
+                except json.JSONDecodeError:
+                    return resp.text
+            return resp.text
 
     # Public generic method
     def call(

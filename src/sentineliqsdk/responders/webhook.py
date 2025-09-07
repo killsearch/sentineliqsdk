@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
-import urllib.request
 from typing import Any
+
+import httpx
 
 from sentineliqsdk.models import ModuleMetadata, ResponderReport
 from sentineliqsdk.responders.base import Responder
@@ -16,7 +17,7 @@ def _as_bool(value: Any | None) -> bool:
 
 
 class WebhookResponder(Responder):
-    """POST (or GET) to a webhook URL using stdlib only.
+    """POST (or GET) to a webhook URL using httpx.
 
     Configuration via WorkerConfig.params (no environment variables):
     - Target URL: ``WorkerInput.data`` (``data_type='url'``) or params ``webhook.url``.
@@ -74,16 +75,21 @@ class WebhookResponder(Responder):
         if dry_run:
             return self.report(full)
 
-        req = urllib.request.Request(url=url, method=method)
-        for k, v in headers.items():
-            req.add_header(k, v)
+        # Build request and send using httpx
+        send_headers = dict(headers)
         if data_bytes is not None and content_type is not None:
-            req.add_header("Content-Type", content_type)
+            send_headers.setdefault("Content-Type", content_type)
 
         try:
-            with urllib.request.urlopen(req, data=data_bytes, timeout=30) as resp:  # nosec B310
+            with httpx.Client(timeout=30.0) as client:
+                resp = client.request(
+                    method,
+                    url,
+                    headers=send_headers,
+                    content=data_bytes,
+                )
                 full["status"] = "delivered"
-                full["http_status"] = getattr(resp, "status", None)
+                full["http_status"] = resp.status_code
         except Exception as exc:  # pragma: no cover - network dependent
             self.error(f"Webhook request failed: {exc}")
 

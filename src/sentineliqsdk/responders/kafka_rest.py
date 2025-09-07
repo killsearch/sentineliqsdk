@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import json
-import urllib.request
 from base64 import b64encode
 from typing import Any
+
+import httpx
 
 from sentineliqsdk.models import ModuleMetadata, ResponderReport
 from sentineliqsdk.responders.base import Responder
@@ -75,15 +75,11 @@ class KafkaResponder(Responder):
         if dry_run:
             return self.report(full)
 
-        req = urllib.request.Request(url=url, method="POST")
-        for k, v in headers.items():
-            req.add_header(k, v)
-        data = json.dumps(payload).encode("utf-8")
-
         try:
-            with urllib.request.urlopen(req, data=data, timeout=30) as resp:  # nosec B310
+            with httpx.Client(timeout=30.0) as client:
+                resp = client.request("POST", url, headers=headers, json=payload)
                 full["status"] = "published"
-                full["http_status"] = getattr(resp, "status", None)
+                full["http_status"] = resp.status_code
         except Exception as exc:  # pragma: no cover - network dependent
             self.error(f"Kafka REST publish failed: {exc}")
 

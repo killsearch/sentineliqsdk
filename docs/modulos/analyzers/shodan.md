@@ -18,7 +18,7 @@ expor chamadas dinâmicas a diversos endpoints do cliente Shodan.
   minificado para cada IP resolvido.
 - Heurística de veredito: marca como `malicious` se houver tag `malware`, `suspicious` se
   houver vulnerabilidades; caso contrário, `safe`.
-- Rede: utiliza `urllib`; proxies são honrados via `WorkerConfig.proxy`.
+- Rede: utiliza `httpx`; proxies são honrados via `WorkerConfig.proxy`.
 
 ## Métodos Suportados (dinâmico)
 

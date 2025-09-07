@@ -5,15 +5,14 @@ from typing import Any
 
 import pytest
 
+from sentineliqsdk.analyzers.axur import AxurAnalyzer
+from sentineliqsdk.analyzers.shodan import ShodanAnalyzer
 from sentineliqsdk.models import WorkerConfig, WorkerInput
 from sentineliqsdk.responders.kafka_rest import KafkaResponder
 from sentineliqsdk.responders.rabbitmq_http import RabbitMqResponder
 from sentineliqsdk.responders.smtp_gmail import GmailSmtpResponder
 from sentineliqsdk.responders.smtp_outlook import OutlookSmtpResponder
 from sentineliqsdk.responders.webhook import WebhookResponder
-from sentineliqsdk.analyzers.shodan import ShodanAnalyzer
-from sentineliqsdk.analyzers.axur import AxurAnalyzer
-
 
 REQUIRED_META_KEYS = {
     "Name",

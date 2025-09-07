@@ -30,6 +30,7 @@ nav:
     - Responders: examples/responders.md
   - Guides:
     - Agent Guide: guides/guide.md
+    - HTTPX Client Pattern: guides/httpx-client.md
   - Modules:
     - Analyzers:
       - Shodan: modulos/analyzers/shodan.md

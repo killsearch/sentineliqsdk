@@ -1,27 +1,11 @@
 from __future__ import annotations
 
-import io
 from typing import Any
-from unittest.mock import patch
 
+import httpx
 import pytest
 
 from sentineliqsdk.clients.axur import AxurClient, _merge_query
-
-
-class DummyResponse:
-    def __init__(self, body: bytes, content_type: str = "application/json") -> None:
-        self._body = body
-        self.headers = {"Content-Type": content_type}
-
-    def read(self) -> bytes:
-        return self._body
-
-    def __enter__(self) -> DummyResponse:
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        return None
 
 
 def test_merge_query_boolean_and_existing() -> None:
@@ -48,91 +32,102 @@ def test_request_json_success() -> None:
     client = AxurClient(api_token="tok")
     body = b'{"ok": true}'
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        return DummyResponse(body, content_type="application/json")
+    def _fake_request(self, method, url, **kwargs):
+        return httpx.Response(
+            status_code=200, content=body, headers={"Content-Type": "application/json"}
+        )
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client.call("GET", "/customers/customers")
         assert isinstance(result, dict) and result["ok"] is True
+    finally:
+        monkeypatch.undo()
 
 
 def test_request_text_fallback_on_invalid_json() -> None:
     client = AxurClient(api_token="tok")
     body = b"not-json"
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        return DummyResponse(body, content_type="application/json")
+    def _fake_request(self, method, url, **kwargs):
+        return httpx.Response(
+            status_code=200, content=body, headers={"Content-Type": "application/json"}
+        )
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client.call("GET", "/customers/customers")
         assert result == "not-json"
+    finally:
+        monkeypatch.undo()
 
 
 def test_request_non_json_content_type() -> None:
     client = AxurClient(api_token="tok")
     body = b"plain"
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        return DummyResponse(body, content_type="text/plain")
+    def _fake_request(self, method, url, **kwargs):
+        return httpx.Response(status_code=200, content=body, headers={"Content-Type": "text/plain"})
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client.call("GET", "/customers/customers")
         assert result == "plain"
+    finally:
+        monkeypatch.undo()
 
 
 def test_http_error_with_body() -> None:
     client = AxurClient(api_token="tok")
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        fp = io.BytesIO(b"failure-detail")
-        raise Exception  # type: ignore[misc]
-
-    # Build a real HTTPError with a file-like to exercise error branch
-    err = None
-    fp = io.BytesIO(b"failure-detail")
-    http_error = None
-    try:
-        http_error = __import__("urllib.error").error.HTTPError(
-            url="http://x", code=400, msg="bad", hdrs=None, fp=fp
+    def _fake_request(self, method, url, **kwargs):
+        return httpx.Response(
+            status_code=400,
+            content=b"failure-detail",
+            headers={"Content-Type": "text/plain"},
+            request=httpx.Request(method, url),
         )
-    except Exception as e:  # pragma: no cover - safety
-        err = e
-    assert err is None
 
-    def _raise_http_error(req, timeout=None, context=None):
-        raise http_error  # type: ignore[misc]
-
-    with patch("urllib.request.urlopen", _raise_http_error):
-        with pytest.raises(__import__("urllib.error").error.HTTPError) as ei:
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
+        with pytest.raises(httpx.HTTPStatusError) as ei:
             client.call("GET", "/customers/customers")
         assert "failure-detail" in str(ei.value)
+    finally:
+        monkeypatch.undo()
 
 
 def test_http_error_without_body() -> None:
     client = AxurClient(api_token="tok")
 
-    # Simulate HTTPError without readable body
-    http_error = __import__("urllib.error").error.HTTPError(
-        url="http://x", code=400, msg="bad", hdrs=None, fp=None
-    )
+    def _fake_request(self, method, url, **kwargs):
+        # No body
+        return httpx.Response(status_code=400, request=httpx.Request(method, url))
 
-    def _raise(req, timeout=None, context=None):
-        raise http_error
-
-    with patch("urllib.request.urlopen", _raise):
-        with pytest.raises(__import__("urllib.error").error.HTTPError):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
+        with pytest.raises(httpx.HTTPStatusError):
             client.call("GET", "/x")
+    finally:
+        monkeypatch.undo()
 
 
 def test_request_with_bytes_body_and_headers(monkeypatch) -> None:
     client = AxurClient(api_token="tok")
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        # Ensure custom header is propagated (case-insensitive)
-        assert (req.headers.get("X-Test") or req.headers.get("X-test")) == "1"
-        return DummyResponse(b"")  # no body
+    def _fake_request(self, method, url, **kwargs):
+        hdrs = kwargs.get("headers") or {}
+        assert hdrs.get("X-Test") == "1"
+        return httpx.Response(status_code=200, content=b"")
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client.call(
             "POST",
             "/tickets-api/tickets",
@@ -140,6 +135,8 @@ def test_request_with_bytes_body_and_headers(monkeypatch) -> None:
             data=b"raw",
         )
         assert result is None
+    finally:
+        monkeypatch.undo()
 
 
 def test_wrappers_delegate_to_request(monkeypatch) -> None:

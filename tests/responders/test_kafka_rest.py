@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import json
-
+import httpx
 import pytest
 
 from sentineliqsdk.models import WorkerConfig, WorkerInput
@@ -10,9 +9,11 @@ from sentineliqsdk.responders.kafka_rest import KafkaResponder
 
 def test_kafka_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     # Guard network
-    import urllib.request as _r
-
-    monkeypatch.setattr(_r, "urlopen", lambda *a, **k: (_ for _ in ()).throw(AssertionError))
+    monkeypatch.setattr(
+        httpx.Client,
+        "request",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError),
+    )
 
     input_data = WorkerInput(
         data_type="other",
@@ -31,26 +32,17 @@ def test_kafka_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_kafka_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    import urllib.request as _r
+    from typing import Any
 
-    captured = {}
+    captured: dict[str, Any] = {}
 
-    class DummyResp:
-        status = 200
+    def _fake_request(self, method, url, **kwargs):
+        captured["url"] = url
+        captured["headers"] = dict(kwargs.get("headers") or {})
+        captured["data"] = kwargs.get("json")
+        return httpx.Response(status_code=200)
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return None
-
-    def _fake_urlopen(req, data=None, timeout=None):
-        captured["url"] = req.full_url
-        captured["headers"] = dict(req.header_items())
-        captured["data"] = json.loads(data.decode("utf-8"))
-        return DummyResp()
-
-    monkeypatch.setattr(_r, "urlopen", _fake_urlopen)
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
 
     input_data = WorkerInput(
         data_type="other",
@@ -74,16 +66,16 @@ def test_kafka_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
     assert report.full_report.get("status") == "published"
     assert captured["url"].endswith("/topics/events")
     # Expect content-type header set and Authorization present
-    hdrs = {k.lower(): v for k, v in captured["headers"].items()}
+    hdrs = {k.lower(): v for k, v in (captured["headers"] or {}).items()}
     assert hdrs["content-type"] == "application/json"
-    assert any(k.lower() == "authorization" for k in captured["headers"].keys())
+    assert any(k.lower() == "authorization" for k in (captured["headers"] or {}).keys())
     assert captured["data"] == {"records": [{"value": "x"}]}
 
 
 def test_kafka_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    import urllib.request as _r
-
-    monkeypatch.setattr(_r, "urlopen", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        httpx.Client, "request", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
+    )
 
     input_data = WorkerInput(
         data_type="other",
@@ -101,18 +93,7 @@ def test_kafka_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_kafka_invalid_headers_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    import urllib.request as _r
-
-    class DummyResp:
-        status = 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return None
-
-    monkeypatch.setattr(_r, "urlopen", lambda *a, **k: DummyResp())
+    monkeypatch.setattr(httpx.Client, "request", lambda *a, **k: httpx.Response(200))
 
     input_data = WorkerInput(
         data_type="other",

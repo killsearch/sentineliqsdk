@@ -16,7 +16,7 @@ envio real exige os dois sinalizadores de segurança.
 
 ## Como Funciona
 
-- `POST {base}/api/exchanges/{vhost}/{exchange}/publish` com payload string.
+- Usa `httpx.Client` para enviar `POST {base}/api/exchanges/{vhost}/{exchange}/publish` com payload JSON.
 - Em dry‑run, retorna o plano; em execução real, adiciona `status` e `http_status`.
 
 ## Instanciação

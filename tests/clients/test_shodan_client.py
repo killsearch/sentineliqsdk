@@ -1,26 +1,9 @@
 from __future__ import annotations
 
-import io
-from unittest.mock import patch
-
+import httpx
 import pytest
 
 from sentineliqsdk.clients.shodan import ShodanClient, _merge_query
-
-
-class DummyResponse:
-    def __init__(self, body: bytes, content_type: str = "application/json") -> None:
-        self._body = body
-        self.headers = {"Content-Type": content_type}
-
-    def read(self) -> bytes:
-        return self._body
-
-    def __enter__(self) -> DummyResponse:
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        return None
 
 
 def test_merge_query_appends_params() -> None:
@@ -42,66 +25,101 @@ def test_get_parses_json_and_injects_key() -> None:
     client = ShodanClient(api_key="abc", base_url="https://api.shodan.io")
     captured = {}
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        # Capture URL to assert key param injection
-        captured["url"] = req.full_url
-        return DummyResponse(b'{"ok": true}')
+    def _fake_request(self, method, url, **kwargs):
+        captured["url"] = url
+        return httpx.Response(
+            status_code=200, content=b'{"ok": true}', headers={"Content-Type": "application/json"}
+        )
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    # Patch httpx.Client.request
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client._get("/shodan/ports")
         assert result == {"ok": True}
         assert "key=abc" in captured["url"]
+    finally:
+        monkeypatch.undo()
 
 
 def test_post_with_json_body() -> None:
     client = ShodanClient(api_key="abc")
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        # Ensure content-type header is json (case-insensitive in urllib)
-        ct = req.headers.get("Content-Type") or req.headers.get("Content-type")
-        assert ct and ct.startswith("application/json")
-        return DummyResponse(b'{"status": "ok"}')
+    def _fake_request(self, method, url, **kwargs):
+        # Ensure content-type header is json
+        hdrs = kwargs.get("headers") or {}
+        ct = hdrs.get("Content-Type")
+        # httpx sets the json content-type automatically, but header may not be present here;
+        # Accept either header set by client or rely on body being present in json kwarg
+        assert (kwargs.get("json") is not None) or (ct and ct.startswith("application/json"))
+        return httpx.Response(
+            status_code=200,
+            content=b'{"status": "ok"}',
+            headers={"Content-Type": "application/json"},
+        )
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client._post("/shodan/scan", json_body={"ips": "1.1.1.1"})
         assert result["status"] == "ok"
+    finally:
+        monkeypatch.undo()
 
 
 def test_post_with_form_data() -> None:
     client = ShodanClient(api_key="abc")
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        ct = req.headers.get("Content-Type") or req.headers.get("Content-type")
-        assert ct and "application/x-www-form-urlencoded" in ct
-        return DummyResponse(b'{"done": true}')
+    def _fake_request(self, method, url, **kwargs):
+        hdrs = kwargs.get("headers") or {}
+        ct = hdrs.get("Content-Type") or ""
+        assert "application/x-www-form-urlencoded" in ct
+        return httpx.Response(
+            status_code=200, content=b'{"done": true}', headers={"Content-Type": "application/json"}
+        )
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client._post("/shodan/scan", data={"ips": "8.8.8.8"})
         assert result["done"] is True
+    finally:
+        monkeypatch.undo()
 
 
 def test_http_error_includes_body() -> None:
     client = ShodanClient(api_key="abc")
-    fp = io.BytesIO(b"bad-request")
-    http_error = __import__("urllib.error").error.HTTPError(
-        url="http://x", code=400, msg="bad", hdrs=None, fp=fp
-    )
 
-    def _raise(req, timeout=None, context=None):
-        raise http_error
+    def _fake_request(self, method, url, **kwargs):
+        return httpx.Response(
+            status_code=400,
+            content=b"bad-request",
+            headers={"Content-Type": "text/plain"},
+            request=httpx.Request(method, url),
+        )
 
-    with patch("urllib.request.urlopen", _raise):
-        with pytest.raises(__import__("urllib.error").error.HTTPError) as ei:
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
+        with pytest.raises(httpx.HTTPStatusError) as ei:
             client._get("/shodan/ports")
         assert "bad-request" in str(ei.value)
+    finally:
+        monkeypatch.undo()
 
 
 def test_post_with_bytes_data() -> None:
     client = ShodanClient(api_key="abc")
 
-    def _fake_urlopen(req, timeout=None, context=None):
-        return DummyResponse(b"ok", content_type="text/plain")
+    def _fake_request(self, method, url, **kwargs):
+        return httpx.Response(
+            status_code=200, content=b"ok", headers={"Content-Type": "text/plain"}
+        )
 
-    with patch("urllib.request.urlopen", _fake_urlopen):
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
+    try:
         result = client._post("/shodan/scan", data=b"raw")
         assert result == "ok"
+    finally:
+        monkeypatch.undo()

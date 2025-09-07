@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import json
+from typing import Any
 
+import httpx
 import pytest
 
 from sentineliqsdk.models import WorkerConfig, WorkerInput
@@ -34,26 +35,16 @@ def test_rabbitmq_dry_run_url(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_rabbitmq_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    import urllib.request as _r
+    captured: dict[str, Any] = {}
 
-    captured = {}
+    def _fake_request(self, method, url, **kwargs):
+        captured["url"] = url
+        captured["headers"] = dict(kwargs.get("headers") or {})
+        # httpx json kwarg arrives as dict
+        captured["data"] = kwargs.get("json")
+        return httpx.Response(status_code=200)
 
-    class DummyResp:
-        status = 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return None
-
-    def _fake_urlopen(req, data=None, timeout=None):
-        captured["url"] = req.full_url
-        captured["headers"] = dict(req.header_items())
-        captured["data"] = json.loads(data.decode("utf-8"))
-        return DummyResp()
-
-    monkeypatch.setattr(_r, "urlopen", _fake_urlopen)
+    monkeypatch.setattr(httpx.Client, "request", _fake_request)
 
     input_data = WorkerInput(
         data_type="other",
@@ -83,9 +74,9 @@ def test_rabbitmq_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_rabbitmq_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    import urllib.request as _r
-
-    monkeypatch.setattr(_r, "urlopen", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        httpx.Client, "request", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
+    )
 
     input_data = WorkerInput(
         data_type="other",
@@ -103,18 +94,7 @@ def test_rabbitmq_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_rabbitmq_invalid_properties_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    import urllib.request as _r
-
-    class DummyResp:
-        status = 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return None
-
-    monkeypatch.setattr(_r, "urlopen", lambda *a, **k: DummyResp())
+    monkeypatch.setattr(httpx.Client, "request", lambda *a, **k: httpx.Response(200))
 
     input_data = WorkerInput(
         data_type="other",

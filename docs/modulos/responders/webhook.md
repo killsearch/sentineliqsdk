@@ -1,6 +1,6 @@
 # Webhook Responder
 
-Envia uma requisição HTTP para um webhook usando apenas a stdlib (`urllib`). Por padrão, roda
+Envia uma requisição HTTP para um webhook usando httpx. Por padrão, roda
 em dry‑run; o envio real é protegido por sinalizadores de segurança.
 
 ## Visão Geral
@@ -13,7 +13,7 @@ em dry‑run; o envio real é protegido por sinalizadores de segurança.
 
 ## Como Funciona
 
-- Constrói um `urllib.request.Request` com método, cabeçalhos e corpo.
+- Constrói e envia a requisição com `httpx.Client.request` (método, cabeçalhos e corpo).
 - Quando em dry‑run, retorna o `ResponderReport` sem realizar a chamada.
 - Quando executado, envia a requisição e adiciona `status` e `http_status`.
 
@@ -85,7 +85,7 @@ O responder inclui `full_report.metadata` com:
 ```json
 {
   "Name": "Webhook Responder",
-  "Description": "POST/GET to a webhook URL using stdlib",
+  "Description": "POST/GET to a webhook URL using httpx",
   "Author": ["SentinelIQ Team <team@sentineliq.com.br>"],
   "License": "SentinelIQ License",
   "pattern": "webhook",

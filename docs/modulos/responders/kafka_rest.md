@@ -14,7 +14,7 @@ envio real exige os dois sinalizadores de segurança.
 
 ## Como Funciona
 
-- Monta `POST {base}/topics/{topic}` com payload `{ "records": [{"value": value}] }`.
+- Usa `httpx.Client` para enviar `POST {base}/topics/{topic}` com payload `{ "records": [{"value": value}] }`.
 - Em dry‑run, retorna o plano; em execução real, adiciona `status` e `http_status` ao relatório.
 
 ## Instanciação
