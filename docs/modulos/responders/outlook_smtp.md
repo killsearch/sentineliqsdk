@@ -6,9 +6,9 @@ executa em dry‑run; o envio real requer portas de segurança habilitadas.
 ## Visão Geral
 
 - Destinatário: `WorkerInput.data` (`data_type == "mail"`).
-- Conteúdo: `config.params['email'].subject` e `config.params['email'].body`.
-- Remetente: `config.params['email'].from` (padrão: `outlook.username`).
-- Autenticação: `config.secrets['outlook'].username` / `config.secrets['outlook'].password`.
+- Conteúdo: `email.subject` e `email.body`.
+- Remetente: `email.from` (padrão: `outlook.username`).
+- Autenticação: `outlook.username` / `outlook.password`.
 - Portas de segurança: `config.params.execute=True` e `config.params.include_dangerous=True`.
 
 ## Instanciação

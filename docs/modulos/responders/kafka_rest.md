@@ -5,11 +5,11 @@ envio real exige os dois sinalizadores de segurança.
 
 ## Visão Geral
 
-- Endpoint: `config.params['kafka'].base_url` (ex.: `http://localhost:8082`)
-- Tópico: `config.params['kafka'].topic`
-- Valor: `config.params['kafka'].value` (opcional; padrão é `WorkerInput.data`)
-- Cabeçalhos: `config.params['kafka'].headers` (dict)
-- Autenticação: `config.secrets['kafka'].basic_auth` ("user:pass") ou `username/password`
+- Endpoint: `kafka.base_url` (ex.: `http://localhost:8082`)
+- Tópico: `kafka.topic`
+- Valor: `kafka.value` (opcional; padrão é `WorkerInput.data`)
+- Cabeçalhos: `kafka.headers` (dict)
+- Autenticação: `kafka.basic_auth` ("user:pass") ou `kafka.username/password`
 - Portas de segurança: `config.params.execute` e `config.params.include_dangerous`
 
 ## Como Funciona
@@ -47,7 +47,7 @@ Sem suporte por variáveis de ambiente.
 ## Uso Correto
 
 - Defina o tópico e o valor; use cabeçalhos adicionais conforme o proxy/segurança do cluster.
-- Para Basic Auth, defina `config.secrets['kafka'].basic_auth = "user:pass"`.
+- Para Basic Auth, defina `kafka.basic_auth = "user:pass"` em `WorkerConfig.secrets`.
 
 ## Retorno
 

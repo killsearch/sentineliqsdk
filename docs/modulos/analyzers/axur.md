@@ -6,7 +6,7 @@ chamada e retorna um `AnalyzerReport` com os detalhes da resposta.
 
 ## Visão Geral
 
-- Chamadas dinâmicas: `config.params['axur']['method']`/`config.params['axur']['params']` ou
+- Chamadas dinâmicas: `axur.method`/`axur.params` em `WorkerConfig.params` ou
   `data_type == "other"` com `{ "method": "...", "params": {...} }`.
 - Método genérico `call` permite invocar qualquer rota REST (`http_method`, `path`, `query`,
   `headers`, `json`, `data`, `dry_run`).
@@ -55,8 +55,8 @@ report = AxurAnalyzer(inp).execute()
 
 ## Configuração
 
-- `WorkerConfig.secrets['axur']['api_token']`
-- `WorkerConfig.params['axur']['method']` e `WorkerConfig.params['axur']['params']` (dict)
+- `axur.api_token` em `WorkerConfig.secrets`
+- `axur.method` e `axur.params` (dict) em `WorkerConfig.params`
 - Proxies: `WorkerInput.config.proxy`
 
 Nota: não há suporte por variáveis de ambiente.

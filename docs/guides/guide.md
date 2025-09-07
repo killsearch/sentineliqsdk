@@ -6,6 +6,39 @@ this repository.
 
 Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
 
+## Module Metadata (New)
+
+- Every Analyzer/Responder must declare a `METADATA` attribute using
+  `sentineliqsdk.models.ModuleMetadata` and include it in the `full_report` under the
+  `metadata` key.
+- Required fields (keys when serialized via `to_dict()`):
+  - `Name`, `Description`, `Author` (list of "Name <email>"), `License`
+  - `pattern` (ex.: "smtp", "webhook", "kafka", "threat-intel")
+  - `doc_pattern` (curta descrição do formato da documentação)
+  - `doc` (URL pública da documentação do módulo — site do SentinelIQ)
+  - `VERSION` (um de: `DEVELOPER`, `TESTING`, `STABLE`)
+
+Example:
+
+```python
+from sentineliqsdk.models import ModuleMetadata
+
+class MyResponder(Responder):
+    METADATA = ModuleMetadata(
+        name="My Responder",
+        description="Does something useful",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="webhook",
+        doc_pattern="MkDocs module page; programmatic usage",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/my_responder/",
+        version_stage="TESTING",
+    )
+
+    def execute(self) -> ResponderReport:
+        full = {"action": "noop", "metadata": self.METADATA.to_dict()}
+        return self.report(full)
+```
+
 ## Mandatory Examples (Agent Rule)
 
 - Always add a runnable example in `examples/` when you introduce a new Analyzer, Responder,

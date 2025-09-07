@@ -5,10 +5,10 @@ em dry‑run; o envio real é protegido por sinalizadores de segurança.
 
 ## Visão Geral
 
-- URL alvo: `WorkerInput.data` (`data_type == "url"`) ou `config.params['webhook'].url`.
-- Método: `config.params['webhook'].method` (padrão `POST`). Suporta `POST` e `GET`.
-- Cabeçalhos: `config.params['webhook'].headers` (dict).
-- Corpo: `config.params['webhook'].body` (string ou dict; JSON gera `application/json`).
+- URL alvo: `WorkerInput.data` (`data_type == "url"`) ou `webhook.url`.
+- Método: `webhook.method` (padrão `POST`). Suporta `POST` e `GET`.
+- Cabeçalhos: `webhook.headers` (dict).
+- Corpo: `webhook.body` (string ou dict; JSON gera `application/json`).
 - Portas de segurança: requer `config.params.execute=True` e `config.params.include_dangerous=True`.
 
 ## Como Funciona

@@ -6,9 +6,9 @@ o envio real exige habilitar as portas de segurança.
 ## Visão Geral
 
 - Destinatário: `WorkerInput.data` (`data_type == "mail"`).
-- Conteúdo: `config.params['email'].subject` e `config.params['email'].body`.
-- Remetente: `config.params['email'].from` (padrão: `gmail.username`).
-- Autenticação: `config.secrets['gmail'].username` / `config.secrets['gmail'].password`.
+- Conteúdo: `email.subject` e `email.body`.
+- Remetente: `email.from` (padrão: `gmail.username`).
+- Autenticação: `gmail.username` / `gmail.password`.
 - Portas de segurança: `config.params.execute=True` e `config.params.include_dangerous=True`.
 
 ## Como Funciona

@@ -5,13 +5,13 @@ envio real exige os dois sinalizadores de segurança.
 
 ## Visão Geral
 
-- Base: `config.params['rabbitmq'].api_url` (ex.: `http://localhost:15672`)
-- VHost: `config.params['rabbitmq'].vhost` (padrão: `/`)
-- Exchange: `config.params['rabbitmq'].exchange` (obrigatório)
-- Routing Key: `config.params['rabbitmq'].routing_key` (padrão: vazio)
-- Autenticação: `config.secrets['rabbitmq'].username`/`config.secrets['rabbitmq'].password`
-- Propriedades: `config.params['rabbitmq'].properties` (dict)
-- Mensagem: `config.params['rabbitmq'].message` (padrão: `WorkerInput.data`)
+- Base: `rabbitmq.api_url` (ex.: `http://localhost:15672`)
+- VHost: `rabbitmq.vhost` (padrão: `/`)
+- Exchange: `rabbitmq.exchange` (obrigatório)
+- Routing Key: `rabbitmq.routing_key` (padrão: vazio)
+- Autenticação: `rabbitmq.username`/`rabbitmq.password`
+- Propriedades: `rabbitmq.properties` (dict)
+- Mensagem: `rabbitmq.message` (padrão: `WorkerInput.data`)
 - Portas de segurança: `config.params.execute` e `config.params.include_dangerous`
 
 ## Como Funciona

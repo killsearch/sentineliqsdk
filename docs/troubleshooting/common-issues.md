@@ -21,8 +21,8 @@
   - Some operations also require `--include-dangerous`.
 
 - Missing credentials
-  - Shodan: use `WorkerConfig.secrets['shodan']['api_key']` or pass `--api-key` to the example.
-  - Axur: use `WorkerConfig.secrets['axur']['api_token']` or pass `--token`.
+  - Shodan: set `shodan.api_key` in `WorkerConfig.secrets` or pass `--api-key` to the example.
+  - Axur: set `axur.api_token` in `WorkerConfig.secrets` or pass `--token`.
 
 - MkDocs build errors
   - Ensure dev dependencies are installed: `pip install -e .[dev]` or `uv sync --dev`.

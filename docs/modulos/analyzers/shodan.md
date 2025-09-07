@@ -8,7 +8,7 @@ expor chamadas dinâmicas a diversos endpoints do cliente Shodan.
 - Analisa `ip`, `domain` e `fqdn` diretamente, retornando um `AnalyzerReport` com
   `verdict`, `taxonomy` e `details`.
 - Suporta chamadas dinâmicas a métodos do cliente via:
-  - `config.params['shodan']['method']` e `config.params['shodan']['params']` (dict)
+  - `shodan.method` e `shodan.params` (dict) em `WorkerConfig.params`
   - ou `data_type == "other"` com `data` em JSON: `{"method": "...", "params": {...}}`
 
 ## Como Funciona
@@ -62,9 +62,8 @@ report = ShodanAnalyzer(inp).execute()
 
 ## Configuração
 
-- Autenticação: `WorkerConfig.secrets['shodan']['api_key']`
-- Chamada dinâmica: `WorkerConfig.params['shodan']['method']` e
-  `WorkerConfig.params['shodan']['params']` (dict)
+- Autenticação: `shodan.api_key` em `WorkerConfig.secrets`
+- Chamada dinâmica: `shodan.method` e `shodan.params` (dict) em `WorkerConfig.params`
 - Proxies: `WorkerInput.config.proxy.http/https`
 
 Exemplo (dataclasses):
