@@ -17,6 +17,7 @@ dependencies = [
     "mkdocs-mermaid2-plugin>=1.2.2",
     "pypdns>=2.2.8",
     "pypssl>=2.2",
+    "pyvulnerabilitylookup>=2.14.0",
     "PyYAML>=6.0.2",
 ]
 
