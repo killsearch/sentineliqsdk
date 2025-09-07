@@ -19,6 +19,20 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 [0.1.0]: https://github.com/killsearch/sentineliqsdk/releases/tag/v0.1.0
 
+## v0.2.2 (2025-09-07)
+
+### Feat
+
+- **responders**: add SMTP Gmail/Outlook, Webhook, Kafka (REST), and RabbitMQ (HTTP) responders with runnable examples and docs
+
+### Fix
+
+- **examples**: annotate responder secrets dicts to satisfy mypy
+
+### Refactor
+
+- align responders/analyzers implementations and tests
+
 ## v0.2.1 (2025-09-06)
 
 ### Feat
