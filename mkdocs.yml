@@ -37,6 +37,7 @@ nav:
       - Axur: modulos/analyzers/axur.md
       - AbuseIPDB: modulos/analyzers/abuseipdb.md
       - AnyRun: modulos/analyzers/anyrun.md
+      - AutoFocus: modulos/analyzers/autofocus.md
     - Responders:
       - Webhook: modulos/responders/webhook.md
       - Gmail SMTP: modulos/responders/gmail_smtp.md

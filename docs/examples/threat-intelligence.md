@@ -46,7 +46,34 @@ python examples/analyzers/abuseipdb_example.py --ip 1.2.3.4 --api-key YOUR_KEY -
 
 File: examples/analyzers/abuseipdb_example.py
 
+AutoFocus (Palo Alto Networks threat intelligence):
+
+```bash
+# Search for IP address (dry-run)
+python examples/analyzers/autofocus_example.py --data-type ip --data 1.2.3.4 --service search_ioc
+
+# Analyze hash sample (dry-run)
+python examples/analyzers/autofocus_example.py --data-type hash --data abc123... --service get_sample_analysis
+
+# Search for domain (dry-run)
+python examples/analyzers/autofocus_example.py --data-type domain --data malicious.com --service search_ioc
+
+# Execute real searches (requires API key)
+python examples/analyzers/autofocus_example.py --data-type ip --data 1.2.3.4 --service search_ioc --execute
+
+# Use specific API key
+python examples/analyzers/autofocus_example.py \
+  --data-type url \
+  --data "https://malicious.com/payload.exe" \
+  --service search_ioc \
+  --apikey YOUR_API_KEY \
+  --execute
+```
+
+File: examples/analyzers/autofocus_example.py
+
 Notes:
 
 - Ensure proxies if required by your network: use `WorkerInput.config.proxy`.
 - Respect TLP/PAP defaults in your environment; see the Agent Guide for details.
+- AutoFocus requires a valid API key for real searches; use `--apikey` or set `AUTOFOCUS_API_KEY` environment variable.
