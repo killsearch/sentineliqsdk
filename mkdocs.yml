@@ -36,6 +36,7 @@ nav:
       - Shodan: modulos/analyzers/shodan.md
       - CIRCL Hashlookup: modulos/analyzers/circl_hashlookup.md
       - CIRCL Passive DNS: modulos/analyzers/circl_passivedns.md
+      - CIRCL PassiveSSL: modulos/analyzers/circl_passivessl.md
       - Axur: modulos/analyzers/axur.md
       - AbuseIPDB: modulos/analyzers/abuseipdb.md
       - AnyRun: modulos/analyzers/anyrun.md
