@@ -40,6 +40,7 @@ nav:
       - CIRCL Vulnerability Lookup: modulos/analyzers/circl_vulnerability_lookup.md
       - Axur: modulos/analyzers/axur.md
       - AbuseIPDB: modulos/analyzers/abuseipdb.md
+      - ChainAbuse: modulos/analyzers/chainabuse.md
       - AnyRun: modulos/analyzers/anyrun.md
       - AutoFocus: modulos/analyzers/autofocus.md
       - MCAP: modulos/analyzers/mcap.md

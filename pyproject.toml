@@ -16,6 +16,7 @@ dependencies = [
     "censys-platform>=0.8.0",
     "httpx>=0.27.0",
     "mkdocs-mermaid2-plugin>=1.2.2",
+    "pyclamd>=0.4.0",
     "pypdns>=2.2.8",
     "pypssl>=2.2",
     "pyvulnerabilitylookup>=2.14.0",
