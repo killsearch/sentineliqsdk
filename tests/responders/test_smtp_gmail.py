@@ -19,10 +19,12 @@ class DummySMTP:
 
     # Context manager API
     def __enter__(self) -> DummySMTP:
+        """Enter context manager."""
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        return None
+        """Exit context manager."""
+        return
 
     # SMTP API we use
     def ehlo(self) -> None:
@@ -130,4 +132,5 @@ def test_gmail_execute_no_login_and_run(monkeypatch: pytest.MonkeyPatch) -> None
     # Call run() to cover delegating path
     GmailSmtpResponder(input_data).run()
     # Ensure no login happened
-    assert instances and instances[0].logged_in is None
+    assert instances
+    assert instances[0].logged_in is None

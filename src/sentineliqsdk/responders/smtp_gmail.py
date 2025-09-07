@@ -1,3 +1,5 @@
+"""Gmail SMTP responder for SentinelIQ SDK."""
+
 from __future__ import annotations
 
 import smtplib
@@ -39,6 +41,7 @@ class GmailSmtpResponder(Responder):
     )
 
     def execute(self) -> ResponderReport:
+        """Execute the Gmail SMTP operation."""
         to_addr = str(self.get_data())
 
         username = self.get_secret("gmail.username") or self.get_secret("smtp.username")
@@ -88,4 +91,5 @@ class GmailSmtpResponder(Responder):
         return self.report(full)
 
     def run(self) -> None:
+        """Run the responder and execute the Gmail SMTP operation."""
         self.execute()

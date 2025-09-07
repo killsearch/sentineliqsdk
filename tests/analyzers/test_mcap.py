@@ -19,11 +19,13 @@ class TestMCAPAnalyzer:
             check_tlp=False,
             check_pap=False,
             auto_extract=False,
-            mcap_private_samples=False,
-            mcap_minimum_confidence=80,
-            mcap_minimum_severity=80,
-            mcap_polling_interval=60,
-            mcap_max_sample_result_wait=1000,
+            params={
+                "mcap_private_samples": False,
+                "mcap_minimum_confidence": 80,
+                "mcap_minimum_severity": 80,
+                "mcap_polling_interval": 60,
+                "mcap_max_sample_result_wait": 1000,
+            },
             secrets=self.secrets,
         )
 

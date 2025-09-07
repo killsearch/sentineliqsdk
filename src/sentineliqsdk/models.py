@@ -62,6 +62,7 @@ class WorkerConfig:
     secrets: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:  # type: ignore[override]
+        """Post-initialization to ensure mapping immutability."""
         # Ensure mapping immutability for params and secrets
         if isinstance(self.params, dict):
             object.__setattr__(self, "params", MappingProxyType(dict(self.params)))
@@ -113,6 +114,7 @@ class Artifact:
     extra: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:  # type: ignore[override]
+        """Post-initialization to ensure deep immutability."""
         # Wrap mutable mappings in an immutable proxy to ensure deep immutability
         if isinstance(self.extra, dict):
             object.__setattr__(self, "extra", MappingProxyType(dict(self.extra)))
@@ -126,6 +128,7 @@ class Operation:
     parameters: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:  # type: ignore[override]
+        """Post-initialization to ensure parameter immutability."""
         if isinstance(self.parameters, dict):
             object.__setattr__(self, "parameters", MappingProxyType(dict(self.parameters)))
 

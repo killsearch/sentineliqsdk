@@ -27,7 +27,8 @@ REQUIRED_META_KEYS = {
 
 
 def _assert_metadata(full: dict[str, Any]) -> None:
-    assert "metadata" in full and isinstance(full["metadata"], dict)
+    assert "metadata" in full
+    assert isinstance(full["metadata"], dict)
     missing = REQUIRED_META_KEYS - set(full["metadata"].keys())
     assert not missing, f"Missing metadata keys: {missing}"
 

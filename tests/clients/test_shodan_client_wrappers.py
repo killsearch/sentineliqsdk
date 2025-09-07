@@ -5,17 +5,22 @@ from typing import Any
 from sentineliqsdk.clients.shodan import ShodanClient
 
 
-def test_wrappers_delegate(monkeypatch) -> None:
+def _create_mock_client(monkeypatch) -> tuple[ShodanClient, list[tuple[str, str, dict[str, Any]]]]:
+    """Create a mock ShodanClient for testing."""
     captured: list[tuple[str, str, dict[str, Any]]] = []
 
-    def fake_request(self, method, path, **kwargs):
+    def fake_request(self, method, path, options=None, **kwargs):
         captured.append((method, path, kwargs))
         return {"ok": True}
 
     monkeypatch.setattr(ShodanClient, "_request", fake_request)
-    c = ShodanClient(api_key="k")
+    return ShodanClient(api_key="k"), captured
 
-    # Host/Host Search
+
+def test_host_search_methods(monkeypatch) -> None:
+    """Test host and search related methods."""
+    c, captured = _create_mock_client(monkeypatch)
+
     c.host_information("1.1.1.1", history=True, minify=True)
     c.search_host_count("port:80")
     c.search_host("port:80", page=1, facets="os:linux", minify=True)
@@ -24,12 +29,26 @@ def test_wrappers_delegate(monkeypatch) -> None:
     c.search_host_tokens("ssl")
     c.ports()
     c.protocols()
-    # Scanning
+
+    assert len(captured) == 8
+
+
+def test_scanning_methods(monkeypatch) -> None:
+    """Test scanning related methods."""
+    c, captured = _create_mock_client(monkeypatch)
+
     c.scan("8.8.8.8")
     c.scan_internet(443, "https")
     c.scans()
     c.scan_by_id("scanid")
-    # Alerts/Notifiers
+
+    assert len(captured) == 4
+
+
+def test_alert_notifier_methods(monkeypatch) -> None:
+    """Test alert and notifier related methods."""
+    c, captured = _create_mock_client(monkeypatch)
+
     c.alert_create("name", ["1.1.1.1"], expires=60)
     c.alert_info("aid")
     c.alert_delete("aid")
@@ -48,6 +67,14 @@ def test_wrappers_delegate(monkeypatch) -> None:
     c.notifier_delete("nid")
     c.notifier_get("nid")
     c.notifier_update("nid", "slack", {"url": "http://"})
+
+    assert len(captured) == 18
+
+
+def test_other_api_methods(monkeypatch) -> None:
+    """Test other API methods (queries, data, org, account, DNS, tools)."""
+    c, captured = _create_mock_client(monkeypatch)
+
     # Query directory
     c.queries()
     c.query_search("port:22", page=1)
@@ -70,4 +97,4 @@ def test_wrappers_delegate(monkeypatch) -> None:
     c.tools_myip()
     c.api_info()
 
-    assert len(captured) >= 30
+    assert len(captured) == 15

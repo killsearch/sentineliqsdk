@@ -56,6 +56,7 @@ DANGEROUS_METHODS = {
 
 
 def main(argv: list[str]) -> int:
+    """Run CirclHashlookupAnalyzer for all supported methods."""
     ap = argparse.ArgumentParser(
         description="Run CirclHashlookupAnalyzer for all supported methods"
     )

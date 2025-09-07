@@ -1,3 +1,5 @@
+"""Outlook SMTP responder for SentinelIQ SDK."""
+
 from __future__ import annotations
 
 import smtplib
@@ -39,6 +41,7 @@ class OutlookSmtpResponder(Responder):
     )
 
     def execute(self) -> ResponderReport:
+        """Execute the Outlook SMTP operation."""
         to_addr = str(self.get_data())
 
         username = self.get_secret("outlook.username") or self.get_secret("smtp.username")
@@ -87,4 +90,5 @@ class OutlookSmtpResponder(Responder):
         return self.report(full)
 
     def run(self) -> None:
+        """Run the responder and execute the Outlook SMTP operation."""
         self.execute()

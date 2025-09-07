@@ -17,10 +17,12 @@ class DummySMTP:
         self.sent: list[object] = []
 
     def __enter__(self) -> DummySMTP:
+        """Enter context manager."""
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        return None
+        """Exit context manager."""
+        return
 
     def ehlo(self) -> None:
         return None
@@ -109,4 +111,5 @@ def test_outlook_execute_no_login_and_run(monkeypatch: pytest.MonkeyPatch) -> No
         config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
     )
     OutlookSmtpResponder(input_data).run()
-    assert instances and instances[0].logged_in is None
+    assert instances
+    assert instances[0].logged_in is None

@@ -68,7 +68,7 @@ def test_kafka_execute_success(monkeypatch: pytest.MonkeyPatch) -> None:
     # Expect content-type header set and Authorization present
     hdrs = {k.lower(): v for k, v in (captured["headers"] or {}).items()}
     assert hdrs["content-type"] == "application/json"
-    assert any(k.lower() == "authorization" for k in (captured["headers"] or {}).keys())
+    assert any(k.lower() == "authorization" for k in (captured["headers"] or {}))
     assert captured["data"] == {"records": [{"value": "x"}]}
 
 

@@ -1,3 +1,9 @@
+"""Webhook Responder Example.
+
+This example demonstrates how to use the Webhook Responder to trigger
+HTTP webhooks with custom headers and payloads.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +14,7 @@ from sentineliqsdk.responders.webhook import WebhookResponder
 
 
 def main() -> None:
+    """Run the Webhook Responder example."""
     parser = argparse.ArgumentParser(description="Trigger a webhook (Responder)")
     parser.add_argument("--url", required=True, help="Webhook URL")
     parser.add_argument(

@@ -1,3 +1,9 @@
+"""RabbitMQ HTTP Responder Example.
+
+This example demonstrates how to use the RabbitMQ HTTP Responder to publish
+messages to RabbitMQ exchanges via HTTP API.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +14,7 @@ from sentineliqsdk.responders.rabbitmq_http import RabbitMqResponder
 
 
 def main() -> None:
+    """Run the RabbitMQ HTTP Responder example."""
     parser = argparse.ArgumentParser(description="Publish to RabbitMQ via HTTP API (Responder)")
     parser.add_argument("--api-url", required=True, help="RabbitMQ HTTP API base URL")
     parser.add_argument("--vhost", default="/", help="RabbitMQ vhost (default /)")

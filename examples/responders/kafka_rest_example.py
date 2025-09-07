@@ -1,3 +1,9 @@
+"""Kafka REST Responder Example.
+
+This example demonstrates how to use the Kafka REST Responder to publish
+messages to Kafka topics via REST Proxy.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +14,7 @@ from sentineliqsdk.responders.kafka_rest import KafkaResponder
 
 
 def main() -> None:
+    """Run the Kafka REST Responder example."""
     parser = argparse.ArgumentParser(description="Publish to Kafka via REST Proxy (Responder)")
     parser.add_argument("--rest-url", required=True, help="REST proxy base URL")
     parser.add_argument("--topic", required=True, help="Topic name")

@@ -2,19 +2,14 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
+
 # Optional client exports. Keep package import resilient when optional
 # integrations are not present in the environment or repo.
-__all__: list[str] = []
-try:  # pragma: no cover - import guard
+__all__: list[str] = ["AxurClient", "ShodanClient"]
+
+with suppress(Exception):  # pragma: no cover - import guard
     from sentineliqsdk.clients.shodan import ShodanClient
 
-    __all__.append("ShodanClient")
-except Exception:  # pragma: no cover - import guard
-    pass
-
-try:  # pragma: no cover - import guard
+with suppress(Exception):  # pragma: no cover - import guard
     from sentineliqsdk.clients.axur import AxurClient
-
-    __all__.append("AxurClient")
-except Exception:  # pragma: no cover - import guard
-    pass

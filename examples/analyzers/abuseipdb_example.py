@@ -1,10 +1,10 @@
 """Runnable example for AbuseIPDBAnalyzer.
 
-Defaults to dry‑run (plan only). Use --execute to perform the real API call.
+Defaults to dry-run (plan only). Use --execute to perform the real API call.
 
 Usage:
   python examples/analyzers/abuseipdb_example.py --ip 1.2.3.4 --api-key KEY           # plan only
-  python examples/analyzers/abuseipdb_example.py --ip 1.2.3.4 --api-key KEY --execute  # perform call
+  python examples/analyzers/abuseipdb_example.py --ip 1.2.3.4 --api-key KEY --execute
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from sentineliqsdk.analyzers.abuseipdb import AbuseIPDBAnalyzer
 
 
 def main(argv: list[str]) -> int:
+    """Run the AbuseIPDB analyzer example with command line arguments."""
     ap = argparse.ArgumentParser(description="Run AbuseIPDBAnalyzer for a given IP")
     ap.add_argument("--ip", required=True, help="IP address to check")
     ap.add_argument("--api-key", dest="api_key", required=True)

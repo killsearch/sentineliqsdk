@@ -18,27 +18,41 @@ class DummyHttpClient:
     def __init__(self, *a, **k):
         pass
 
-    def get(self, url: str, **kwargs) -> MockResponse:
-        """Mock GET request."""
-        if "/lookup/md5/" in url:
-            hash_value = url.split("/lookup/md5/")[1]
-            if hash_value == "5d41402abc4b2a76b9719d911017c592":
-                return MockResponse(200, {"hashlookup:trust": 100, "MD5": hash_value.upper()})
-            return MockResponse(404, {"error": "not_found"})
-        if "/lookup/sha1/" in url:
-            hash_value = url.split("/lookup/sha1/")[1]
-            if hash_value == "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d":
-                return MockResponse(200, {"hashlookup:trust": 100, "SHA-1": hash_value.upper()})
-            return MockResponse(404, {"error": "not_found"})
-        if "/lookup/sha256/" in url:
-            hash_value = url.split("/lookup/sha256/")[1]
-            if hash_value == "2cf24dba4f21a03f4b3d914f42305d25206eaf64a81f73b3e4e5b9bd3e978038":
-                return MockResponse(200, {"hashlookup:trust": 100, "SHA-256": hash_value.upper()})
-            return MockResponse(404, {"error": "not_found"})
+    def _handle_hash_lookup(self, url: str) -> MockResponse | None:
+        """Handle hash lookup requests."""
+        hash_configs = {
+            "/lookup/md5/": {"key": "MD5", "known_hash": "5d41402abc4b2a76b9719d911017c592"},
+            "/lookup/sha1/": {
+                "key": "SHA-1",
+                "known_hash": "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d",
+            },
+            "/lookup/sha256/": {
+                "key": "SHA-256",
+                "known_hash": "2cf24dba4f21a03f4b3d914f42305d25206eaf64a81f73b3e4e5b9bd3e978038",
+            },
+        }
+
+        for endpoint, config in hash_configs.items():
+            if endpoint in url:
+                hash_value = url.split(endpoint)[1]
+                if hash_value == config["known_hash"]:
+                    return MockResponse(
+                        200, {"hashlookup:trust": 100, config["key"]: hash_value.upper()}
+                    )
+                return MockResponse(404, {"error": "not_found"})
+
+        return None
+
+    def _handle_bulk_requests(self, url: str) -> MockResponse | None:
+        """Handle bulk API requests."""
         if "/bulk/md5" in url:
             return MockResponse(200, [{"MD5": "5D41402ABC4B2A76B9719D911017C592"}])
         if "/bulk/sha1" in url:
             return MockResponse(200, [{"SHA-1": "AAF4C61DDCC5E8A2DABEDE0F3B482CD9AEA9434D"}])
+        return None
+
+    def _handle_other_endpoints(self, url: str) -> MockResponse | None:
+        """Handle other API endpoints."""
         if "/children/" in url or "/parents/" in url:
             return MockResponse(404, {"error": "not_found"})
         if "/info" in url:
@@ -49,6 +63,23 @@ class DummyHttpClient:
             return MockResponse(200, {"session": "test-session"})
         if "/session/get/" in url:
             return MockResponse(200, {"matches": [], "non_matches": []})
+        return None
+
+    def get(self, url: str, **kwargs) -> MockResponse:
+        """Mock GET request."""
+        # Try different handlers
+        response = self._handle_hash_lookup(url)
+        if response:
+            return response
+
+        response = self._handle_bulk_requests(url)
+        if response:
+            return response
+
+        response = self._handle_other_endpoints(url)
+        if response:
+            return response
+
         return MockResponse(404, {"error": "not_found"})
 
     def post(self, url: str, **kwargs) -> MockResponse:

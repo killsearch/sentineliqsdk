@@ -11,16 +11,19 @@ from sentineliqsdk.clients.axur import AxurClient, _merge_query
 def test_merge_query_boolean_and_existing() -> None:
     url = "https://api.example.test/path?a=1"
     out = _merge_query(url, {"b": True, "c": None, "d": 5})
-    assert "a=1" in out and "b=true" in out and "d=5" in out
+    assert "a=1" in out
+    assert "b=true" in out
+    assert "d=5" in out
 
 
 def test_call_dry_run_returns_plan() -> None:
     client = AxurClient(api_token="tok")
+    from sentineliqsdk.clients.axur import RequestOptions
+
     plan = client.call(
         "GET",
         "/tickets-api/tickets",
-        query={"page": 1},
-        dry_run=True,
+        options=RequestOptions(query={"page": 1}, dry_run=True),
     )
     assert plan["dry_run"] is True
     assert plan["method"] == "GET"
@@ -41,7 +44,8 @@ def test_request_json_success() -> None:
     monkeypatch.setattr(httpx.Client, "request", _fake_request)
     try:
         result = client.call("GET", "/customers/customers")
-        assert isinstance(result, dict) and result["ok"] is True
+        assert isinstance(result, dict)
+        assert result["ok"] is True
     finally:
         monkeypatch.undo()
 
@@ -128,11 +132,12 @@ def test_request_with_bytes_body_and_headers(monkeypatch) -> None:
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(httpx.Client, "request", _fake_request)
     try:
+        from sentineliqsdk.clients.axur import RequestOptions
+
         result = client.call(
             "POST",
             "/tickets-api/tickets",
-            headers={"X-Test": "1"},
-            data=b"raw",
+            options=RequestOptions(headers={"X-Test": "1"}, data=b"raw"),
         )
         assert result is None
     finally:
@@ -149,13 +154,13 @@ def test_wrappers_delegate_to_request(monkeypatch) -> None:
     monkeypatch.setattr(AxurClient, "_request", fake_request)
     c = AxurClient(api_token="tok")
     c.customers()
-    c.users(customers="ACM", pageSize=10)
+    c.users(customers="ACM", page_size=10)
     c.users_stream()
     c.tickets_search({"page": 1})
     c.ticket_create({"reference": "x", "customer": "ACM", "type": "phishing", "assets": ["A"]})
     c.tickets_by_keys("k1,k2", timezone="Z", include="fields")
     c.filter_create({"queries": [], "operation": "AND"})
-    c.filter_results("qid", page=1, pageSize=2, sortBy="current.open.date", order="desc")
+    c.filter_results("qid", page=1, page_size=2, sort_by="current.open.date", order="desc")
     c.ticket_get("abc")
     c.ticket_types()
     c.ticket_texts("xyz")

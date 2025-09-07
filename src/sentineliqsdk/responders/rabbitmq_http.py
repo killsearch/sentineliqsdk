@@ -1,3 +1,5 @@
+"""RabbitMQ HTTP API responder for SentinelIQ SDK."""
+
 from __future__ import annotations
 
 import urllib.parse
@@ -39,6 +41,7 @@ class RabbitMqResponder(Responder):
     )
 
     def execute(self) -> ResponderReport:
+        """Execute the RabbitMQ publish operation."""
         base = str(self.get_config("rabbitmq.api_url", "").rstrip("/"))
         vhost = str(self.get_config("rabbitmq.vhost", "/"))
         exchange = str(self.get_config("rabbitmq.exchange", ""))
@@ -94,4 +97,5 @@ class RabbitMqResponder(Responder):
         return self.report(full)
 
     def run(self) -> None:
+        """Run the responder and execute the RabbitMQ publish operation."""
         self.execute()

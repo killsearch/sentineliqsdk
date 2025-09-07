@@ -1,4 +1,4 @@
-"""CIRCL PassiveSSL Analyzer: queries the CIRCL PassiveSSL service for certificate and IP relationships.
+"""CIRCL PassiveSSL Analyzer: queries the CIRCL PassiveSSL service for certificate/IP relationships.
 
 This analyzer provides comprehensive passive SSL lookup capabilities using the CIRCL PassiveSSL
 API, including IP to certificate and certificate to IP queries.
@@ -169,7 +169,8 @@ class CirclPassivesslAnalyzer(Analyzer):
         # Route to appropriate analysis method
         if dtype == "hash":
             # Validate SHA1 hash length
-            if len(str(observable)) != 40:
+            sha1_hash_length = 40
+            if len(str(observable)) != sha1_hash_length:
                 self.error(
                     "CIRCL PassiveSSL expects a SHA1 hash, given hash has more or less than 40 characters."
                 )
@@ -191,10 +192,7 @@ class CirclPassivesslAnalyzer(Analyzer):
         verdict = self._verdict_from_results(result_count)
 
         # Build taxonomy
-        if result_count == 0 or result_count == 1:
-            value = f"{result_count} record"
-        else:
-            value = f"{result_count} records"
+        value = f"{result_count} record" if result_count in {0, 1} else f"{result_count} records"
 
         taxonomy = self.build_taxonomy(
             level=verdict,

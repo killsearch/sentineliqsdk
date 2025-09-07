@@ -17,6 +17,9 @@ from urllib.parse import urlparse
 
 from sentineliqsdk.constants import DOMAIN_PARTS, HASH_LENGTHS, MIN_FQDN_LABELS, USER_AGENT_PREFIXES
 
+# Port number constants
+MAX_PORT_NUMBER = 65535
+
 
 class DetectionContext(Protocol):
     """Context contract implemented by the orchestrator (Extractor).
@@ -234,6 +237,7 @@ class MacDetector:
     _dot = re.compile(r"^[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}$")
 
     def matches(self, value: str) -> bool:
+        """Check if value matches MAC address pattern."""
         v = value.strip()
         return bool(self._colon.match(v) or self._dash.match(v) or self._dot.match(v))
 
@@ -247,6 +251,7 @@ class AsnDetector:
     _asn = re.compile(r"^(?i:AS)[0-9]{1,10}$")
 
     def matches(self, value: str) -> bool:
+        """Check if value matches ASN pattern."""
         return bool(self._asn.match(value))
 
 
@@ -259,6 +264,7 @@ class CveDetector:
     _cve = re.compile(r"^CVE-\d{4}-\d{4,}$", re.IGNORECASE)
 
     def matches(self, value: str) -> bool:
+        """Check if value matches CVE pattern."""
         return bool(self._cve.match(value))
 
 
@@ -271,6 +277,7 @@ class IpPortDetector:
     _ip_port = re.compile(r"^(\d{1,3}\.){3}\d{1,3}:(\d{1,5})$")
 
     def matches(self, value: str) -> bool:
+        """Check if value matches IP:port pattern."""
         m = self._ip_port.match(value)
         if not m:
             return False
@@ -279,6 +286,6 @@ class IpPortDetector:
         try:
             ipaddress.IPv4Address(host)
             port = int(port_str)
-            return 0 < port <= 65535
+            return 0 < port <= MAX_PORT_NUMBER
         except (ValueError, ipaddress.AddressValueError):
             return False

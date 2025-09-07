@@ -1,3 +1,9 @@
+"""Outlook SMTP Responder Example.
+
+This example demonstrates how to use the Outlook SMTP Responder to send emails
+via Outlook/Office365 SMTP service.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +14,7 @@ from sentineliqsdk.responders.smtp_outlook import OutlookSmtpResponder
 
 
 def main() -> None:
+    """Run the Outlook SMTP Responder example."""
     parser = argparse.ArgumentParser(
         description="Send an email via Outlook/Office365 SMTP (Responder)"
     )

@@ -135,7 +135,7 @@ class ShodanAnalyzer(Analyzer):
             # If it resolves, enrich with host details for each resolved IP (minify to keep light)
             hosts: dict[str, Any] = {}
             if isinstance(resolved, dict):
-                for host, ip in resolved.items():
+                for ip in resolved.values():
                     try:
                         hosts[ip] = client.host_information(ip, minify=True)
                     except httpx.HTTPError:
@@ -152,9 +152,7 @@ class ShodanAnalyzer(Analyzer):
             if "host" in payload and isinstance(payload["host"], dict):
                 candidates.append(payload["host"])
             if "hosts" in payload and isinstance(payload["hosts"], dict):
-                for v in payload["hosts"].values():
-                    if isinstance(v, dict):
-                        candidates.append(v)
+                candidates.extend(v for v in payload["hosts"].values() if isinstance(v, dict))
 
             has_malware = any("malware" in (h.get("tags") or []) for h in candidates)
             has_vulns = any(bool(h.get("vulns")) for h in candidates)
@@ -172,79 +170,92 @@ class ShodanAnalyzer(Analyzer):
         observable = self.get_data()
 
         # 1) Dynamic call via environment variables
-        # Programmatic dynamic call via params: shodan.method / shodan.params
         env_method = self.get_config("shodan.method")
         if env_method:
-            params: dict[str, Any] = {}
-            cfg_params = self.get_config("shodan.params")
-            if isinstance(cfg_params, Mapping):
-                params = dict(cfg_params)
-            elif cfg_params is not None:
-                self.error("Shodan params must be a JSON object.")
-
-            details = {
-                "method": env_method,
-                "params": params,
-                "result": self._call_dynamic(env_method, params),
-            }
-            taxonomy = self.build_taxonomy(
-                level="info",
-                namespace="shodan",
-                predicate="api-call",
-                value=env_method,
-            )
-            full_report = {
-                "observable": observable,
-                "verdict": "info",
-                "taxonomy": [taxonomy.to_dict()],
-                "source": "shodan",
-                "data_type": dtype,
-                "details": details,
-                "metadata": self.METADATA.to_dict(),
-            }
-            return self.report(full_report)
+            return self._handle_env_method(env_method, observable, dtype)
 
         # 2) Dynamic call via data payload when dtype == other
         if dtype == "other":
-            try:
-                payload = json.loads(str(observable))
-            except json.JSONDecodeError:
-                self.error(
-                    "For data_type 'other', data must be a JSON string with keys 'method' and 'params'."
-                )
-            if not isinstance(payload, Mapping):
-                self.error("For data_type 'other', JSON payload must be an object.")
-            if "method" not in payload:
-                self.error("Missing 'method' in payload for data_type 'other'.")
-            method = str(payload["method"])  # force to str
-            params_val = payload.get("params", {})
-            if params_val is None:
-                params_val = {}
-            if not isinstance(params_val, Mapping):
-                self.error("Payload 'params' must be a JSON object.")
-            details = {
-                "method": method,
-                "params": dict(params_val),
-                "result": self._call_dynamic(method, params_val),
-            }
-            taxonomy = self.build_taxonomy(
-                level="info",
-                namespace="shodan",
-                predicate="api-call",
-                value=method,
-            )
-            full_report = {
-                "observable": observable,
-                "verdict": "info",
-                "taxonomy": [taxonomy.to_dict()],
-                "source": "shodan",
-                "data_type": dtype,
-                "details": details,
-                "metadata": self.METADATA.to_dict(),
-            }
-            return self.report(full_report)
+            return self._handle_other_dtype(observable, dtype)
 
         # 3) Default behavior for common observables
+        return self._handle_default_analysis(observable, dtype)
+
+    def _handle_env_method(self, env_method: str, observable: Any, dtype: str) -> AnalyzerReport:
+        """Handle dynamic call via environment variables."""
+        params: dict[str, Any] = {}
+        cfg_params = self.get_config("shodan.params")
+        if isinstance(cfg_params, Mapping):
+            params = dict(cfg_params)
+        elif cfg_params is not None:
+            self.error("Shodan params must be a JSON object.")
+
+        details = {
+            "method": env_method,
+            "params": params,
+            "result": self._call_dynamic(env_method, params),
+        }
+        taxonomy = self.build_taxonomy(
+            level="info",
+            namespace="shodan",
+            predicate="api-call",
+            value=env_method,
+        )
+        full_report = {
+            "observable": observable,
+            "verdict": "info",
+            "taxonomy": [taxonomy.to_dict()],
+            "source": "shodan",
+            "data_type": dtype,
+            "details": details,
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+
+    def _handle_other_dtype(self, observable: Any, dtype: str) -> AnalyzerReport:
+        """Handle dynamic call via data payload when dtype == other."""
+        try:
+            payload = json.loads(str(observable))
+        except json.JSONDecodeError:
+            self.error(
+                "For data_type 'other', data must be a JSON string with keys 'method' and 'params'."
+            )
+        if not isinstance(payload, Mapping):
+            self.error("For data_type 'other', JSON payload must be an object.")
+        if "method" not in payload:
+            self.error("Missing 'method' in payload for data_type 'other'.")
+
+        method = str(payload["method"])  # force to str
+        params_val = payload.get("params", {})
+        if params_val is None:
+            params_val = {}
+        if not isinstance(params_val, Mapping):
+            self.error("Payload 'params' must be a JSON object.")
+
+        details = {
+            "method": method,
+            "params": dict(params_val),
+            "result": self._call_dynamic(method, params_val),
+        }
+        taxonomy = self.build_taxonomy(
+            level="info",
+            namespace="shodan",
+            predicate="api-call",
+            value=method,
+        )
+        full_report = {
+            "observable": observable,
+            "verdict": "info",
+            "taxonomy": [taxonomy.to_dict()],
+            "source": "shodan",
+            "data_type": dtype,
+            "details": details,
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+
+    def _handle_default_analysis(self, observable: Any, dtype: str) -> AnalyzerReport:
+        """Handle default behavior for common observables."""
         if dtype == "ip":
             details = self._analyze_ip(str(observable))
             verdict = self._verdict_from_shodan(details)

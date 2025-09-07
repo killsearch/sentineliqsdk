@@ -71,8 +71,8 @@ def print_compact_result(report: Any) -> None:
     print("=" * 50)
 
 
-def main() -> None:
-    """Run the CIRCL Passive DNS analyzer example."""
+def _setup_argument_parser() -> argparse.ArgumentParser:
+    """Set up the argument parser with all options."""
     parser = argparse.ArgumentParser(
         description="CIRCL Passive DNS Analyzer Example",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -106,23 +106,23 @@ def main() -> None:
         help="Output full JSON result",
     )
 
-    args = parser.parse_args()
+    return parser
 
-    # Determine data type and value
+
+def _determine_input_type(args: argparse.Namespace) -> tuple[str, str]:
+    """Determine data type and value from arguments."""
     if args.domain:
-        data_type = "domain"
-        data = args.domain
-    elif args.ip:
-        data_type = "ip"
-        data = args.ip
-    elif args.url:
-        data_type = "url"
-        data = args.url
-    else:
-        parser.error("Must specify --domain, --ip, or --url")
+        return "domain", args.domain
+    if args.ip:
+        return "ip", args.ip
+    if args.url:
+        return "url", args.url
+    raise ValueError("Must specify --domain, --ip, or --url")
 
-    # Check for credentials if executing
-    if args.execute:
+
+def _print_execution_info(execute: bool) -> None:
+    """Print execution mode information."""
+    if execute:
         print("Running with real API calls")
         print("Make sure to configure CIRCL credentials in WorkerConfig.secrets:")
         print("  secrets = {")
@@ -136,6 +136,18 @@ def main() -> None:
         print("Running in dry-run mode (no real API calls)")
         print("Use --execute to make real API calls")
         print()
+
+
+def main() -> None:
+    """Run the CIRCL Passive DNS analyzer example."""
+    parser = _setup_argument_parser()
+    args = parser.parse_args()
+
+    # Determine data type and value
+    data_type, data = _determine_input_type(args)
+
+    # Check for credentials if executing
+    _print_execution_info(args.execute)
 
     try:
         # Create input data with secrets configuration

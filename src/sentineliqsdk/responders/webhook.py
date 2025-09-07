@@ -1,3 +1,5 @@
+"""Webhook responder for SentinelIQ SDK."""
+
 from __future__ import annotations
 
 import json
@@ -38,6 +40,7 @@ class WebhookResponder(Responder):
     )
 
     def execute(self) -> ResponderReport:
+        """Execute the webhook operation."""
         # Programmatic configuration via WorkerConfig.params only.
         url = str(self.get_data() or self.get_config("webhook.url", ""))
         method = str(self.get_config("webhook.method", "POST")).upper()
@@ -96,4 +99,5 @@ class WebhookResponder(Responder):
         return self.report(full)
 
     def run(self) -> None:
+        """Run the responder and execute the webhook operation."""
         self.execute()

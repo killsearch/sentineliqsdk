@@ -15,7 +15,8 @@ from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.axur import AxurAnalyzer
 
 
-def main(argv: list[str]) -> int:
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser."""
     ap = argparse.ArgumentParser(description="Axur Analyzer example (generic API caller)")
     ap.add_argument("--token", required=True)
     ap.add_argument(
@@ -37,69 +38,108 @@ def main(argv: list[str]) -> int:
         help="HTTP method for 'call' (GET/POST/PUT/DELETE)",
     )
     ap.add_argument("--execute", action="store_true", help="perform the HTTP call")
+    return ap
+
+
+def parse_json_argument(value: str, arg_name: str) -> dict[str, Any] | None:
+    """Parse a JSON argument and return the parsed dict or None if empty."""
+    if not value:
+        return None
+
+    try:
+        parsed = json.loads(value)
+        if not isinstance(parsed, dict):
+            print(f"--{arg_name} must be a JSON object", file=sys.stderr)
+            return None
+        return parsed
+    except json.JSONDecodeError:
+        print(f"--{arg_name} must be a valid JSON object", file=sys.stderr)
+        return None
+
+
+def build_call_params(args: argparse.Namespace) -> dict[str, Any] | None:
+    """Build parameters for the 'call' method."""
+    if not args.path:
+        print("--path is required when --method=call", file=sys.stderr)
+        return None
+
+    params = {
+        "http_method": args.http_method,
+        "path": args.path,
+        "dry_run": not args.execute,
+    }
+
+    if args.query:
+        query_params = parse_json_argument(args.query, "query")
+        if query_params is None:
+            return None
+        params["query"] = query_params
+
+    if args.json_body:
+        json_params = parse_json_argument(args.json_body, "json")
+        if json_params is None:
+            return None
+        params["json"] = json_params
+
+    if args.headers:
+        headers_params = parse_json_argument(args.headers, "headers")
+        if headers_params is None:
+            return None
+        params["headers"] = headers_params
+
+    return params
+
+
+def build_wrapper_params(args: argparse.Namespace) -> dict[str, Any] | None:
+    """Build parameters for wrapper methods."""
+    params: dict[str, Any] = {}
+
+    if args.query:
+        query_params = parse_json_argument(args.query, "query")
+        if query_params is None:
+            return None
+        params.update(query_params)
+
+    if args.json_body:
+        json_params = parse_json_argument(args.json_body, "json")
+        if json_params is None:
+            return None
+        # Many wrappers accept a single dict payload (e.g., ticket_create, filter_create)
+        # We place it under a conventional key if the wrapper expects a single positional
+        # parameter; analyzer will pass kwargs unchanged.
+        # For example: --method=ticket_create --json '{"reference": ..., ...}'
+        params = json_params
+
+    return params
+
+
+def build_payload(args: argparse.Namespace) -> dict[str, Any] | None:
+    """Build the complete payload for the analyzer."""
+    method = args.method
+
+    params = build_call_params(args) if method == "call" else build_wrapper_params(args)
+
+    if params is None:
+        return None
+
+    return {"method": method, "params": params}
+
+
+def main(argv: list[str]) -> int:
+    """Run the Axur analyzer example."""
+    ap = create_argument_parser()
     args = ap.parse_args(argv)
 
-    # Prepare payload for analyzer (data_type=other with JSON payload)
-    method = args.method
-    params: dict[str, Any] = {}
-    if method == "call":
-        if not args.path:
-            print("--path is required when --method=call", file=sys.stderr)
-            return 2
-        params["http_method"] = args.http_method
-        params["path"] = args.path
-        params["dry_run"] = not args.execute
-        if args.query:
-            try:
-                params["query"] = json.loads(args.query)
-            except json.JSONDecodeError:
-                print("--query must be a valid JSON object", file=sys.stderr)
-                return 2
-        if args.json_body:
-            try:
-                params["json"] = json.loads(args.json_body)
-            except json.JSONDecodeError:
-                print("--json must be a valid JSON object", file=sys.stderr)
-                return 2
-        if args.headers:
-            try:
-                params["headers"] = json.loads(args.headers)
-            except json.JSONDecodeError:
-                print("--headers must be a valid JSON object", file=sys.stderr)
-                return 2
-    else:
-        # Wrapper methods: pass through query/json when applicable
-        if args.query:
-            try:
-                q = json.loads(args.query)
-            except json.JSONDecodeError:
-                print("--query must be a valid JSON object", file=sys.stderr)
-                return 2
-            if not isinstance(q, dict):
-                print("--query must be a JSON object", file=sys.stderr)
-                return 2
-            params.update(q)
-        if args.json_body:
-            try:
-                jb = json.loads(args.json_body)
-            except json.JSONDecodeError:
-                print("--json must be a valid JSON object", file=sys.stderr)
-                return 2
-            if not isinstance(jb, dict):
-                print("--json must be a JSON object", file=sys.stderr)
-                return 2
-            # Many wrappers accept a single dict payload (e.g., ticket_create, filter_create)
-            # We place it under a conventional key if the wrapper expects a single positional
-            # parameter; analyzer will pass kwargs unchanged.
-            # For example: --method=ticket_create --json '{"reference": ..., ...}'
-            params = jb
+    payload = build_payload(args)
+    if payload is None:
+        return 2
 
-    payload = {"method": method, "params": params}
     input_data = WorkerInput(
         data_type="other",
         data=json.dumps(payload),
         config=WorkerConfig(secrets={"axur": {"api_token": args.token}}),
     )
+
     # For programmatic result, call execute(); run() performs side-effect only
     report = AxurAnalyzer(input_data).execute()
     print(json.dumps(report.full_report, ensure_ascii=False))

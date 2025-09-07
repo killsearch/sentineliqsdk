@@ -1,3 +1,5 @@
+"""Kafka REST Proxy responder for SentinelIQ SDK."""
+
 from __future__ import annotations
 
 from base64 import b64encode
@@ -38,6 +40,7 @@ class KafkaResponder(Responder):
     )
 
     def execute(self) -> ResponderReport:
+        """Execute the Kafka publish operation."""
         base = str(self.get_config("kafka.base_url", "").rstrip("/"))
         topic = str(self.get_config("kafka.topic", ""))
         value = self.get_config("kafka.value", self.get_data())
@@ -86,4 +89,5 @@ class KafkaResponder(Responder):
         return self.report(full)
 
     def run(self) -> None:
+        """Run the responder and execute the Kafka publish operation."""
         self.execute()

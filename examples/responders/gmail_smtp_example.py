@@ -1,3 +1,9 @@
+"""Gmail SMTP Responder Example.
+
+This example demonstrates how to use the Gmail SMTP Responder to send emails
+via Gmail's SMTP service.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +14,7 @@ from sentineliqsdk.responders.smtp_gmail import GmailSmtpResponder
 
 
 def main() -> None:
+    """Run the Gmail SMTP Responder example."""
     parser = argparse.ArgumentParser(description="Send an email via Gmail SMTP (Responder)")
     parser.add_argument("--to", required=True, help="Recipient email address")
     parser.add_argument("--subject", default="SentinelIQ Notification")

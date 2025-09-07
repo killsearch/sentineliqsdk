@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any, NoReturn
 
-from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, EXIT_ERROR
+from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, EXIT_ERROR, JSON_ENSURE_ASCII
 from sentineliqsdk.core.config.proxy import EnvProxyConfigurator
 from sentineliqsdk.core.config.secrets import sanitize_config
 from sentineliqsdk.models import Artifact, Operation, WorkerError, WorkerInput
@@ -170,7 +170,6 @@ class Worker(ABC):
         }
 
         # Preserve Unicode by default per JSON_ENSURE_ASCII, allow override via parameter
-        from sentineliqsdk.constants import JSON_ENSURE_ASCII
 
         print(
             json.dumps(

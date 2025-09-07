@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AnyRun Analyzer Example
+"""AnyRun Analyzer Example.
 
 This example demonstrates how to use the AnyRun analyzer to submit files and URLs
 for sandbox analysis. The analyzer supports both file uploads and URL analysis
@@ -49,8 +49,8 @@ def create_sample_file() -> str:
     return sample_path
 
 
-def main() -> None:
-    """Main function to run the AnyRun analyzer example."""
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(description="AnyRun Analyzer Example")
     parser.add_argument("--file", help="Path to file to analyze")
     parser.add_argument("--url", help="URL to analyze")
@@ -66,10 +66,11 @@ def main() -> None:
     parser.add_argument("--env-version", help="Environment version")
     parser.add_argument("--env-type", help="Environment type")
     parser.add_argument("--timeout", type=int, help="Analysis timeout in seconds")
+    return parser
 
-    args = parser.parse_args()
 
-    # Validate arguments
+def validate_arguments(args: argparse.Namespace) -> None:
+    """Validate command line arguments."""
     if not args.file and not args.url:
         print("Error: Must specify either --file or --url")
         sys.exit(1)
@@ -78,26 +79,25 @@ def main() -> None:
         print("Error: Cannot specify both --file and --url")
         sys.exit(1)
 
-    # Check for dangerous operations
     if args.file and not args.include_dangerous:
         print("Warning: File analysis requires --include-dangerous flag")
         print("This is a safety measure to prevent accidental file uploads")
         sys.exit(1)
 
-    # Get API token
-    token = args.token
-    if not token and args.execute:
+    if not args.token and args.execute:
         print("Error: API token required for real analysis")
         print("Use --token to provide the API token")
         print("Example: python anyrun_example.py --token YOUR_TOKEN --execute")
         sys.exit(1)
 
-    # Build configuration
+
+def build_config(args: argparse.Namespace) -> WorkerConfig:
+    """Build worker configuration from arguments."""
     secrets = {}
     params = {}
 
-    if token:
-        secrets["anyrun"] = {"token": token}
+    if args.token:
+        secrets["anyrun"] = {"token": args.token}
 
     anyrun_params = {"privacy_type": args.privacy_type}
     if args.env_bitness:
@@ -112,28 +112,31 @@ def main() -> None:
     if anyrun_params:
         params["anyrun"] = anyrun_params
 
-    config = WorkerConfig(secrets=secrets, params=params)
+    return WorkerConfig(secrets=secrets, params=params)
 
-    # Prepare input data
+
+def create_input_data(args: argparse.Namespace, config: WorkerConfig) -> WorkerInput:
+    """Create input data from arguments and config."""
     if args.file:
         if not os.path.exists(args.file):
             print(f"Error: File not found: {args.file}")
             sys.exit(1)
 
-        input_data = WorkerInput(
+        return WorkerInput(
             data_type="file",
             data=args.file,
             filename=args.file,
             config=config,
         )
-    else:
-        input_data = WorkerInput(
-            data_type="url",
-            data=args.url,
-            config=config,
-        )
+    return WorkerInput(
+        data_type="url",
+        data=args.url,
+        config=config,
+    )
 
-    # Show what we're about to do
+
+def print_analysis_info(input_data: WorkerInput, args: argparse.Namespace) -> None:
+    """Print information about the analysis to be performed."""
     print("AnyRun Analyzer Example")
     print("=" * 50)
     print(f"Data type: {input_data.data_type}")
@@ -145,19 +148,65 @@ def main() -> None:
     print(f"Execute: {args.execute}")
     print()
 
-    if not args.execute:
-        print("DRY RUN MODE - No actual analysis will be performed")
-        print("Use --execute flag to perform real analysis")
-        print()
 
-        # Show what the configuration would look like
-        print("Configuration that would be used:")
-        print(
-            json.dumps(
-                {"secrets": {"anyrun": {"token": "***" if token else "NOT_SET"}}, "params": params},
-                indent=2,
-            )
+def print_dry_run_info(token: str | None, params: dict) -> None:
+    """Print dry run information and configuration."""
+    print("DRY RUN MODE - No actual analysis will be performed")
+    print("Use --execute flag to perform real analysis")
+    print()
+
+    print("Configuration that would be used:")
+    print(
+        json.dumps(
+            {"secrets": {"anyrun": {"token": "***" if token else "NOT_SET"}}, "params": params},
+            indent=2,
         )
+    )
+
+
+def print_analysis_results(report) -> None:
+    """Print analysis results in a formatted way."""
+    print("Analysis completed!")
+    print("=" * 50)
+
+    full_report = report.full_report
+    print(f"Observable: {full_report.get('observable')}")
+    print(f"Verdict: {full_report.get('verdict')}")
+    print(f"Task ID: {full_report.get('task_id')}")
+
+    # Print taxonomy
+    taxonomy = full_report.get("taxonomy", [])
+    if taxonomy:
+        print("\nTaxonomy:")
+        for tax in taxonomy:
+            print(f"  {tax['level']}: {tax['namespace']}/{tax['predicate']} = {tax['value']}")
+
+    # Print analysis summary if available
+    analysis = full_report.get("analysis", {})
+    if analysis:
+        scores = analysis.get("scores", {})
+        if scores:
+            print("\nScores:")
+            for score_type, score_data in scores.items():
+                if isinstance(score_data, dict) and "score" in score_data:
+                    print(f"  {score_type}: {score_data['score']}")
+
+    print(f"\nFull report available in: {full_report.get('metadata', {}).get('Name', 'AnyRun')}")
+
+
+def main() -> None:
+    """Run the AnyRun analyzer example."""
+    parser = create_argument_parser()
+    args = parser.parse_args()
+
+    validate_arguments(args)
+    config = build_config(args)
+    input_data = create_input_data(args, config)
+
+    print_analysis_info(input_data, args)
+
+    if not args.execute:
+        print_dry_run_info(args.token, dict(config.params))
         return
 
     # Execute the analyzer
@@ -165,36 +214,7 @@ def main() -> None:
         print("Submitting to AnyRun for analysis...")
         analyzer = AnyRunAnalyzer(input_data)
         report = analyzer.execute()
-
-        print("Analysis completed!")
-        print("=" * 50)
-
-        # Print a compact summary
-        full_report = report.full_report
-        print(f"Observable: {full_report.get('observable')}")
-        print(f"Verdict: {full_report.get('verdict')}")
-        print(f"Task ID: {full_report.get('task_id')}")
-
-        # Print taxonomy
-        taxonomy = full_report.get("taxonomy", [])
-        if taxonomy:
-            print("\nTaxonomy:")
-            for tax in taxonomy:
-                print(f"  {tax['level']}: {tax['namespace']}/{tax['predicate']} = {tax['value']}")
-
-        # Print analysis summary if available
-        analysis = full_report.get("analysis", {})
-        if analysis:
-            scores = analysis.get("scores", {})
-            if scores:
-                print("\nScores:")
-                for score_type, score_data in scores.items():
-                    if isinstance(score_data, dict) and "score" in score_data:
-                        print(f"  {score_type}: {score_data['score']}")
-
-        print(
-            f"\nFull report available in: {full_report.get('metadata', {}).get('Name', 'AnyRun')}"
-        )
+        print_analysis_results(report)
 
     except Exception as e:
         print(f"Error: {e}")

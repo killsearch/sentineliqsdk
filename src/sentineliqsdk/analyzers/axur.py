@@ -86,14 +86,18 @@ class AxurAnalyzer(Analyzer):
                 json_body = kwargs.pop("json", None)
                 dry_run = bool(kwargs.pop("dry_run", False))
                 # Any remaining kwargs are ignored; only documented keys used
+                from sentineliqsdk.clients.axur import RequestOptions
+
                 return client.call(
                     http_method,
                     path,
-                    query=query if isinstance(query, Mapping) else None,
-                    headers=headers if isinstance(headers, Mapping) else None,
-                    data=data,
-                    json_body=json_body if isinstance(json_body, Mapping) else None,
-                    dry_run=dry_run,
+                    RequestOptions(
+                        query=query if isinstance(query, Mapping) else None,
+                        headers=headers if isinstance(headers, Mapping) else None,
+                        data=data,
+                        json_body=json_body if isinstance(json_body, Mapping) else None,
+                        dry_run=dry_run,
+                    ),
                 )
 
             func = getattr(client, method)
@@ -188,4 +192,5 @@ class AxurAnalyzer(Analyzer):
         )
 
     def run(self) -> None:
+        """Run the analyzer and print results to stdout."""
         self.execute()

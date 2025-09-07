@@ -86,6 +86,7 @@ def build_examples() -> list[tuple[str, tuple[Any, ...], dict[str, Any]]]:
 
 
 def main(argv: list[str]) -> int:
+    """Run all ShodanClient methods."""
     ap = argparse.ArgumentParser(description="Call all ShodanClient methods (demo)")
     ap.add_argument("--api-key", dest="api_key", required=True)
     ap.add_argument("--base-url", dest="base_url", default="https://api.shodan.io")

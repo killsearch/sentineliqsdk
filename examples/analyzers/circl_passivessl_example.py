@@ -30,6 +30,29 @@ from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.circl_passivessl import CirclPassivesslAnalyzer
 
 
+def _print_taxonomy(taxonomy: list[dict]) -> None:
+    """Print taxonomy information."""
+    if not taxonomy:
+        return
+    print("Taxonomy:")
+    for tax in taxonomy:
+        print(
+            f"  - {tax.get('namespace', 'N/A')}:{tax.get('predicate', 'N/A')} = {tax.get('value', 'N/A')} ({tax.get('level', 'N/A')})"
+        )
+
+
+def _print_certificates(certificates: list[dict]) -> None:
+    """Print certificate information."""
+    print(f"\nCertificates found: {len(certificates)}")
+    if not certificates:
+        return
+    print("Certificate details:")
+    for i, cert in enumerate(certificates[:5]):  # Show first 5
+        print(f"  {i + 1}. Fingerprint: {cert.get('fingerprint', 'N/A')}")
+        print(f"     Subject: {cert.get('subject', 'N/A')}")
+        print()
+
+
 def print_compact_result(report: Any) -> None:
     """Print a compact version of the analysis result."""
     full = report.full_report if hasattr(report, "full_report") else report
@@ -41,25 +64,14 @@ def print_compact_result(report: Any) -> None:
 
     # Show taxonomy
     taxonomy = full.get("taxonomy", [])
-    if taxonomy:
-        print("Taxonomy:")
-        for tax in taxonomy:
-            print(
-                f"  - {tax.get('namespace', 'N/A')}:{tax.get('predicate', 'N/A')} = {tax.get('value', 'N/A')} ({tax.get('level', 'N/A')})"
-            )
+    _print_taxonomy(taxonomy)
 
     details = full.get("details", {})
 
     # Handle IP query results
     if "certificates" in details:
         certificates = details.get("certificates", [])
-        print(f"\nCertificates found: {len(certificates)}")
-        if certificates:
-            print("Certificate details:")
-            for i, cert in enumerate(certificates[:5]):  # Show first 5
-                print(f"  {i + 1}. Fingerprint: {cert.get('fingerprint', 'N/A')}")
-                print(f"     Subject: {cert.get('subject', 'N/A')}")
-                print()
+        _print_certificates(certificates)
 
     # Handle certificate query results
     if "query" in details:

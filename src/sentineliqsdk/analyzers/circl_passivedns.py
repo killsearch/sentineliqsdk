@@ -20,7 +20,7 @@ Configuration:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -116,7 +116,7 @@ class CirclPassivednsAnalyzer(Analyzer):
                 try:
                     if isinstance(clean_result["time_first"], int | float):
                         # Unix timestamp
-                        dt = datetime.fromtimestamp(clean_result["time_first"], tz=None)
+                        dt = datetime.fromtimestamp(clean_result["time_first"], tz=UTC)
                         clean_result["time_first"] = dt.isoformat(" ")
                     else:
                         # Already a datetime object
@@ -129,7 +129,7 @@ class CirclPassivednsAnalyzer(Analyzer):
                 try:
                     if isinstance(clean_result["time_last"], int | float):
                         # Unix timestamp
-                        dt = datetime.fromtimestamp(clean_result["time_last"], tz=None)
+                        dt = datetime.fromtimestamp(clean_result["time_last"], tz=UTC)
                         clean_result["time_last"] = dt.isoformat(" ")
                     else:
                         # Already a datetime object

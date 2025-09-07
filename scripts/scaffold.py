@@ -21,21 +21,25 @@ TEMPLATES = ROOT / "examples" / "_templates"
 
 
 def to_snake(name: str) -> str:
+    """Convert a name to snake_case format."""
     s = re.sub(r"[^0-9A-Za-z]+", " ", name).strip()
     s = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s)
     return "_".join(s.lower().split())
 
 
 def to_pascal(name: str) -> str:
+    """Convert a name to PascalCase format."""
     parts = re.sub(r"[^0-9A-Za-z]+", " ", name).strip().split()
     return "".join(p.capitalize() for p in parts)
 
 
 def read_template(path: pathlib.Path) -> str:
+    """Read template file content."""
     return path.read_text(encoding="utf-8")
 
 
 def write_file(path: pathlib.Path, content: str, *, force: bool) -> None:
+    """Write content to file, optionally overwriting existing files."""
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not force:
         raise SystemExit(f"Refusing to overwrite existing file: {path}. Use --force to override.")
@@ -43,6 +47,7 @@ def write_file(path: pathlib.Path, content: str, *, force: bool) -> None:
 
 
 def scaffold_analyzer(name: str, *, force: bool) -> list[pathlib.Path]:
+    """Scaffold a new analyzer with code and example files."""
     base = re.sub(r"Analyzer$", "", to_pascal(name))
     class_name = f"{base}Analyzer"
     snake = to_snake(base)
@@ -62,6 +67,7 @@ def scaffold_analyzer(name: str, *, force: bool) -> list[pathlib.Path]:
 
 
 def scaffold_responder(name: str, *, force: bool) -> list[pathlib.Path]:
+    """Scaffold a new responder with code and example files."""
     base = re.sub(r"Responder$", "", to_pascal(name))
     class_name = f"{base}Responder"
     snake = to_snake(base)
@@ -81,6 +87,7 @@ def scaffold_responder(name: str, *, force: bool) -> list[pathlib.Path]:
 
 
 def scaffold_detector(name: str, *, force: bool) -> list[pathlib.Path]:
+    """Scaffold a new detector with code and example files."""
     base = re.sub(r"Detector$", "", to_pascal(name))
     class_name = f"{base}Detector"
     snake = to_snake(base)
@@ -105,6 +112,7 @@ def scaffold_detector(name: str, *, force: bool) -> list[pathlib.Path]:
 
 
 def main(argv: list[str]) -> int:
+    """Scaffold new modules."""
     ap = argparse.ArgumentParser(description="Scaffold Analyzer/Responder/Detector")
     ap.add_argument("--kind", choices=["analyzer", "responder", "detector"], required=True)
     ap.add_argument("--name", required=True, help="Base name, e.g. 'Shodan' or 'BlockIp'")

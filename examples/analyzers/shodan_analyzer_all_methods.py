@@ -1,11 +1,11 @@
 """Execute ShodanAnalyzer.run() for all supported methods.
 
-This example iterates over all methods allowed by the analyzer’s dynamic
+This example iterates over all methods allowed by the analyzer`s dynamic
 interface using config.params (no environment variables) and calling .execute().
 
 Usage:
-  python examples/analyzers/shodan_analyzer_all_methods.py --api-key KEY           # dry-run (plan only)
-  python examples/analyzers/shodan_analyzer_all_methods.py --api-key KEY --execute # perform calls
+  python examples/analyzers/shodan_analyzer_all_methods.py --api-key KEY  # dry-run
+  python examples/analyzers/shodan_analyzer_all_methods.py --api-key KEY --execute
 
 Flags:
   --only method1,method2     run a subset
@@ -115,6 +115,7 @@ DANGEROUS_METHODS = {
 
 
 def main(argv: list[str]) -> int:
+    """Run ShodanAnalyzer for all supported methods."""
     ap = argparse.ArgumentParser(description="Run ShodanAnalyzer for all supported methods")
     ap.add_argument("--api-key", dest="api_key", required=True)
     ap.add_argument("--execute", action="store_true", help="perform API calls (else dry-run)")

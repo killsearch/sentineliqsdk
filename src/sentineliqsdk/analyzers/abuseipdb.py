@@ -31,7 +31,7 @@ from typing import Any
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
-from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
+from sentineliqsdk.models import AnalyzerReport, Artifact, ModuleMetadata, TaxonomyLevel
 
 
 def _category_name(category_number: int | str) -> str:
@@ -106,7 +106,9 @@ class AbuseIPDBAnalyzer(Analyzer):
         except httpx.HTTPError as exc:  # pragma: no cover - network dependent
             self.error(f"HTTP call to AbuseIPDB failed: {exc}")
 
-        if not (200 <= resp.status_code < 300):
+        http_ok_min = 200
+        http_ok_max = 300
+        if not (http_ok_min <= resp.status_code < http_ok_max):
             body = resp.text
             self.error(f"Unable to query AbuseIPDB API (status {resp.status_code})\n{body}")
 
@@ -115,11 +117,8 @@ class AbuseIPDBAnalyzer(Analyzer):
         return payload if isinstance(payload, list) else [payload]
 
     @staticmethod
-    def _compute_enrichments(entry: dict[str, Any]) -> None:
-        data = entry.get("data") or {}
-        reports = data.get("reports") or []
-
-        # Category strings per report and consolidated per entry
+    def _process_categories(reports: list[dict[str, Any]]) -> tuple[list[str], None]:
+        """Process categories for all reports and return consolidated list."""
         categories_strings: list[str] = []
         for item in reports:
             out = []
@@ -129,32 +128,37 @@ class AbuseIPDBAnalyzer(Analyzer):
                 if name not in categories_strings:
                     categories_strings.append(name)
             item["categories_strings"] = out
-        entry["categories_strings"] = categories_strings
+        return categories_strings, None
 
-        # Reporter geography top 6
+    @staticmethod
+    def _process_reporting_countries(reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Process reporter geography and return top 6 countries."""
         cc_counts: Counter[tuple[str, str]] = Counter()
         for r in reports:
             code = (r.get("reporterCountryCode") or "??").upper()
             name = r.get("reporterCountryName") or code
             cc_counts[(code, name)] += 1
-        entry["reporting_countries"] = [
+        return [
             {"code": code, "name": name, "count": cnt}
             for (code, name), cnt in cc_counts.most_common(6)
         ]
 
-        # Category frequency top 6
+    @staticmethod
+    def _process_category_frequency(reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Process category frequency and return top 6 categories."""
         cat_counts: Counter[str] = Counter()
         for r in reports:
             for c in r.get("categories_strings") or []:
                 cat_counts[c] += 1
-        entry["category_counts"] = [
-            {"category": k, "count": v} for k, v in cat_counts.most_common(6)
-        ]
+        return [{"category": k, "count": v} for k, v in cat_counts.most_common(6)]
 
-        # Freshness windows
+    @staticmethod
+    def _process_freshness(reports: list[dict[str, Any]]) -> dict[str, int]:
+        """Process freshness windows for reports."""
+
         def _to_dt(x: Any) -> datetime | None:
             try:
-                return datetime.fromisoformat(str(x).replace("Z", "+00:00"))
+                return datetime.fromisoformat(str(x))
             except Exception:
                 return None
 
@@ -170,9 +174,29 @@ class AbuseIPDBAnalyzer(Analyzer):
                 last_24h += 1
             if delta <= 7 * 24 * 3600:
                 last_7d += 1
-        entry["freshness"] = {"last24h": last_24h, "last7d": last_7d}
+        return {"last24h": last_24h, "last7d": last_7d}
+
+    @classmethod
+    def _compute_enrichments(cls, entry: dict[str, Any]) -> None:
+        """Compute enrichments for an AbuseIPDB entry."""
+        data = entry.get("data") or {}
+        reports = data.get("reports") or []
+
+        # Process categories
+        categories_strings = cls._process_categories(reports)
+        entry["categories_strings"] = categories_strings
+
+        # Process reporting countries
+        entry["reporting_countries"] = cls._process_reporting_countries(reports)
+
+        # Process category frequency
+        entry["category_counts"] = cls._process_category_frequency(reports)
+
+        # Process freshness
+        entry["freshness"] = cls._process_freshness(reports)
 
     def execute(self) -> AnalyzerReport:
+        """Execute the AbuseIPDB analysis."""
         dtype = self.data_type
         observable = self.get_data()
         if dtype != "ip":
@@ -200,9 +224,10 @@ class AbuseIPDBAnalyzer(Analyzer):
                     "info", "abuseipdb", "usage-type", str(primary["usageType"])
                 ).to_dict()
             )
+        malicious_threshold = 80
         score = int(primary.get("abuseConfidenceScore") or 0)
         level: TaxonomyLevel = (
-            "malicious" if score >= 80 else ("suspicious" if score > 0 else "safe")
+            "malicious" if score >= malicious_threshold else ("suspicious" if score > 0 else "safe")
         )
         taxonomies.append(
             self.build_taxonomy(level, "abuseipdb", "abuse-confidence-score", str(score)).to_dict()
@@ -228,8 +253,9 @@ class AbuseIPDBAnalyzer(Analyzer):
         return self.report(full_report)
 
     def artifacts(self, raw: Any) -> list:
+        """Extract artifacts from AbuseIPDB data."""
         # Custom curated artifacts from AbuseIPDB fields + auto-extract when enabled
-        artifacts = []
+        artifacts: list[Artifact] = []
         values = (raw or {}).get("values") if isinstance(raw, dict) else None
         if isinstance(values, list):
             domains_out: set[str] = set()
@@ -239,14 +265,17 @@ class AbuseIPDBAnalyzer(Analyzer):
                 base = (data.get("domain") or "").strip().rstrip(".").lower()
                 if base:
                     domains_out.add(base)
-                for h in data.get("hostnames") or []:
-                    h = (h or "").strip().rstrip(".").lower()
-                    if h:
-                        hostnames_out.add(h)
-            for d in sorted(domains_out):
-                artifacts.append(self.build_artifact("domain", d, tags=["AbuseIPDB"]))
-            for h in sorted(hostnames_out):
-                artifacts.append(self.build_artifact("fqdn", h, tags=["AbuseIPDB"]))
+                for hostname in data.get("hostnames") or []:
+                    clean_hostname = (hostname or "").strip().rstrip(".").lower()
+                    if clean_hostname:
+                        hostnames_out.add(clean_hostname)
+            artifacts.extend(
+                self.build_artifact("domain", d, tags=["AbuseIPDB"]) for d in sorted(domains_out)
+            )
+            artifacts.extend(
+                self.build_artifact("fqdn", hostname, tags=["AbuseIPDB"])
+                for hostname in sorted(hostnames_out)
+            )
 
         # Merge with auto-extracted artifacts when enabled
         try:
@@ -256,4 +285,5 @@ class AbuseIPDBAnalyzer(Analyzer):
         return artifacts + auto
 
     def run(self) -> None:
+        """Run the analyzer and print results to stdout."""
         self.execute()

@@ -1,3 +1,9 @@
+"""MCAP (Malware Configuration and Analysis Platform) Analyzer.
+
+This analyzer integrates with MCAP by CIS Security to analyze observables
+and files for malware indicators and threat intelligence.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -13,6 +19,8 @@ from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 
 class Sample(TypedDict):
+    """Sample data structure from MCAP API."""
+
     mcap_id: str  # Unique identifier for the sample
     filename: str  # Name of the file submitted
     created_at: str  # The date and time the file was submitted
@@ -23,11 +31,15 @@ class Sample(TypedDict):
 
 
 class SubmitResponse(TypedDict):
+    """Response structure for file submission to MCAP."""
+
     message: str  # Message confirming upload was successful
     sample: Sample
 
 
 class SampleStatus(TypedDict):
+    """Sample status information from MCAP API."""
+
     # The sample ID, globally unique, and the canonical identifier of this
     # sample analysis.
     id: str
@@ -144,12 +156,13 @@ class MCAPAnalyzer(Analyzer):
             "source": 6,  # Other/Unknown
             "email_notification": 0,
         }
-        files = {"sample_file": open(file_path, mode="rb")}
-        try:
-            response = self.session.post(url, data=data, files=files)
-            self._check_for_api_errors(response, "While submitting file:")
-        except requests.RequestException as e:
-            self.error("Error while trying to submit file: " + str(e))
+        with open(file_path, mode="rb") as f:
+            files = {"sample_file": f}
+            try:
+                response = self.session.post(url, data=data, files=files)
+                self._check_for_api_errors(response, "While submitting file:")
+            except requests.RequestException as e:
+                self.error("Error while trying to submit file: " + str(e))
         submit_response: SubmitResponse = response.json()
         return submit_response
 
@@ -203,12 +216,13 @@ class MCAPAnalyzer(Analyzer):
         elif data_type == "url":
             feed_name = "urls"
             request_data["url"] = data
-        elif data_type == "hash" and len(data) != 64:
-            self.error(
-                "This API only supports SHA-256 hashes which have 64"
-                f" characters. Your hash '{data}' has {len(data)}"
-            )
         elif data_type == "hash":
+            sha256_hash_length = 64
+            if len(data) != sha256_hash_length:
+                self.error(
+                    "This API only supports SHA-256 hashes which have 64"
+                    f" characters. Your hash '{data}' has {len(data)}"
+                )
             feed_name = "artifacts"
             request_data["sha256"] = data
         else:
@@ -249,10 +263,7 @@ class MCAPAnalyzer(Analyzer):
 
             # Build taxonomy based on IOC count
             ioc_count = len(iocs)
-            if ioc_count > 0:
-                taxonomy_level = "malicious"
-            else:
-                taxonomy_level = "safe"
+            taxonomy_level = "malicious" if ioc_count > 0 else "safe"
 
             taxonomy = self.build_taxonomy(
                 level=cast(TaxonomyLevel, taxonomy_level),
@@ -306,10 +317,7 @@ class MCAPAnalyzer(Analyzer):
 
         # Build taxonomy based on IOC count
         ioc_count = len(iocs)
-        if ioc_count > 0:
-            file_taxonomy_level = "malicious"
-        else:
-            file_taxonomy_level = "safe"
+        file_taxonomy_level = "malicious" if ioc_count > 0 else "safe"
 
         taxonomy = self.build_taxonomy(
             level=cast(TaxonomyLevel, file_taxonomy_level),
@@ -331,5 +339,6 @@ class MCAPAnalyzer(Analyzer):
         return self.report(full)
 
     def run(self) -> None:
+        """Run the analyzer and print results to stdout."""
         report = self.execute()
         print(json.dumps(report.full_report, ensure_ascii=False))

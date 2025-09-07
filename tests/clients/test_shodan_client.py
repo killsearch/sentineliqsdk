@@ -9,7 +9,9 @@ from sentineliqsdk.clients.shodan import ShodanClient, _merge_query
 def test_merge_query_appends_params() -> None:
     url = "https://api.shodan.io/path?x=1"
     out = _merge_query(url, {"y": 2, "z": True})
-    assert "x=1" in out and "y=2" in out and "z=true" in out
+    assert "x=1" in out
+    assert "y=2" in out
+    assert "z=true" in out
 
 
 def test_merge_query_none_and_skip_none_values() -> None:
@@ -18,7 +20,8 @@ def test_merge_query_none_and_skip_none_values() -> None:
     assert _merge_query(base, None) == base
     # Skip keys with None values
     out = _merge_query(base, {"a": None, "b": 1})
-    assert "a=" not in out and "b=1" in out
+    assert "a=" not in out
+    assert "b=1" in out
 
 
 def test_get_parses_json_and_injects_key() -> None:
