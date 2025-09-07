@@ -17,8 +17,13 @@ class DummyAxurClient:
     def customers(self) -> dict[str, Any]:
         return {"customers": [{"key": "ACME"}]}
 
-    def call(self, method: str, path: str, **kwargs) -> dict[str, Any]:
-        return {"dry_run": kwargs.get("dry_run", False), "url": f"/api/{path}"}
+    def call(self, method: str, path: str, options=None, **kwargs) -> dict[str, Any]:
+        dry_run = False
+        if options and hasattr(options, "dry_run"):
+            dry_run = options.dry_run
+        elif kwargs:
+            dry_run = kwargs.get("dry_run", False)
+        return {"dry_run": dry_run, "url": f"/api/{path}"}
 
 
 def build_analyzer(data: str = "payload", data_type: DataType = "other") -> AxurAnalyzer:

@@ -20,12 +20,12 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, NoReturn, cast
 
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
-from sentineliqsdk.clients.axur import AxurClient
+from sentineliqsdk.clients.axur import AxurClient, RequestOptions
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
 # Allowlist of AxurClient methods exposed for dynamic calls
@@ -86,7 +86,6 @@ class AxurAnalyzer(Analyzer):
                 json_body = kwargs.pop("json", None)
                 dry_run = bool(kwargs.pop("dry_run", False))
                 # Any remaining kwargs are ignored; only documented keys used
-                from sentineliqsdk.clients.axur import RequestOptions
 
                 return client.call(
                     http_method,
@@ -190,6 +189,11 @@ class AxurAnalyzer(Analyzer):
         self.error(
             "Unsupported data type for AxurAnalyzer. Use env AXUR_METHOD or data_type 'other' with JSON."
         )
+        return cast(AnalyzerReport, self._never_returns())  # type: ignore[unreachable]
+
+    def _never_returns(self) -> NoReturn:
+        """Return a value that never returns, used after self.error() calls."""
+        raise RuntimeError("This should never be reached")
 
     def run(self) -> None:
         """Run the analyzer and print results to stdout."""

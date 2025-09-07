@@ -31,7 +31,7 @@ Example programmatic usage:
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, NoReturn, cast
 
 import httpx
 
@@ -160,6 +160,7 @@ class AnyRunAnalyzer(Analyzer):
                 self.error(f"HTTP call to AnyRun failed: {exc}")
 
         self.error("Failed to submit analysis to AnyRun after maximum retries")
+        return cast(str, self._never_returns())  # type: ignore[unreachable]
 
     def _wait_for_completion(self, task_id: str) -> dict[str, Any]:
         """Poll AnyRun API for analysis completion and return results."""
@@ -198,6 +199,11 @@ class AnyRunAnalyzer(Analyzer):
 
         # If we get here, we've exhausted all attempts
         self.error("AnyRun analysis timed out")
+        return cast(dict[str, Any], self._never_returns())  # type: ignore[unreachable]
+
+    def _never_returns(self) -> NoReturn:
+        """Return a value that never returns, used after self.error() calls."""
+        raise RuntimeError("This should never be reached")
 
     def _clean_report(self, report: dict[str, Any]) -> dict[str, Any]:
         """Clean up the report by removing large fields to avoid memory issues."""

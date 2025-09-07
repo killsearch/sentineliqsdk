@@ -147,7 +147,7 @@ def test_request_with_bytes_body_and_headers(monkeypatch) -> None:
 def test_wrappers_delegate_to_request(monkeypatch) -> None:
     captured: list[tuple[str, str, dict[str, Any]]] = []
 
-    def fake_request(self, method, path, **kwargs):
+    def fake_request(self, method, path, options=None, **kwargs):
         captured.append((method, path, kwargs))
         return {"ok": True}
 

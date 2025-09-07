@@ -46,7 +46,7 @@ class TestCensysAnalyzer:
         assert analyzer.METADATA.pattern == "threat-intel"
         assert analyzer.METADATA.version_stage == "STABLE"
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_client_initialization(self, mock_sdk_class) -> None:
         """Test client initialization."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -107,7 +107,7 @@ class TestCensysAnalyzer:
         assert expected_collections_methods.issubset(ALLOWED_METHODS)
         assert expected_global_data_methods.issubset(ALLOWED_METHODS)
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_call_dynamic_collections_method(self, mock_sdk_class) -> None:
         """Test dynamic call to collections method."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -121,7 +121,7 @@ class TestCensysAnalyzer:
         mock_sdk.collections.list.assert_called_once_with(page_size=10)
         assert result == {"collections": []}
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_call_dynamic_global_data_method(self, mock_sdk_class) -> None:
         """Test dynamic call to global data method."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -151,7 +151,7 @@ class TestCensysAnalyzer:
         with pytest.raises(SystemExit):
             analyzer._call_dynamic("collections_list", "invalid_params")  # type: ignore
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_analyze_ip(self, mock_sdk_class) -> None:
         """Test IP analysis."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -170,7 +170,7 @@ class TestCensysAnalyzer:
         mock_sdk.global_data.get_host.assert_called_once_with(ip="1.2.3.4")
         mock_sdk.global_data.get_host_timeline.assert_called_once_with(ip="1.2.3.4")
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_analyze_domain(self, mock_sdk_class) -> None:
         """Test domain analysis."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -187,7 +187,7 @@ class TestCensysAnalyzer:
         assert "certificate_search_results" in result
         assert "web_properties" in result
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_analyze_certificate(self, mock_sdk_class) -> None:
         """Test certificate analysis."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -233,7 +233,7 @@ class TestCensysAnalyzer:
 
         assert verdict == "malicious"
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_execute_ip_analysis(self, mock_sdk_class) -> None:
         """Test execute method for IP analysis."""
         mock_sdk = MagicMock()
@@ -254,7 +254,7 @@ class TestCensysAnalyzer:
         assert report.full_report["data_type"] == "ip"
         assert "metadata" in report.full_report
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_execute_domain_analysis(self, mock_sdk_class) -> None:
         """Test execute method for domain analysis."""
         mock_sdk = MagicMock()
@@ -272,7 +272,7 @@ class TestCensysAnalyzer:
         assert report.full_report["source"] == "censys"
         assert report.full_report["data_type"] == "domain"
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_execute_certificate_analysis(self, mock_sdk_class) -> None:
         """Test execute method for certificate analysis."""
         mock_sdk = MagicMock()
@@ -362,7 +362,7 @@ class TestCensysAnalyzer:
             analyzer.run()
             mock_execute.assert_called_once()
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_analyze_ip_exception_handling(self, mock_sdk_class) -> None:
         """Test exception handling in IP analysis."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -374,7 +374,7 @@ class TestCensysAnalyzer:
         with pytest.raises(SystemExit):
             analyzer._analyze_ip("1.2.3.4")
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_analyze_domain_exception_handling(self, mock_sdk_class) -> None:
         """Test exception handling in domain analysis."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)
@@ -386,7 +386,7 @@ class TestCensysAnalyzer:
         with pytest.raises(SystemExit):
             analyzer._analyze_domain("example.com")
 
-    @patch("censys_platform.SDK")
+    @patch("sentineliqsdk.analyzers.censys.SDK")
     def test_analyze_certificate_exception_handling(self, mock_sdk_class) -> None:
         """Test exception handling in certificate analysis."""
         mock_sdk = self._setup_mock_sdk(mock_sdk_class)

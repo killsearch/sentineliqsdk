@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Censys Analyzer Example - Comprehensive demonstration of all Censys Platform API methods.
+r"""Censys Analyzer Example - Comprehensive demonstration of all Censys Platform API methods.
 
 This example demonstrates how to use the CensysAnalyzer with various data types and methods.
 It supports both dry-run mode (default) and execution mode with --execute flag.
@@ -35,7 +35,8 @@ Examples
     python examples/analyzers/censys_example.py --execute --method collections_list
 
     # Search with custom query
-    python examples/analyzers/censys_example.py --execute --method global_data_search --query "services.port:443"
+    python examples/analyzers/censys_example.py --execute --method global_data_search \\
+        --query "services.port:443"
 """
 
 from __future__ import annotations
@@ -272,8 +273,8 @@ def demonstrate_all_methods(execute: bool) -> None:
         print("\n[DRY RUN] Use --execute --method <method_name> to test specific methods")
 
 
-def main() -> None:
-    """Main function to run the Censys analyzer example."""
+def _setup_argument_parser() -> argparse.ArgumentParser:
+    """Set up command line argument parser."""
     parser = argparse.ArgumentParser(
         description="Censys Analyzer Example - Comprehensive Censys Platform API demonstration",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -311,96 +312,111 @@ def main() -> None:
         "--show-all-methods", action="store_true", help="Show all available Censys API methods"
     )
 
-    args = parser.parse_args()
+    return parser
 
+
+def _print_mode_info(execute: bool, include_dangerous: bool) -> None:
+    """Print information about current execution mode."""
     print("Censys Analyzer Example")
     print("=" * 50)
 
-    if not args.execute:
+    if not execute:
         print("Running in DRY RUN mode - no actual API calls will be made")
         print("Use --execute to make real API calls")
     else:
         print("Running in EXECUTE mode - making real API calls")
-        if not args.include_dangerous:
+        if not include_dangerous:
             print("Use --include-dangerous for potentially impactful operations")
 
-    # Show all methods if requested
+
+def _handle_special_commands(args: argparse.Namespace) -> bool:
+    """Handle special commands like show-all-methods and method calls. Returns True if handled."""
     if args.show_all_methods:
         demonstrate_all_methods(args.execute)
-        return
+        return True
 
-    # Run specific method if provided
     if args.method:
         if args.method.startswith("global_data_search"):
             demonstrate_global_data_search(args.execute, args.query)
         else:
             demonstrate_dynamic_method_call(args.execute, args.method)
-        return
+        return True
 
-    # Run comprehensive demonstrations
-    try:
-        # Basic data type analysis
-        if args.data_type == "ip":
-            input_data = WorkerInput(
-                data_type="ip", data=args.data, config=WorkerConfig(secrets=create_sample_config())
-            )
-            analyzer = CensysAnalyzer(input_data)
-            if args.execute:
-                report = analyzer.execute()
-                print("\nAnalysis Result:")
-                print(f"Observable: {report.full_report['observable']}")
-                print(f"Verdict: {report.full_report['verdict']}")
-                print(f"Source: {report.full_report['source']}")
-                print(f"Taxonomy: {json.dumps(report.full_report['taxonomy'], indent=2)}")
-                if report.artifacts:
-                    print(f"Artifacts: {len(report.artifacts)} found")
-            else:
-                print(f"\n[DRY RUN] Would analyze IP: {args.data}")
+    return False
 
-        elif args.data_type in ("domain", "fqdn"):
-            input_data = WorkerInput(
-                data_type=args.data_type,
-                data=args.data,
-                config=WorkerConfig(secrets=create_sample_config()),
-            )
-            analyzer = CensysAnalyzer(input_data)
-            if args.execute:
-                report = analyzer.execute()
-                print("\nAnalysis Result:")
-                print(f"Observable: {report.full_report['observable']}")
-                print(f"Verdict: {report.full_report['verdict']}")
-                print(f"Source: {report.full_report['source']}")
-                print(f"Taxonomy: {json.dumps(report.full_report['taxonomy'], indent=2)}")
-            else:
-                print(f"\n[DRY RUN] Would analyze {args.data_type}: {args.data}")
 
-        elif args.data_type == "hash":
-            input_data = WorkerInput(
-                data_type="hash",
-                data=args.data,
-                config=WorkerConfig(secrets=create_sample_config()),
-            )
-            analyzer = CensysAnalyzer(input_data)
-            if args.execute:
-                report = analyzer.execute()
-                print("\nAnalysis Result:")
-                print(f"Observable: {report.full_report['observable']}")
-                print(f"Verdict: {report.full_report['verdict']}")
-                print(f"Source: {report.full_report['source']}")
-                print(f"Taxonomy: {json.dumps(report.full_report['taxonomy'], indent=2)}")
-            else:
-                print(f"\n[DRY RUN] Would analyze certificate hash: {args.data}")
+def _analyze_data_type(args: argparse.Namespace) -> None:
+    """Analyze data based on data type."""
+    config = WorkerConfig(secrets=create_sample_config())
 
-        else:  # other
-            print(f"\n[DRY RUN] Would analyze {args.data_type}: {args.data}")
-            print("For 'other' data type, provide JSON with 'method' and 'params' keys")
+    if args.data_type == "ip":
+        _analyze_ip(args, config)
+    elif args.data_type in ("domain", "fqdn"):
+        _analyze_domain(args, config)
+    elif args.data_type == "hash":
+        _analyze_hash(args, config)
+    else:  # other
+        print(f"\n[DRY RUN] Would analyze {args.data_type}: {args.data}")
+        print("For 'other' data type, provide JSON with 'method' and 'params' keys")
 
-    except Exception as e:
-        print(f"Error: {e}")
-        if not args.execute:
-            print("Note: This might be due to missing API credentials in dry run mode")
-        sys.exit(1)
 
+def _analyze_ip(args: argparse.Namespace, config: WorkerConfig) -> None:
+    """Analyze IP address."""
+    input_data = WorkerInput(data_type="ip", data=args.data, config=config)
+    analyzer = CensysAnalyzer(input_data)
+    if args.execute:
+        report = analyzer.execute()
+        print("\nAnalysis Result:")
+        print(f"Observable: {report.full_report['observable']}")
+        print(f"Verdict: {report.full_report['verdict']}")
+        print(f"Source: {report.full_report['source']}")
+        print(f"Taxonomy: {json.dumps(report.full_report['taxonomy'], indent=2)}")
+        if report.artifacts:
+            print(f"Artifacts: {len(report.artifacts)} found")
+    else:
+        print(f"\n[DRY RUN] Would analyze IP: {args.data}")
+
+
+def _analyze_domain(args: argparse.Namespace, config: WorkerConfig) -> None:
+    """Analyze domain or FQDN."""
+    input_data = WorkerInput(
+        data_type=args.data_type,
+        data=args.data,
+        config=config,
+    )
+    analyzer = CensysAnalyzer(input_data)
+    if args.execute:
+        report = analyzer.execute()
+        print("\nAnalysis Result:")
+        print(f"Observable: {report.full_report['observable']}")
+        print(f"Verdict: {report.full_report['verdict']}")
+        print(f"Source: {report.full_report['source']}")
+        print(f"Taxonomy: {json.dumps(report.full_report['taxonomy'], indent=2)}")
+    else:
+        print(f"\n[DRY RUN] Would analyze {args.data_type}: {args.data}")
+
+
+def _analyze_hash(args: argparse.Namespace, config: WorkerConfig) -> None:
+    """Analyze certificate hash."""
+    input_data = WorkerInput(
+        data_type="hash",
+        data=args.data,
+        config=config,
+    )
+    analyzer = CensysAnalyzer(input_data)
+    if args.execute:
+        report = analyzer.execute()
+        print("\nAnalysis Result:")
+        print(f"Observable: {report.full_report['observable']}")
+        print(f"Verdict: {report.full_report['verdict']}")
+        print(f"Source: {report.full_report['source']}")
+        print(f"Taxonomy: {json.dumps(report.full_report['taxonomy'], indent=2)}")
+    else:
+        print(f"\n[DRY RUN] Would analyze certificate hash: {args.data}")
+
+
+def _print_completion_message() -> None:
+    """Print completion message and usage examples."""
     print("\n" + "=" * 50)
     print("Example completed successfully!")
     print("\nFor more examples, run:")
@@ -409,6 +425,27 @@ def main() -> None:
     print(
         "  python examples/analyzers/censys_example.py --execute --data-type domain --data example.com"
     )
+
+
+def main() -> None:
+    """Run the Censys analyzer example."""
+    parser = _setup_argument_parser()
+    args = parser.parse_args()
+
+    _print_mode_info(args.execute, args.include_dangerous)
+
+    if _handle_special_commands(args):
+        return
+
+    try:
+        _analyze_data_type(args)
+    except Exception as e:
+        print(f"Error: {e}")
+        if not args.execute:
+            print("Note: This might be due to missing API credentials in dry run mode")
+        sys.exit(1)
+
+    _print_completion_message()
 
 
 if __name__ == "__main__":

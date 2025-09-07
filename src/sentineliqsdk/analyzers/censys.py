@@ -36,8 +36,13 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from censys_platform import SDK
+
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
+
+# Constants
+SUSPICIOUS_RESULTS_THRESHOLD = 100
 
 # Allowlist of Censys Platform API methods exposed for dynamic calls
 ALLOWED_METHODS: set[str] = {
@@ -78,9 +83,7 @@ class CensysAnalyzer(Analyzer):
 
     def _client(self) -> Any:
         """Initialize Censys Platform SDK client."""
-        try:
-            from censys_platform import SDK
-        except ImportError:
+        if SDK is None:
             self.error("Censys Platform SDK not installed. Run: pip install censys-platform")
 
         personal_access_token = self.get_secret("censys.personal_access_token")
@@ -249,6 +252,56 @@ class CensysAnalyzer(Analyzer):
             except Exception as e:
                 self.error(f"Censys certificate lookup failed: {e}")
 
+    def _check_host_services(self, host_data: dict[str, Any]) -> TaxonomyLevel | None:
+        """Check host services for malicious indicators."""
+        services = host_data.get("services", [])
+        if not isinstance(services, list):
+            return None
+
+        suspicious_ports = {22, 23, 135, 139, 445, 1433, 3389}
+        malicious_keywords = ["malware", "trojan", "backdoor", "exploit"]
+
+        for service in services:
+            if not isinstance(service, dict):
+                continue
+
+            # Check for suspicious ports
+            port = service.get("port")
+            if port in suspicious_ports:
+                return "suspicious"
+
+            # Check for malicious banners
+            banner = service.get("banner", "").lower()
+            if any(keyword in banner for keyword in malicious_keywords):
+                return "malicious"
+
+        return None
+
+    def _check_certificate_patterns(self, cert_data: dict[str, Any]) -> TaxonomyLevel | None:
+        """Check certificate patterns for suspicious indicators."""
+        parsed = cert_data.get("parsed", {})
+
+        # Check for self-signed certificates
+        if parsed.get("is_ca") is False:
+            return "suspicious"
+
+        # Check for expired certificates (placeholder for future implementation)
+        if parsed.get("validity", {}).get("not_after"):
+            # This would need date parsing in a real implementation
+            pass
+
+        return None
+
+    def _check_search_results(self, search_data: Any) -> TaxonomyLevel | None:
+        """Check search results for suspicious patterns."""
+        if (
+            hasattr(search_data, "hits")
+            and search_data.hits
+            and len(search_data.hits) > SUSPICIOUS_RESULTS_THRESHOLD
+        ):
+            return "suspicious"
+        return None
+
     def _verdict_from_censys(self, payload: dict[str, Any]) -> TaxonomyLevel:
         """Determine verdict based on Censys data analysis."""
         try:
@@ -256,52 +309,24 @@ class CensysAnalyzer(Analyzer):
             if "host" in payload:
                 host_data = payload["host"]
                 if isinstance(host_data, dict):
-                    # Check for known malicious services or vulnerabilities
-                    services = host_data.get("services", [])
-                    if isinstance(services, list):
-                        for service in services:
-                            if isinstance(service, dict):
-                                # Check for suspicious ports or services
-                                port = service.get("port")
-                                if port in [
-                                    22,
-                                    23,
-                                    135,
-                                    139,
-                                    445,
-                                    1433,
-                                    3389,
-                                ]:  # Common attack vectors
-                                    return "suspicious"
-
-                                # Check for known malicious banners
-                                banner = service.get("banner", "").lower()
-                                if any(
-                                    keyword in banner
-                                    for keyword in ["malware", "trojan", "backdoor", "exploit"]
-                                ):
-                                    return "malicious"
+                    verdict = self._check_host_services(host_data)
+                    if verdict:
+                        return verdict
 
             # Check for suspicious certificate patterns
             if "certificate" in payload:
                 cert_data = payload["certificate"]
                 if isinstance(cert_data, dict):
-                    # Check for self-signed certificates
-                    if cert_data.get("parsed", {}).get("is_ca") is False:
-                        return "suspicious"
-
-                    # Check for expired certificates
-                    if cert_data.get("parsed", {}).get("validity", {}).get("not_after"):
-                        # This would need date parsing in a real implementation
-                        pass
+                    verdict = self._check_certificate_patterns(cert_data)
+                    if verdict:
+                        return verdict
 
             # Check search results for suspicious patterns
             if "search_results" in payload:
                 search_data = payload["search_results"]
-                if hasattr(search_data, "hits") and search_data.hits:
-                    # If many results, might indicate widespread presence
-                    if len(search_data.hits) > 100:
-                        return "suspicious"
+                verdict = self._check_search_results(search_data)
+                if verdict:
+                    return verdict
 
         except Exception:
             pass
