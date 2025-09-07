@@ -47,6 +47,7 @@ dev = [
   "pytest-mock (>=3.14.0)",
   "pytest-xdist (>=3.6.1)",
   "ruff (>=0.9.2)",
+  "types-requests>=2.32.4.20250809",
 ]
 
 [tool.commitizen]  # https://commitizen-tools.github.io/commitizen/config/
