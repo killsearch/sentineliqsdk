@@ -50,6 +50,9 @@ nav:
       - Outlook SMTP: modulos/responders/outlook_smtp.md
       - Kafka REST: modulos/responders/kafka_rest.md
       - RabbitMQ HTTP: modulos/responders/rabbitmq_http.md
+    - Clients:
+      - Axur Client: modulos/clients/axur.md
+      - Shodan Client: modulos/clients/shodan.md
     - Detectors:
       - ip: modulos/detectors/ip.md
       - url: modulos/detectors/url.md
