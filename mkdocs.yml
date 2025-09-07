@@ -35,6 +35,7 @@ nav:
     - Analyzers:
       - Shodan: modulos/analyzers/shodan.md
       - Axur: modulos/analyzers/axur.md
+      - AbuseIPDB: modulos/analyzers/abuseipdb.md
     - Responders:
       - Webhook: modulos/responders/webhook.md
       - Gmail SMTP: modulos/responders/gmail_smtp.md

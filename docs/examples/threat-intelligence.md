@@ -37,6 +37,15 @@ python examples/analyzers/axur_example.py \
 
 File: examples/analyzers/axur_example.py
 
+AbuseIPDB (IP reputation):
+
+```bash
+python examples/analyzers/abuseipdb_example.py --ip 1.2.3.4 --api-key YOUR_KEY           # plan only
+python examples/analyzers/abuseipdb_example.py --ip 1.2.3.4 --api-key YOUR_KEY --execute  # perform call
+```
+
+File: examples/analyzers/abuseipdb_example.py
+
 Notes:
 
 - Ensure proxies if required by your network: use `WorkerInput.config.proxy`.
