@@ -301,5 +301,5 @@ logging.basicConfig(level=logging.DEBUG)
 
 - [Censys Platform API Documentation](https://censys.io/platform)
 - [Censys Python SDK](https://github.com/censys/censys-sdk-python)
-- [SentinelIQ SDK Configuration](../configuration.md)
-- [Analyzer Development Guide](../analyzers.md)
+- [SentinelIQ SDK Configuration](../../guides/guide.md)
+- [Analyzer Development Guide](../../tutorials/building-analyzers.md)

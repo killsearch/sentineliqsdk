@@ -43,6 +43,7 @@ nav:
       - AnyRun: modulos/analyzers/anyrun.md
       - AutoFocus: modulos/analyzers/autofocus.md
       - MCAP: modulos/analyzers/mcap.md
+      - Censys: modulos/analyzers/censys.md
     - Responders:
       - Webhook: modulos/responders/webhook.md
       - Gmail SMTP: modulos/responders/gmail_smtp.md

@@ -205,8 +205,8 @@ The analyzer handles various error conditions:
 
 ## Related Modules
 
-- [CIRCL PassiveDNS Analyzer](../circl_passivedns.md) - Historical DNS records
-- [CIRCL Hash Lookup Analyzer](../circl_hashlookup.md) - File hash analysis
+- [CIRCL PassiveDNS Analyzer](circl_passivedns.md) - Historical DNS records
+- [CIRCL Hash Lookup Analyzer](circl_hashlookup.md) - File hash analysis
 
 ## References
 
