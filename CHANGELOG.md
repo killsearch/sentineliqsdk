@@ -19,6 +19,25 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 [0.1.0]: https://github.com/killsearch/sentineliqsdk/releases/tag/v0.1.0
 
+## v0.3.0 (2025-09-07)
+
+### Feat
+
+- implement comprehensive Censys Platform API analyzer
+- add MCAP analyzer for threat intelligence analysis
+- add CIRCL Vulnerability Lookup Analyzer
+- add CIRCL PassiveSSL analyzer
+- add CIRCL Passive DNS analyzer and update configuration rules
+- add CIRCL Hashlookup analyzer with full API coverage
+- add AnyRun analyzer for sandbox analysis
+- add AbuseIPDB analyzer for IP reputation checking
+
+### Fix
+
+- add explicit return statements to satisfy RET503 linter
+- resolve test failures and mypy errors
+- resolve type errors and update AutoFocus analyzer
+
 ## v0.2.2 (2025-09-07)
 
 ### Feat
