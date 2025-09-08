@@ -349,8 +349,8 @@ print(json.dumps(report.full_report, ensure_ascii=False, indent=2))
 
 - [ClamAV Official Documentation](https://www.clamav.net/documents)
 - [pyclamd Documentation](https://pypi.org/project/pyclamd/)
-- [SentinelIQ SDK Analyzer Guide](../guides/analyzers.md)
-- [Configuration Patterns](../guides/configuration.md)
+- [SentinelIQ SDK Agent Guide](../../guides/guide.md)
+- [HTTPX Client Pattern](../../guides/httpx-client.md)
 
 ## Support
 

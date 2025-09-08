@@ -295,8 +295,8 @@ python examples/analyzers/cluster25_example.py --execute --json
 
 Para suporte e dúvidas sobre o Cluster25 Analyzer:
 
-- **Documentação**: [Guia do Desenvolvedor](../../guides/developer-guide.md)
-- **Exemplos**: [Exemplos de Análise](../../examples/analysis-examples.md)
+- **Documentação**: [Agent Guide](../../guides/guide.md)
+- **Exemplos**: [Threat Intelligence](../../examples/threat-intelligence.md)
 - **Issues**: [GitHub Issues](https://github.com/killsearch/sentineliqsdk/issues)
 
 ## Changelog
