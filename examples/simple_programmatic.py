@@ -11,7 +11,7 @@ from sentineliqsdk import Analyzer, TaxonomyLevel, WorkerInput
 class SimpleAnalyzer(Analyzer):
     """Simple analyzer example."""
 
-    def run(self) -> None:
+    def run(self):
         """Run the simple analyzer to check if the IP is malicious."""
         observable = self.get_data()
 
@@ -34,7 +34,7 @@ class SimpleAnalyzer(Analyzer):
             ],
         }
 
-        self.report(full_report)
+        return self.report(full_report)
 
 
 def main():

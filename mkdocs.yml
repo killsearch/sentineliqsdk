@@ -57,6 +57,8 @@ nav:
       - RabbitMQ HTTP: modulos/responders/rabbitmq_http.md
     - Clients:
       - Axur Client: modulos/clients/axur.md
+      - Cluster25 Client: modulos/clients/cluster25.md
+      - CrowdSec Client: modulos/clients/crowdsec.md
       - Shodan Client: modulos/clients/shodan.md
     - Detectors:
       - ip: modulos/detectors/ip.md
