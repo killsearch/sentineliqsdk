@@ -96,6 +96,6 @@ class RabbitMqResponder(Responder):
 
         return self.report(full)
 
-    def run(self) -> None:
-        """Run the responder and execute the RabbitMQ publish operation."""
-        self.execute()
+    def run(self) -> ResponderReport:
+        """Run the responder and return ResponderReport."""
+        return self.execute()

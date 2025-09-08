@@ -79,18 +79,18 @@ def test_ip_analysis_safe_branch() -> None:
 
 def test_other_payload_invalid_json() -> None:
     analyzer = build_analyzer("other", "not-json")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_other_payload_missing_method_and_bad_params() -> None:
     # Missing method
     analyzer = build_analyzer("other", json.dumps({"params": {}}))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
     # Params not a mapping
     analyzer2 = build_analyzer("other", json.dumps({"method": "ports", "params": [1, 2]}))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer2.execute()
 
 
@@ -100,7 +100,7 @@ def test_config_params_not_mapping() -> None:
         params={"shodan": {"method": "ports", "params": [1, 2]}},
     )
     analyzer = ShodanAnalyzer(WorkerInput(data_type="ip", data="8.8.8.8", config=cfg))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
@@ -119,7 +119,7 @@ def test_dynamic_config_call_tokens() -> None:
 def test_unsupported_dtype_error() -> None:
     with patch("sentineliqsdk.analyzers.shodan.ShodanClient", DummyShodanClient):
         analyzer = build_analyzer("hash", "deadbeef")
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
 

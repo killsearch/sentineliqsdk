@@ -63,35 +63,35 @@ def test_execute_config_params_not_mapping() -> None:
         params={"axur": {"method": "customers", "params": [1, 2]}},
     )
     analyzer = AxurAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4", config=cfg))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_execute_payload_missing_method(monkeypatch) -> None:
     payload = {"no_method": True}
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_execute_payload_params_not_mapping(monkeypatch) -> None:
     payload = {"method": "customers", "params": [1, 2, 3]}  # invalid params type
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_execute_call_missing_path(monkeypatch) -> None:
     payload = {"method": "call", "params": {"http_method": "GET"}}  # missing path
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_execute_unsupported_method(monkeypatch) -> None:
     payload = {"method": "not_allowed", "params": {}}
     analyzer = build_analyzer(json.dumps(payload), data_type="other")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 

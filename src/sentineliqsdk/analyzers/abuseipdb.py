@@ -284,6 +284,6 @@ class AbuseIPDBAnalyzer(Analyzer):
             auto = []
         return artifacts + auto
 
-    def run(self) -> None:
-        """Run the analyzer and print results to stdout."""
-        self.execute()
+    def run(self) -> AnalyzerReport:
+        """Run analysis and return AnalyzerReport."""
+        return self.execute()

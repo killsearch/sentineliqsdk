@@ -89,6 +89,6 @@ class OutlookSmtpResponder(Responder):
 
         return self.report(full)
 
-    def run(self) -> None:
-        """Run the responder and execute the Outlook SMTP operation."""
-        self.execute()
+    def run(self) -> ResponderReport:
+        """Run the responder and return ResponderReport."""
+        return self.execute()

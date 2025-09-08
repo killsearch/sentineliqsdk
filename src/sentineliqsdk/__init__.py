@@ -8,8 +8,17 @@ from __future__ import annotations
 from typing import Protocol, TypeVar
 
 from sentineliqsdk.analyzers import Analyzer
+from sentineliqsdk.consumers import Consumer
 from sentineliqsdk.core import Worker
 from sentineliqsdk.extractors import Extractor
+from sentineliqsdk.messaging import (
+    ConsumerReport,
+    Message,
+    MessageConfig,
+    MessageMetadata,
+    ProducerReport,
+    QueueConfig,
+)
 from sentineliqsdk.models import (
     AnalyzerReport,
     Artifact,
@@ -24,17 +33,30 @@ from sentineliqsdk.models import (
     WorkerError,
     WorkerInput,
 )
+from sentineliqsdk.pipelines import MessageRouter, Pipeline, PipelineOrchestrator
+from sentineliqsdk.producers import Producer
 from sentineliqsdk.responders import Responder
 
 __all__ = [
     "Analyzer",
     "AnalyzerReport",
     "Artifact",
+    "Consumer",
+    "ConsumerReport",
     "Extractor",
     "ExtractorResult",
     "ExtractorResults",
+    "Message",
+    "MessageConfig",
+    "MessageMetadata",
+    "MessageRouter",
     "Operation",
+    "Pipeline",
+    "PipelineOrchestrator",
+    "Producer",
+    "ProducerReport",
     "ProxyConfig",
+    "QueueConfig",
     "Responder",
     "ResponderReport",
     "TaxonomyEntry",

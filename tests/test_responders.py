@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 from sentineliqsdk.models import (
     Operation,
     ProxyConfig,
+    ResponderReport,
     WorkerConfig,
     WorkerInput,
 )
@@ -16,8 +17,9 @@ from sentineliqsdk.responders import Responder
 class ConcreteResponder(Responder):
     """Concrete implementation of Responder for testing."""
 
-    def run(self) -> None:
+    def run(self) -> ResponderReport:
         """Test implementation of run method."""
+        return self.report({"action": "noop", "target": self.get_data()})
 
 
 class TestResponder:

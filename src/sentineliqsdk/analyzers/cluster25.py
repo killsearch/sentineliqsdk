@@ -75,6 +75,7 @@ class Cluster25Analyzer(Analyzer):
             # Create full report
             full_report = {
                 "observable": observable,
+                "data_type": self.data_type,
                 "indicator_data": indicator_data,
                 "taxonomy": [tax.to_dict() for tax in taxonomies],
                 "metadata": self.METADATA.to_dict(),
@@ -132,14 +133,16 @@ class Cluster25Analyzer(Analyzer):
         """Create an error report."""
         full_report = {
             "observable": observable,
+            "data_type": self.data_type,
             "error": error_message,
             "taxonomy": [self.build_taxonomy("info", "C25", "Error", error_message).to_dict()],
             "metadata": self.METADATA.to_dict(),
         }
         return self.report(full_report)
 
-    def run(self) -> None:
+    def run(self) -> AnalyzerReport:
         """Run the analyzer and print the report."""
         report = self.execute()
         # Print the report in JSON format to stdout
         print(json.dumps(report.full_report, ensure_ascii=False))
+        return report

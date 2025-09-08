@@ -161,7 +161,7 @@ class TestMCAPAnalyzer:
 
         analyzer = MCAPAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):  # analyzer.error() calls sys.exit(1)
+        with pytest.raises(RuntimeError):
             analyzer.check_feed("hash", "invalid_hash")
 
     def test_check_feed_unsupported_data_type(self):
@@ -170,7 +170,7 @@ class TestMCAPAnalyzer:
 
         analyzer = MCAPAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):  # analyzer.error() calls sys.exit(1)
+        with pytest.raises(RuntimeError):
             analyzer.check_feed("other", "some_data")
 
     @patch("requests.Session")
@@ -350,7 +350,7 @@ class TestMCAPAnalyzer:
 
         analyzer = MCAPAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):  # analyzer.error() calls sys.exit(1)
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
     def test_summary(self):

@@ -90,6 +90,6 @@ class GmailSmtpResponder(Responder):
 
         return self.report(full)
 
-    def run(self) -> None:
-        """Run the responder and execute the Gmail SMTP operation."""
-        self.execute()
+    def run(self) -> ResponderReport:
+        """Run the responder and return ResponderReport."""
+        return self.execute()

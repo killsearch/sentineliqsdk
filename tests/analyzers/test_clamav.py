@@ -75,7 +75,7 @@ class TestClamavAnalyzer:
         with patch("sentineliqsdk.analyzers.clamav.pyclamd.ClamdUnixSocket") as mock_clamd:
             mock_clamd.side_effect = Exception("Connection failed")
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(RuntimeError):
                 ClamavAnalyzer(input_data)
 
     def test_check_file_clean(self):
@@ -131,7 +131,7 @@ class TestClamavAnalyzer:
 
             analyzer = ClamavAnalyzer(input_data)
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(RuntimeError):
                 analyzer.check_file("/non/existent/file")
 
     def test_check_data_clean(self):
@@ -274,7 +274,7 @@ class TestClamavAnalyzer:
 
             analyzer = ClamavAnalyzer(input_data)
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(RuntimeError):
                 analyzer.execute()
 
     def test_run_method(self):
@@ -328,5 +328,5 @@ class TestClamavAnalyzer:
 
             analyzer = ClamavAnalyzer(input_data)
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(RuntimeError):
                 analyzer.execute()

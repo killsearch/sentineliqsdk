@@ -84,7 +84,7 @@ def test_webhook_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
         data="https://example.com",
         config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
     )
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         WebhookResponder(input_data).execute()
 
 

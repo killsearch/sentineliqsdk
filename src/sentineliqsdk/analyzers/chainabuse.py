@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import base64
 from contextlib import suppress
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -105,9 +105,11 @@ class ChainAbuseAnalyzer(Analyzer):
             except Exception as e:
                 self.error(f"Could not decode JSON response: {e!s}")
 
-        # This line is unreachable due to self.error() calls above, but mypy needs it
-        self.error(
-            f"Failed to query ChainAbuse API. Status: {resp.status_code}, Content: {resp.text}"
+        return cast(
+            dict[str, Any],
+            self.error(
+                f"Failed to query ChainAbuse API. Status: {resp.status_code}, Content: {resp.text}"
+            ),
         )
 
     def _fetch_sanctioned_address(self, address: str) -> dict[str, Any]:
@@ -133,10 +135,12 @@ class ChainAbuseAnalyzer(Analyzer):
             # Address not found in sanctioned list
             return {"sanctioned": False, "data": None}
 
-        # This line is unreachable due to self.error() calls above, but mypy needs it
-        self.error(
-            f"Failed to query ChainAbuse sanctioned addresses. Status: {resp.status_code}, "
-            f"Content: {resp.text}"
+        return cast(
+            dict[str, Any],
+            self.error(
+                f"Failed to query ChainAbuse sanctioned addresses. Status: {resp.status_code}, "
+                f"Content: {resp.text}"
+            ),
         )
 
     def _determine_verdict(
@@ -234,6 +238,6 @@ class ChainAbuseAnalyzer(Analyzer):
 
         return self.report(full_report)
 
-    def run(self) -> None:
-        """Run the analyzer and print results to stdout."""
-        self.execute()
+    def run(self) -> AnalyzerReport:
+        """Run analysis and return AnalyzerReport."""
+        return self.execute()

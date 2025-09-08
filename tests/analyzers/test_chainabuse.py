@@ -173,7 +173,7 @@ def test_metadata_included() -> None:
 def test_unsupported_data_type() -> None:
     """Test error handling for unsupported data types."""
     analyzer = build_analyzer("file", "test.txt")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
@@ -181,7 +181,7 @@ def test_missing_api_key() -> None:
     """Test error handling for missing API key."""
     cfg = WorkerConfig(secrets={})  # No API key
     analyzer = ChainAbuseAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4", config=cfg))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
@@ -271,7 +271,7 @@ def test_http_error_handling() -> None:
         )
 
         analyzer = build_analyzer("ip", "1.2.3.4")
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
 
@@ -284,7 +284,7 @@ def test_api_error_response() -> None:
         mock_client.return_value.__enter__.return_value.get.return_value = mock_response
 
         analyzer = build_analyzer("ip", "1.2.3.4")
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
 
@@ -297,7 +297,7 @@ def test_json_decode_error() -> None:
         mock_client.return_value.__enter__.return_value.get.return_value = mock_response
 
         analyzer = build_analyzer("ip", "1.2.3.4")
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
 

@@ -142,6 +142,27 @@ class WorkerError:
     input_data: WorkerInput | None = None
 
 
+@dataclass(frozen=True)
+class PipelineReport:
+    """Pipeline processing report."""
+
+    success: bool
+    messages_processed: int = 0
+    messages_failed: int = 0
+    processing_time: float = 0.0
+    registered_analyzers: int = 0
+    registered_responders: int = 0
+    full_report: Mapping[str, Any] = field(default_factory=dict)
+    operations: list[Operation] = field(default_factory=list)
+
+    def __post_init__(self) -> None:  # type: ignore[override]
+        """Post-initialization to ensure immutability."""
+        if isinstance(self.full_report, dict):
+            object.__setattr__(self, "full_report", MappingProxyType(dict(self.full_report)))
+        if isinstance(self.operations, list):
+            object.__setattr__(self, "operations", tuple(self.operations))
+
+
 # Version stage for module metadata
 ModuleVersionStage = Literal["DEVELOPER", "TESTING", "STABLE"]
 

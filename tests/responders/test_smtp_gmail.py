@@ -106,7 +106,7 @@ def test_gmail_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
         data="rcpt@example.com",
         config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
     )
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         GmailSmtpResponder(input_data).execute()
 
 

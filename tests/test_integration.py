@@ -11,9 +11,11 @@ import pytest
 
 from sentineliqsdk import (
     Analyzer,
+    AnalyzerReport,
     Extractor,
     ProxyConfig,
     Responder,
+    ResponderReport,
     WorkerConfig,
     WorkerInput,
     runner,
@@ -26,7 +28,7 @@ class TestAnalyzerIntegration:
     class ReputationAnalyzer(Analyzer):
         """Test analyzer for integration testing."""
 
-        def run(self) -> None:
+        def run(self) -> AnalyzerReport:
             """Test analyzer implementation."""
             observable = self.get_data()
 
@@ -56,7 +58,7 @@ class TestAnalyzerIntegration:
             }
 
             # Report the results
-            self.report(full_report)
+            return self.report(full_report)
 
     def test_analyzer_with_auto_extract(self):
         """Test analyzer with auto-extraction enabled."""
@@ -99,7 +101,7 @@ class TestAnalyzerIntegration:
         config = WorkerConfig(check_tlp=True, max_tlp=2)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=3, config=config)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             self.ReputationAnalyzer(input_data)
 
     def test_analyzer_pap_validation(self):
@@ -107,7 +109,7 @@ class TestAnalyzerIntegration:
         config = WorkerConfig(check_pap=True, max_pap=2)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", pap=3, config=config)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             self.ReputationAnalyzer(input_data)
 
     def test_analyzer_with_proxy_config(self):
@@ -129,7 +131,7 @@ class TestResponderIntegration:
     class BlockIpResponder(Responder):
         """Test responder for integration testing."""
 
-        def run(self) -> None:
+        def run(self) -> ResponderReport:
             """Test responder implementation."""
             ip = self.get_data()
 
@@ -154,7 +156,7 @@ class TestResponderIntegration:
             ]
 
             # Report the results
-            self.report(result)
+            return self.report(result)
 
     def test_responder_basic_functionality(self):
         """Test responder basic functionality."""
@@ -179,7 +181,7 @@ class TestResponderIntegration:
         config = WorkerConfig(check_tlp=True, max_tlp=2)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=3, config=config)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             self.BlockIpResponder(input_data)
 
 
@@ -354,14 +356,14 @@ class TestEndToEndIntegration:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=config)
 
         class TestAnalyzer(Analyzer):
-            def run(self) -> None:
+            def run(self) -> AnalyzerReport:
                 full_report = {
                     "observable": self.get_data(),
                     "verdict": "malicious",
                     "related_ips": ["8.8.8.8", "1.1.1.1"],
                     "related_urls": ["https://example.com"],
                 }
-                self.report(full_report)
+                return self.report(full_report)
 
         analyzer = TestAnalyzer(input_data)
 
@@ -374,7 +376,7 @@ class TestEndToEndIntegration:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4")
 
         class TestResponder(Responder):
-            def run(self) -> None:
+            def run(self) -> ResponderReport:
                 operations = [
                     self.build_operation("block", target=self.get_data()),
                     self.build_operation("alert", severity="high"),
@@ -387,7 +389,7 @@ class TestEndToEndIntegration:
                         for op in operations
                     ],
                 }
-                self.report(result)
+                return self.report(result)
 
         responder = TestResponder(input_data)
 
@@ -399,14 +401,15 @@ class TestEndToEndIntegration:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4")
 
         class TestWorker(Analyzer):
-            def run(self) -> None:
+            def run(self) -> AnalyzerReport:
                 # Test get_env method
                 test_var = self.get_env("TEST_VAR", default="default_value")
                 assert test_var == "default_value"
 
                 # Test get_env with required variable
-                with pytest.raises(SystemExit):
+                with pytest.raises(RuntimeError):
                     self.get_env("REQUIRED_VAR", message="Required variable missing")
+                return self.report({"ok": True})
 
         with patch.dict(os.environ, {}, clear=True):
             worker = TestWorker(input_data)
@@ -417,7 +420,7 @@ class TestEndToEndIntegration:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4")
 
         class TestWorker(Analyzer):
-            def run(self) -> None:
+            def run(self) -> AnalyzerReport:
                 self.error("Test error message")
 
         worker = TestWorker(input_data)
@@ -426,13 +429,11 @@ class TestEndToEndIntegration:
         captured_output = StringIO()
 
         with patch("sys.stdout", captured_output):
-            with pytest.raises(SystemExit) as exc_info:
-                worker.run()
+            with pytest.raises(RuntimeError) as exc_info:
+                worker.error("Test error message")
 
-        assert exc_info.value.code == 1
-
-        # Parse the JSON output
-        output = json.loads(captured_output.getvalue())
+        # Parse the JSON output from exception message
+        output = json.loads(str(exc_info.value))
         assert output["success"] is False
         assert output["errorMessage"] == "Test error message"
         assert "input" in output

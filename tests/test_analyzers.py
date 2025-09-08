@@ -8,6 +8,7 @@ import pytest
 
 from sentineliqsdk.analyzers import Analyzer
 from sentineliqsdk.models import (
+    AnalyzerReport,
     Artifact,
     TaxonomyEntry,
     WorkerConfig,
@@ -18,8 +19,9 @@ from sentineliqsdk.models import (
 class ConcreteAnalyzer(Analyzer):
     """Concrete implementation of Analyzer for testing."""
 
-    def run(self) -> None:
+    def run(self) -> AnalyzerReport:
         """Test implementation of run method."""
+        return self.report({"observable": self.get_data(), "verdict": "info"})
 
 
 class TestAnalyzer:
@@ -60,7 +62,7 @@ class TestAnalyzer:
         input_data = WorkerInput(data_type="file", data="malware.exe")
         analyzer = ConcreteAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.get_data()
 
     def test_build_taxonomy_valid_levels(self):

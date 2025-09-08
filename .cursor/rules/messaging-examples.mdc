@@ -1,0 +1,358 @@
+---
+globs: examples/producers/*.py,examples/consumers/*.py
+---
+
+# Messaging Examples Requirements
+
+This rule applies specifically to Producer and Consumer examples in the `examples/` directory.
+
+## Required Structure
+
+### Import Organization
+```python
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from typing import Any
+
+from sentineliqsdk import WorkerConfig, WorkerInput
+from sentineliqsdk.messaging import MessageConfig, QueueConfig
+from sentineliqsdk.producers import MyProducer  # or consumers
+```
+
+### Argument Parser Requirements
+All examples must include these standard arguments:
+
+```python
+def main() -> None:
+    parser = argparse.ArgumentParser(description="My Producer/Consumer Example")
+    
+    # Data arguments
+    parser.add_argument("--data", default="Hello World!", help="Data to publish/process")
+    parser.add_argument("--topic", default="my-topic", help="Topic/queue name")
+    
+    # Consumer-specific arguments
+    parser.add_argument("--group-id", default="my-consumer", help="Consumer group ID")
+    parser.add_argument("--max-messages", type=int, default=5, help="Maximum messages to consume")
+    
+    # Safety gates (REQUIRED)
+    parser.add_argument("--execute", action="store_true", help="Execute real operations")
+    parser.add_argument("--include-dangerous", action="store_true", help="Include dangerous operations")
+    
+    args = parser.parse_args()
+```
+
+### Configuration Requirements
+
+#### Producer Configuration
+```python
+# Create input data with secrets (NEVER use os.environ)
+input_data = WorkerInput(
+    data_type="other",
+    data=args.data,
+    config=WorkerConfig(
+        secrets={
+            "kafka.bootstrap_servers": "localhost:9092",
+            "kafka.security_protocol": "PLAINTEXT",
+            # Add other broker-specific secrets
+        }
+    ),
+)
+
+# Create and configure producer
+producer = MyProducer(input_data)
+
+# Configure queue
+queue_config = QueueConfig(
+    queue_name=args.topic,
+    durable=True,
+    auto_delete=False,
+)
+producer.configure_queue(queue_config)
+
+# Configure messaging
+message_config = MessageConfig(
+    delivery_mode="persistent",
+    mandatory=True,
+)
+producer.configure_messaging(message_config)
+```
+
+#### Consumer Configuration
+```python
+# Create input data with secrets and parameters
+input_data = WorkerInput(
+    data_type="other",
+    data="consumer_data",
+    config=WorkerConfig(
+        params={
+            "max_messages": args.max_messages,
+            "timeout_ms": 5000,
+        },
+        secrets={
+            "kafka.bootstrap_servers": "localhost:9092",
+            "kafka.security_protocol": "PLAINTEXT",
+            "kafka.group_id": args.group_id,
+        }
+    ),
+)
+
+# Create and configure consumer
+consumer = MyConsumer(input_data)
+
+# Configure queue
+queue_config = QueueConfig(
+    queue_name=args.topic,
+    durable=True,
+    auto_delete=False,
+)
+consumer.configure_queue(queue_config)
+
+# Configure messaging
+message_config = MessageConfig(
+    auto_ack=False,
+    prefetch_count=1,
+)
+consumer.configure_messaging(message_config)
+```
+
+### Execution Logic
+
+#### Producer Execution
+```python
+if args.execute:
+    try:
+        # Publish message
+        report = producer.run()
+        
+        # Print result
+        result = {
+            "success": report.success,
+            "message_id": report.message_id,
+            "queue_name": report.queue_name,
+            "delivery_confirmed": report.delivery_confirmed,
+            "full_report": report.full_report,
+        }
+        
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        
+    except Exception as e:
+        error_result = {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to publish message",
+        }
+        print(json.dumps(error_result, ensure_ascii=False, indent=2))
+        sys.exit(1)
+        
+    finally:
+        producer.close()
+else:
+    # Dry run - show what would be published
+    dry_run_result = {
+        "mode": "dry_run",
+        "message": "Would publish the following message:",
+        "data": args.data,
+        "topic": args.topic,
+        "note": "Use --execute to actually publish the message",
+    }
+    print(json.dumps(dry_run_result, ensure_ascii=False, indent=2))
+```
+
+#### Consumer Execution
+```python
+if args.execute:
+    try:
+        # Start consuming messages
+        report = consumer.start_consuming()
+        
+        # Print result
+        result = {
+            "success": report.success,
+            "messages_processed": report.messages_processed,
+            "messages_failed": report.messages_failed,
+            "processing_time": report.processing_time,
+            "full_report": report.full_report,
+        }
+        
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        
+    except Exception as e:
+        error_result = {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to consume messages",
+        }
+        print(json.dumps(error_result, ensure_ascii=False, indent=2))
+        sys.exit(1)
+        
+    finally:
+        consumer.stop()
+else:
+    # Dry run - show what would be consumed
+    dry_run_result = {
+        "mode": "dry_run",
+        "message": "Would consume messages from the following topic:",
+        "topic": args.topic,
+        "group_id": args.group_id,
+        "max_messages": args.max_messages,
+        "note": "Use --execute to actually consume messages",
+    }
+    print(json.dumps(dry_run_result, ensure_ascii=False, indent=2))
+```
+
+## Safety Requirements
+
+### Default Behavior
+- **Default**: Dry-run mode (safe, no network calls)
+- **--execute**: Enable real network calls
+- **--include-dangerous**: Enable impactful operations (scans, blocks, etc.)
+
+### Error Handling
+- Always use try/except blocks around execution
+- Print structured JSON error responses
+- Use `sys.exit(1)` on errors
+- Always clean up resources in `finally` blocks
+
+### Resource Management
+```python
+# Producer cleanup
+finally:
+    producer.close()
+
+# Consumer cleanup
+finally:
+    consumer.stop()
+```
+
+## Output Requirements
+
+### JSON Output Format
+All output must be valid JSON with `ensure_ascii=False` and `indent=2`:
+
+```python
+print(json.dumps(result, ensure_ascii=False, indent=2))
+```
+
+### Success Response Structure
+```python
+{
+    "success": true,
+    "message_id": "msg_1234567890",
+    "queue_name": "my-topic",
+    "delivery_confirmed": true,
+    "full_report": {
+        "metadata": {...},
+        "additional": "data"
+    }
+}
+```
+
+### Error Response Structure
+```python
+{
+    "success": false,
+    "error": "Connection failed",
+    "message": "Failed to publish message"
+}
+```
+
+### Dry Run Response Structure
+```python
+{
+    "mode": "dry_run",
+    "message": "Would publish the following message:",
+    "data": "Hello World!",
+    "topic": "my-topic",
+    "note": "Use --execute to actually publish the message"
+}
+```
+
+## Prohibited Patterns
+
+### Direct Environment Variable Usage
+```python
+# PROHIBITED
+import os
+os.environ["KAFKA_BOOTSTRAP_SERVERS"] = "localhost:9092"
+
+# REQUIRED
+config=WorkerConfig(
+    secrets={
+        "kafka.bootstrap_servers": "localhost:9092",
+    }
+)
+```
+
+### Hardcoded Credentials
+```python
+# PROHIBITED
+secrets={
+    "kafka.sasl_password": "hardcoded_password",
+}
+
+# REQUIRED - Use environment or configuration management
+secrets={
+    "kafka.sasl_password": os.getenv("KAFKA_PASSWORD", "default_password"),
+}
+```
+
+### Missing Safety Gates
+```python
+# PROHIBITED - No safety gates
+report = producer.run()
+
+# REQUIRED - With safety gates
+if args.execute:
+    report = producer.run()
+else:
+    # Dry run
+```
+
+## Example Command Line Usage
+
+### Producer Example
+```bash
+# Dry run (default)
+python examples/producers/kafka_producer_example.py --data "Hello World!" --topic "events"
+
+# Execute real publishing
+python examples/producers/kafka_producer_example.py --data "Hello World!" --topic "events" --execute
+
+# Include dangerous operations
+python examples/producers/kafka_producer_example.py --data "Hello World!" --topic "events" --execute --include-dangerous
+```
+
+### Consumer Example
+```bash
+# Dry run (default)
+python examples/consumers/kafka_consumer_example.py --topic "events" --group-id "my-consumer"
+
+# Execute real consumption
+python examples/consumers/kafka_consumer_example.py --topic "events" --group-id "my-consumer" --execute
+
+# Include dangerous operations
+python examples/consumers/kafka_consumer_example.py --topic "events" --group-id "my-consumer" --execute --include-dangerous
+```
+
+## Testing Requirements
+
+### Runnable Locally
+Examples must be runnable with only stdlib + SDK:
+- No external dependencies beyond the SDK
+- Use `--execute` flag for real operations
+- Default to safe dry-run mode
+
+### Output Validation
+Examples must produce valid JSON output:
+- Structured success/error responses
+- Consistent field names
+- Proper error handling
+
+### Documentation Integration
+Examples must be referenced in documentation:
+- Link from module documentation pages
+- Include in README when helpful
+- Update navigation in `mkdocs.yml`

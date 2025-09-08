@@ -256,6 +256,6 @@ class CirclPassivednsAnalyzer(Analyzer):
 
         return self.report(full_report)
 
-    def run(self) -> None:
-        """Run analysis (side-effect only; use execute() for programmatic result)."""
-        self.execute()
+    def run(self) -> AnalyzerReport:
+        """Run analysis and return AnalyzerReport."""
+        return self.execute()

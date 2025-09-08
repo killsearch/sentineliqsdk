@@ -33,5 +33,6 @@ class Responder(Worker):
         """
         return self._build_envelope(full_report)
 
-    def run(self):
-        """Overwritten by responders."""
+    def run(self) -> ResponderReport:
+        """Delegate to execute() when implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement run() or execute()")

@@ -28,11 +28,11 @@ class TestCrowdSecAnalyzer:
 
         analyzer = CrowdSecAnalyzer(input_data=input_data)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             analyzer.execute()
 
         # Check that error message contains API key requirement
-        assert exc_info.value.code == 1
+        assert "Missing CrowdSec API key" in str(exc_info.value)
 
     @patch("sentineliqsdk.analyzers.crowdsec.CrowdSecClient")
     def test_successful_analysis(self, mock_client_class):
@@ -93,10 +93,10 @@ class TestCrowdSecAnalyzer:
 
         analyzer = CrowdSecAnalyzer(input_data=input_data)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             analyzer.execute()
 
-        assert exc_info.value.code == 1
+        assert "CrowdSec rate limit exceeded" in str(exc_info.value)
 
     @patch("sentineliqsdk.analyzers.crowdsec.CrowdSecClient")
     def test_api_error(self, mock_client_class):
@@ -112,10 +112,10 @@ class TestCrowdSecAnalyzer:
 
         analyzer = CrowdSecAnalyzer(input_data=input_data)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             analyzer.execute()
 
-        assert exc_info.value.code == 1
+        assert "CrowdSec API error" in str(exc_info.value)
 
     @patch("sentineliqsdk.analyzers.crowdsec.CrowdSecClient")
     def test_safe_reputation(self, mock_client_class):
@@ -252,10 +252,16 @@ class TestCrowdSecAnalyzer:
 
     def test_run_method(self):
         """Test that run method calls execute."""
-        with patch.object(CrowdSecAnalyzer, "execute") as mock_execute:
-            mock_execute.return_value = Mock()
+        with (
+            patch.object(CrowdSecAnalyzer, "execute") as mock_execute,
+            patch("builtins.print") as mock_print,
+        ):
+            mock_report = Mock()
+            mock_report.full_report = {"test": "data"}
+            mock_execute.return_value = mock_report
 
             analyzer = CrowdSecAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4"))
             analyzer.run()
 
             mock_execute.assert_called_once()
+            mock_print.assert_called_once()

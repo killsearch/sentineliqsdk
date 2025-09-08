@@ -165,7 +165,7 @@ def test_unsupported_hash_type() -> None:
     """Test unsupported hash type."""
     with patch("sentineliqsdk.analyzers.circl_hashlookup.httpx.Client", DummyHttpClient):
         analyzer = build_analyzer("hash", "invalid_hash")
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
 
@@ -173,7 +173,7 @@ def test_unsupported_data_type() -> None:
     """Test unsupported data type."""
     with patch("sentineliqsdk.analyzers.circl_hashlookup.httpx.Client", DummyHttpClient):
         analyzer = build_analyzer("ip", "1.2.3.4")
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
 
@@ -292,21 +292,21 @@ def test_config_method_call() -> None:
 def test_other_payload_invalid_json() -> None:
     """Test invalid JSON payload."""
     analyzer = build_analyzer("other", "not-json")
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_other_payload_missing_method() -> None:
     """Test payload missing method."""
     analyzer = build_analyzer("other", json.dumps({"params": {}}))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
 def test_other_payload_invalid_params() -> None:
     """Test payload with invalid params."""
     analyzer = build_analyzer("other", json.dumps({"method": "lookup_md5", "params": "invalid"}))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
@@ -314,7 +314,7 @@ def test_unsupported_method() -> None:
     """Test unsupported method."""
     payload = json.dumps({"method": "unsupported_method", "params": {}})
     analyzer = build_analyzer("other", payload)
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
@@ -322,7 +322,7 @@ def test_missing_required_parameter() -> None:
     """Test missing required parameter."""
     payload = json.dumps({"method": "lookup_md5", "params": {}})
     analyzer = build_analyzer("other", payload)
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 
@@ -330,7 +330,7 @@ def test_config_params_not_mapping() -> None:
     """Test config params not a mapping."""
     config = WorkerConfig(params={"circl": {"method": "lookup_md5", "params": "invalid"}})
     analyzer = build_analyzer("other", "{}", config)
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()
 
 

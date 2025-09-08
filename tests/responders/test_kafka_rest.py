@@ -88,7 +88,7 @@ def test_kafka_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
             }
         ),
     )
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         KafkaResponder(input_data).execute()
 
 

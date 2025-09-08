@@ -206,7 +206,7 @@ class TestCluster25Analyzer:
         config = WorkerConfig(secrets=secrets)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=config)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             Cluster25Analyzer(input_data)
 
     def test_init_missing_client_key(self):
@@ -216,7 +216,7 @@ class TestCluster25Analyzer:
         config = WorkerConfig(secrets=secrets)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=config)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             Cluster25Analyzer(input_data)
 
     def test_init_default_config(self):
@@ -380,8 +380,10 @@ class TestCluster25Analyzer:
         with (
             patch.object(Cluster25Client, "__init__", return_value=None),
             patch.object(Cluster25Analyzer, "execute") as mock_execute,
+            patch("builtins.print") as mock_print,
         ):
             mock_report = Mock()
+            mock_report.full_report = {"test": "data"}
             mock_execute.return_value = mock_report
 
             analyzer = Cluster25Analyzer(input_data)
@@ -389,6 +391,7 @@ class TestCluster25Analyzer:
 
             assert result == mock_report
             mock_execute.assert_called_once()
+            mock_print.assert_called_once()
 
     def test_metadata(self):
         """Test analyzer metadata."""

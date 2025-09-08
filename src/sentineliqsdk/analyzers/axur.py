@@ -195,6 +195,6 @@ class AxurAnalyzer(Analyzer):
         """Return a value that never returns, used after self.error() calls."""
         raise RuntimeError("This should never be reached")
 
-    def run(self) -> None:
-        """Run the analyzer and print results to stdout."""
-        self.execute()
+    def run(self) -> AnalyzerReport:
+        """Run analysis and return AnalyzerReport."""
+        return self.execute()

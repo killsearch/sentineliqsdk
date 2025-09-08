@@ -66,7 +66,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._client()
 
     def test_missing_organization_id_error(self) -> None:
@@ -76,7 +76,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._client()
 
     def test_allowed_methods(self) -> None:
@@ -140,7 +140,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._call_dynamic("unsupported_method")
 
     def test_call_dynamic_invalid_params(self) -> None:
@@ -148,7 +148,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._call_dynamic("collections_list", "invalid_params")  # type: ignore
 
     @patch("sentineliqsdk.analyzers.censys.SDK")
@@ -296,7 +296,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="url", data="https://example.com", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
     def test_execute_config_method(self) -> None:
@@ -340,7 +340,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="other", data="invalid json", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
     def test_execute_other_dtype_missing_method(self) -> None:
@@ -350,7 +350,7 @@ class TestCensysAnalyzer:
         )
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer.execute()
 
     def test_run_method(self) -> None:
@@ -371,7 +371,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._analyze_ip("1.2.3.4")
 
     @patch("sentineliqsdk.analyzers.censys.SDK")
@@ -383,7 +383,7 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="domain", data="example.com", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._analyze_domain("example.com")
 
     @patch("sentineliqsdk.analyzers.censys.SDK")
@@ -395,5 +395,5 @@ class TestCensysAnalyzer:
         input_data = WorkerInput(data_type="hash", data="test_hash", config=self.config)
         analyzer = CensysAnalyzer(input_data)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(RuntimeError):
             analyzer._analyze_certificate("test_hash")

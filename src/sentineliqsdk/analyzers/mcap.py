@@ -7,7 +7,6 @@ and files for malware indicators and threat intelligence.
 from __future__ import annotations
 
 import hashlib
-import json
 import math
 import time
 from typing import Literal, TypedDict, cast
@@ -338,7 +337,6 @@ class MCAPAnalyzer(Analyzer):
 
         return self.report(full)
 
-    def run(self) -> None:
-        """Run the analyzer and print results to stdout."""
-        report = self.execute()
-        print(json.dumps(report.full_report, ensure_ascii=False))
+    def run(self) -> AnalyzerReport:
+        """Run analysis and return AnalyzerReport."""
+        return self.execute()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import pyclamd
@@ -136,6 +137,7 @@ class ClamavAnalyzer(Analyzer):
         full_report = {
             "observable": observable,
             "verdict": verdict,
+            "data_type": self.data_type,
             "malware_name": malware_name,
             "taxonomy": [taxonomy.to_dict()],
             "metadata": self.METADATA.to_dict(),
@@ -143,6 +145,9 @@ class ClamavAnalyzer(Analyzer):
 
         return self.report(full_report)
 
-    def run(self) -> None:
+    def run(self) -> AnalyzerReport:
         """Run the analyzer."""
-        self.execute()
+        report = self.execute()
+        # Print the report in JSON format to stdout
+        print(json.dumps(report.full_report, ensure_ascii=False))
+        return report

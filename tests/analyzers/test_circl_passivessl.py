@@ -211,7 +211,7 @@ class TestCirclPassivesslAnalyzer:
 
         with patch("sentineliqsdk.analyzers.circl_passivessl.httpx.Client"):
             analyzer = CirclPassivesslAnalyzer(input_data)
-            with pytest.raises(SystemExit):  # error() calls sys.exit(1)
+            with pytest.raises(RuntimeError):
                 analyzer.execute()
 
     def test_invalid_hash_length(self, secrets):
@@ -226,7 +226,7 @@ class TestCirclPassivesslAnalyzer:
 
         with patch("sentineliqsdk.analyzers.circl_passivessl.httpx.Client"):
             analyzer = CirclPassivesslAnalyzer(input_data)
-            with pytest.raises(SystemExit):  # error() calls sys.exit(1)
+            with pytest.raises(RuntimeError):
                 analyzer.execute()
 
     def test_cidr_not_supported(self, secrets):
@@ -241,7 +241,7 @@ class TestCirclPassivesslAnalyzer:
 
         with patch("sentineliqsdk.analyzers.circl_passivessl.httpx.Client"):
             analyzer = CirclPassivesslAnalyzer(input_data)
-            with pytest.raises(SystemExit):  # error() calls sys.exit(1)
+            with pytest.raises(RuntimeError):
                 analyzer.execute()
 
     @patch("sentineliqsdk.analyzers.circl_passivessl.httpx.Client")

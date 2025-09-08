@@ -90,5 +90,6 @@ class Analyzer(Worker):
         """Wrap full report with SDK envelope and return AnalyzerReport."""
         return self._build_envelope(full_report)
 
-    def run(self) -> None:  # pragma: no cover - to be overridden
+    def run(self) -> AnalyzerReport:  # pragma: no cover - to be overridden
         """Override in subclasses."""
+        raise NotImplementedError("Subclasses must implement run() method")

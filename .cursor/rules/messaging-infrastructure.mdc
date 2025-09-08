@@ -1,0 +1,434 @@
+---
+description: Messaging infrastructure patterns and data models
+---
+
+# Messaging Infrastructure Patterns
+
+This rule defines the patterns and requirements for the messaging infrastructure components in the SentinelIQ SDK.
+
+## Core Messaging Models
+
+### Message Structure
+All messages must follow the `Message` dataclass structure:
+
+```python
+from sentineliqsdk.messaging import Message, MessageMetadata
+
+message = Message(
+    message_type="event",  # event, command, query, response, notification
+    data_type="ip",       # ip, url, domain, hash, etc.
+    data="1.2.3.4",
+    metadata=MessageMetadata(
+        message_id="msg_1234567890",
+        correlation_id="corr_123",
+        reply_to="response_queue",
+        timestamp=time.time(),
+        ttl=3600.0,
+        priority="normal",  # low, normal, high, critical
+        status="pending",   # pending, processing, completed, failed, retry
+        retry_count=0,
+        max_retries=3,
+        tags={"environment": "production", "service": "security"},
+    ),
+    payload={"additional": "data"},
+)
+```
+
+### Queue Configuration
+Always use `QueueConfig` for queue/topic settings:
+
+```python
+from sentineliqsdk.messaging import QueueConfig
+
+# Basic queue configuration
+queue_config = QueueConfig(
+    queue_name="security-events",
+    exchange="security",           # Optional for some brokers
+    routing_key="events",         # Optional for some brokers
+    durable=True,                # Queue survives broker restarts
+    auto_delete=False,           # Don't auto-delete when empty
+    exclusive=False,             # Allow multiple consumers
+    max_length=10000,           # Maximum queue length
+    message_ttl=3600.0,         # Message TTL in seconds
+    dead_letter_exchange="dlx",  # Dead letter exchange
+    dead_letter_routing_key="failed",  # Dead letter routing key
+)
+```
+
+### Message Configuration
+Use `MessageConfig` for processing settings:
+
+```python
+from sentineliqsdk.messaging import MessageConfig
+
+# Producer configuration
+producer_config = MessageConfig(
+    delivery_mode="persistent",  # transient, persistent
+    mandatory=True,             # Require delivery confirmation
+    immediate=False,            # Don't require immediate delivery
+    retry_delay=1.0,           # Initial retry delay in seconds
+    retry_backoff=2.0,         # Retry backoff multiplier
+    max_retry_delay=300.0,     # Maximum retry delay
+    connection_timeout=30.0,    # Connection timeout
+    ssl_enabled=True,          # Enable SSL/TLS
+    ssl_verify=True,           # Verify SSL certificates
+    ssl_cert_path="/path/to/cert.pem",
+    ssl_key_path="/path/to/key.pem",
+    ssl_ca_path="/path/to/ca.pem",
+)
+
+# Consumer configuration
+consumer_config = MessageConfig(
+    auto_ack=False,            # Manual acknowledgment
+    prefetch_count=1,          # Prefetch count
+    prefetch_size=0,           # Prefetch size
+    consumer_timeout=5000.0,   # Consumer timeout in ms
+    connection_timeout=30.0,   # Connection timeout
+    ssl_enabled=True,          # Enable SSL/TLS
+    ssl_verify=True,           # Verify SSL certificates
+)
+```
+
+## Report Structures
+
+### Producer Report
+Always return `ProducerReport` from producer operations:
+
+```python
+from sentineliqsdk.messaging import ProducerReport
+
+def publish_message(self, message: Message) -> ProducerReport:
+    try:
+        # Publishing logic here
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "topic": self.queue_config.queue_name,
+            "partition": 0,  # Kafka-specific
+            "offset": 12345,  # Kafka-specific
+            "delivery_confirmed": True,
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+    except Exception as e:
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "delivery_confirmed": False,
+            "error_message": str(e),
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+```
+
+### Consumer Report
+Always return `ConsumerReport` from consumer operations:
+
+```python
+from sentineliqsdk.messaging import ConsumerReport
+
+def consume_messages(self) -> ConsumerReport:
+    try:
+        # Consumption logic here
+        full_report = {
+            "messages_processed": 10,
+            "messages_failed": 0,
+            "topic": self.queue_config.queue_name,
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+    except Exception as e:
+        full_report = {
+            "error_message": str(e),
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+```
+
+## Message Building Patterns
+
+### Producer Message Building
+Use the `build_message` helper method:
+
+```python
+def run(self) -> ProducerReport:
+    data = self.get_data()
+    
+    message = self.build_message(
+        message_type="event",
+        data_type=self.data_type,
+        data=str(data),
+        correlation_id=self.get_config("correlation_id"),
+        priority="normal",
+        tags={"source": "sentineliq"},
+    )
+    
+    return self.publish(message)
+```
+
+### Consumer Message Processing
+Implement message processing logic:
+
+```python
+def _process_message(self, message: Message) -> dict[str, Any]:
+    """Process message based on data type and content."""
+    if message.data_type == "ip":
+        return self._process_ip_message(message)
+    elif message.data_type == "url":
+        return self._process_url_message(message)
+    elif message.data_type == "hash":
+        return self._process_hash_message(message)
+    else:
+        return self._process_generic_message(message)
+
+def _process_ip_message(self, message: Message) -> dict[str, Any]:
+    """Process IP-related messages."""
+    return {
+        "action": "analyze_ip",
+        "ip": message.data,
+        "severity": "high",
+        "processed_at": time.time(),
+        "correlation_id": message.metadata.correlation_id,
+    }
+```
+
+## Error Handling Patterns
+
+### Producer Error Handling
+```python
+def publish(self, message: Message) -> ProducerReport:
+    try:
+        # Validate message
+        if not message.data:
+            raise ValueError("Message data cannot be empty")
+        
+        # Publishing logic
+        result = self._do_publish(message)
+        
+        # Record success
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "delivery_confirmed": True,
+            "result": result,
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+        
+    except ValueError as e:
+        # Validation error
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "delivery_confirmed": False,
+            "error_message": f"Validation error: {e}",
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+        
+    except Exception as e:
+        # Unexpected error
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "delivery_confirmed": False,
+            "error_message": f"Publishing error: {e}",
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+```
+
+### Consumer Error Handling
+```python
+def consume(self, message: Message) -> ConsumerReport:
+    try:
+        # Validate message
+        if not message.data:
+            self._record_failure()
+            raise ValueError("Message data cannot be empty")
+        
+        # Processing logic
+        result = self._process_message(message)
+        
+        # Record success
+        self._record_success()
+        
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "data_type": message.data_type,
+            "data": message.data,
+            "processing_result": result,
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+        
+    except ValueError as e:
+        # Validation error
+        self._record_failure()
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "error_message": f"Validation error: {e}",
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+        
+    except Exception as e:
+        # Unexpected error
+        self._record_failure()
+        full_report = {
+            "message_id": message.metadata.message_id,
+            "error_message": f"Processing error: {e}",
+            "metadata": self.METADATA.to_dict(),
+        }
+        return self.report(full_report)
+```
+
+## Configuration Patterns
+
+### Broker-Specific Configuration
+Use consistent naming patterns for broker-specific settings:
+
+```python
+# Kafka configuration
+kafka_secrets = {
+    "kafka.bootstrap_servers": "localhost:9092",
+    "kafka.security_protocol": "PLAINTEXT",  # PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
+    "kafka.sasl_mechanism": "PLAIN",        # PLAIN, SCRAM-SHA-256, SCRAM-SHA-512
+    "kafka.sasl_username": "user",
+    "kafka.sasl_password": "password",
+    "kafka.ssl_cafile": "/path/to/ca.pem",
+    "kafka.ssl_certfile": "/path/to/cert.pem",
+    "kafka.ssl_keyfile": "/path/to/key.pem",
+    "kafka.group_id": "consumer-group",
+}
+
+# RabbitMQ configuration
+rabbitmq_secrets = {
+    "rabbitmq.host": "localhost",
+    "rabbitmq.port": 5672,
+    "rabbitmq.username": "guest",
+    "rabbitmq.password": "guest",
+    "rabbitmq.vhost": "/",
+    "rabbitmq.ssl_enabled": False,
+    "rabbitmq.ssl_ca_cert": "/path/to/ca.pem",
+    "rabbitmq.ssl_cert": "/path/to/cert.pem",
+    "rabbitmq.ssl_key": "/path/to/key.pem",
+}
+
+# Redis configuration
+redis_secrets = {
+    "redis.host": "localhost",
+    "redis.port": 6379,
+    "redis.password": "password",
+    "redis.db": 0,
+    "redis.ssl_enabled": False,
+    "redis.ssl_ca_cert": "/path/to/ca.pem",
+    "redis.ssl_cert": "/path/to/cert.pem",
+    "redis.ssl_key": "/path/to/key.pem",
+}
+```
+
+### Runtime Parameters
+Use `WorkerConfig.params` for runtime configuration:
+
+```python
+runtime_params = {
+    "max_messages": 100,        # Maximum messages to process
+    "timeout_ms": 5000,         # Timeout in milliseconds
+    "batch_size": 10,           # Batch processing size
+    "retry_attempts": 3,        # Number of retry attempts
+    "correlation_id": "batch_123",  # Correlation ID for tracking
+}
+```
+
+## Testing Patterns
+
+### Producer Testing
+```python
+def test_producer_publish_success():
+    """Test successful message publishing."""
+    input_data = WorkerInput(
+        data_type="other",
+        data="test_data",
+        config=WorkerConfig(secrets={"kafka.bootstrap_servers": "localhost:9092"})
+    )
+    
+    producer = MyProducer(input_data)
+    producer.configure_queue(QueueConfig(queue_name="test-topic"))
+    
+    message = producer.build_message("event", "other", "test_data")
+    report = producer.publish(message)
+    
+    assert report.success is True
+    assert report.delivery_confirmed is True
+    assert report.message_id is not None
+```
+
+### Consumer Testing
+```python
+def test_consumer_process_message():
+    """Test message processing."""
+    input_data = WorkerInput(
+        data_type="other",
+        data="consumer_data",
+        config=WorkerConfig(secrets={"kafka.bootstrap_servers": "localhost:9092"})
+    )
+    
+    consumer = MyConsumer(input_data)
+    consumer.configure_queue(QueueConfig(queue_name="test-topic"))
+    
+    message = Message(
+        message_type="event",
+        data_type="ip",
+        data="1.2.3.4",
+        metadata=MessageMetadata(message_id="test_msg"),
+    )
+    
+    report = consumer.consume(message)
+    
+    assert report.success is True
+    assert report.messages_processed == 1
+    assert report.messages_failed == 0
+```
+
+## Documentation Patterns
+
+### Message Flow Documentation
+Always document the message flow:
+
+```markdown
+## Message Flow
+
+1. **Producer**: Creates message with metadata
+2. **Queue**: Stores message with delivery confirmation
+3. **Consumer**: Processes message and acknowledges
+4. **Report**: Returns processing statistics
+
+## Message Types
+
+- **event**: Security events and alerts
+- **command**: Control commands
+- **query**: Information requests
+- **response**: Query responses
+- **notification**: System notifications
+```
+
+### Configuration Documentation
+Document all configuration options:
+
+```markdown
+## Configuration
+
+### Secrets (WorkerConfig.secrets)
+- `kafka.bootstrap_servers`: Kafka broker addresses
+- `kafka.security_protocol`: Security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
+- `kafka.sasl_mechanism`: SASL mechanism (PLAIN, SCRAM-SHA-256, SCRAM-SHA-512)
+- `kafka.sasl_username`: SASL username
+- `kafka.sasl_password`: SASL password
+- `kafka.ssl_cafile`: SSL CA certificate file
+- `kafka.ssl_certfile`: SSL certificate file
+- `kafka.ssl_keyfile`: SSL key file
+- `kafka.group_id`: Consumer group ID
+
+### Parameters (WorkerConfig.params)
+- `max_messages`: Maximum messages to process
+- `timeout_ms`: Timeout in milliseconds
+- `batch_size`: Batch processing size
+- `retry_attempts`: Number of retry attempts
+- `correlation_id`: Correlation ID for tracking
+```

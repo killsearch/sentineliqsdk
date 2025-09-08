@@ -61,6 +61,7 @@ class CrowdSecAnalyzer(Analyzer):
         # Build full report
         full_report = {
             "observable": observable,
+            "data_type": self.data_type,
             "raw_data": raw_data,
             "taxonomy": [tax.to_dict() for tax in taxonomies],
             "metadata": self.METADATA.to_dict(),
@@ -169,8 +170,9 @@ class CrowdSecAnalyzer(Analyzer):
             return "safe"
         return "info"
 
-    def run(self) -> None:
+    def run(self) -> AnalyzerReport:
         """Run the analyzer and print the report."""
         report = self.execute()
         # Print the report in JSON format to stdout
         print(json.dumps(report.full_report, ensure_ascii=False))
+        return report

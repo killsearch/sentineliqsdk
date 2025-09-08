@@ -89,8 +89,9 @@ def test_rabbitmq_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
             }
         ),
     )
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError) as exc_info:
         RabbitMqResponder(input_data).execute()
+    assert "RabbitMQ publish failed" in str(exc_info.value)
 
 
 def test_rabbitmq_invalid_properties_and_run(monkeypatch: pytest.MonkeyPatch) -> None:

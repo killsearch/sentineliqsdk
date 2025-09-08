@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any, NoReturn
 
-from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, EXIT_ERROR, JSON_ENSURE_ASCII
+from sentineliqsdk.constants import DEFAULT_SECRET_PHRASES, JSON_ENSURE_ASCII
 from sentineliqsdk.core.config.proxy import EnvProxyConfigurator
 from sentineliqsdk.core.config.secrets import sanitize_config
 from sentineliqsdk.models import Artifact, Operation, WorkerError, WorkerInput
@@ -169,14 +168,12 @@ class Worker(ABC):
             },
         }
 
-        # Preserve Unicode by default per JSON_ENSURE_ASCII, allow override via parameter
-
-        print(
-            json.dumps(
-                error_dict, ensure_ascii=JSON_ENSURE_ASCII if ensure_ascii is None else ensure_ascii
-            )
+        # Instead of exiting the process, raise an exception with the serialized error payload
+        # to allow callers/tests to handle the failure without terminating the interpreter.
+        serialized = json.dumps(
+            error_dict, ensure_ascii=JSON_ENSURE_ASCII if ensure_ascii is None else ensure_ascii
         )
-        sys.exit(EXIT_ERROR)
+        raise RuntimeError(serialized)
 
     def summary(self, raw: Any) -> dict[str, Any]:
         """Return a summary for 'short.html' template.
@@ -200,5 +197,5 @@ class Worker(ABC):
         return output
 
     @abstractmethod
-    def run(self) -> None:
+    def run(self) -> Any:
         """Entry point to implement in subclasses."""

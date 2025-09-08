@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import json
 import os
-from io import StringIO
 from unittest.mock import patch
 
 import pytest
 
-from sentineliqsdk.constants import EXIT_ERROR
 from sentineliqsdk.core.worker import Worker
 from sentineliqsdk.models import (
     Operation,
@@ -89,20 +87,18 @@ class TestWorker:
         config = WorkerConfig(check_tlp=True, max_tlp=2)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", tlp=3, config=config)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             ConcreteWorker(input_data)
-
-        assert exc_info.value.code == EXIT_ERROR
+        assert "TLP is higher than allowed." in str(exc_info.value)
 
     def test_pap_validation_fails(self):
         """Test that PAP validation fails when PAP exceeds max."""
         config = WorkerConfig(check_pap=True, max_pap=2)
         input_data = WorkerInput(data_type="ip", data="1.2.3.4", pap=3, config=config)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             ConcreteWorker(input_data)
-
-        assert exc_info.value.code == EXIT_ERROR
+        assert "PAP is higher than allowed." in str(exc_info.value)
 
     def test_tlp_validation_passes(self):
         """Test that TLP validation passes when TLP is within limits."""
@@ -168,27 +164,20 @@ class TestWorker:
         worker = ConcreteWorker(input_data)
 
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(SystemExit) as exc_info:
+            with pytest.raises(RuntimeError) as exc_info:
                 worker.get_env("MISSING_VAR", message="Required environment variable missing")
-
-            assert exc_info.value.code == EXIT_ERROR
+            assert "Required environment variable missing" in str(exc_info.value)
 
     def test_error_method(self):
         """Test error method outputs correct JSON and exits."""
         input_data = WorkerInput(data_type="ip", data="1.2.3.4")
         worker = ConcreteWorker(input_data)
 
-        # Capture stdout
-        captured_output = StringIO()
+        with pytest.raises(RuntimeError) as exc_info:
+            worker.error("Test error message")
 
-        with patch("sys.stdout", captured_output):
-            with pytest.raises(SystemExit) as exc_info:
-                worker.error("Test error message")
-
-        assert exc_info.value.code == EXIT_ERROR
-
-        # Parse the JSON output
-        output = json.loads(captured_output.getvalue())
+        # Parse the JSON output from exception message
+        output = json.loads(str(exc_info.value))
         assert output["success"] is False
         assert output["errorMessage"] == "Test error message"
         assert "input" in output
@@ -252,13 +241,10 @@ class TestWorker:
         )
         worker = ConcreteWorker(input_data)
 
-        captured_output = StringIO()
+        with pytest.raises(RuntimeError) as exc_info:
+            worker.error("Test error")
 
-        with patch("sys.stdout", captured_output):
-            with pytest.raises(SystemExit):
-                worker.error("Test error")
-
-        output = json.loads(captured_output.getvalue())
+        output = json.loads(str(exc_info.value))
 
         # Check the structure
         assert output["success"] is False

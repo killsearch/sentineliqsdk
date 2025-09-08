@@ -163,9 +163,9 @@ class AutoFocusAnalyzer(Analyzer):
 
         return self.build_taxonomy(level, namespace, predicate, value)
 
-    def run(self) -> None:
-        """Run the analyzer."""
-        self.execute()
+    def run(self) -> AnalyzerReport:
+        """Run analysis and return AnalyzerReport."""
+        return self.execute()
 
     # Search classes for different IOC types
     class _SearchJson:

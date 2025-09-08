@@ -89,7 +89,7 @@ def test_outlook_execute_error(monkeypatch: pytest.MonkeyPatch) -> None:
         data="rcpt@contoso.com",
         config=WorkerConfig(params={"execute": True, "include_dangerous": True}),
     )
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         OutlookSmtpResponder(input_data).execute()
 
 
