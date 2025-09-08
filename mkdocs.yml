@@ -75,6 +75,7 @@ nav:
       - asn: modulos/detectors/asn.md
       - cve: modulos/detectors/cve.md
       - ip_port: modulos/detectors/ip_port.md
+      - crt.sh: modulos/analyzers/crtsh.md
   - Reference:
     - Worker: reference/api/worker.md
     - Analyzer: reference/api/analyzer.md
