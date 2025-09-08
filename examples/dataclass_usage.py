@@ -25,7 +25,7 @@ from sentineliqsdk import (
 class AdvancedAnalyzer(Analyzer):
     """Advanced analyzer example using dataclasses."""
 
-    def run(self) -> None:
+    def run(self):
         """Run the advanced analyzer to analyze the observable."""
         observable = self.get_data()
 
@@ -62,13 +62,13 @@ class AdvancedAnalyzer(Analyzer):
             "operations": operations,
         }
 
-        self.report(full_report)
+        return self.report(full_report)
 
 
 class AdvancedResponder(Responder):
     """Advanced responder example using dataclasses."""
 
-    def run(self) -> None:
+    def run(self):
         """Run the advanced responder to block the IP."""
         ip = self.get_data()
 
@@ -87,7 +87,7 @@ class AdvancedResponder(Responder):
             "operations": operations,
         }
 
-        self.report(result)
+        return self.report(result)
 
 
 def demonstrate_dataclass_features():

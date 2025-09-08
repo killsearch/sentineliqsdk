@@ -15,7 +15,7 @@ from sentineliqsdk import Analyzer, Responder, TaxonomyLevel, WorkerInput
 class ReputationAnalyzer(Analyzer):
     """Example analyzer that marks specific IPs as malicious."""
 
-    def run(self) -> None:
+    def run(self):
         """Run the reputation analyzer to check if the IP is malicious."""
         observable = self.get_data()
 
@@ -37,13 +37,13 @@ class ReputationAnalyzer(Analyzer):
             ],
         }
 
-        self.report(full_report)
+        return self.report(full_report)
 
 
 class BlockIpResponder(Responder):
     """Example responder that blocks IPs."""
 
-    def run(self) -> None:
+    def run(self):
         """Run the IP blocker responder to block the given IP."""
         ip = self.get_data()
 
@@ -56,7 +56,7 @@ class BlockIpResponder(Responder):
             "message": f"IP {ip} has been blocked successfully",
         }
 
-        self.report(result)
+        return self.report(result)
 
 
 def main():
