@@ -39,10 +39,10 @@ from typing import Any
 from censys_platform import SDK
 
 from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk.constants import SUSPICIOUS_RESULTS_THRESHOLD
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 # Constants
-SUSPICIOUS_RESULTS_THRESHOLD = 100
 
 # Allowlist of Censys Platform API methods exposed for dynamic calls
 ALLOWED_METHODS: set[str] = {

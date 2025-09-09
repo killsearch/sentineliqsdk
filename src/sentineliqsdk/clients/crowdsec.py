@@ -8,6 +8,8 @@ from typing import Any
 import requests
 from requests.compat import urljoin
 
+from sentineliqsdk.constants import HTTP_RATE_LIMIT, HTTP_SUCCESS_STATUS
+
 
 class CrowdSecAPIError(Exception):
     """Exception raised when the CrowdSec API returns an error."""
@@ -72,8 +74,8 @@ class CrowdSecClient:
             raise CrowdSecAPIError(f"Request failed: {e}") from e
 
         # Constants for HTTP status codes
-        rate_limit_status = 429
-        success_status = 200
+        rate_limit_status = HTTP_RATE_LIMIT
+        success_status = HTTP_SUCCESS_STATUS
 
         if response.status_code == rate_limit_status:
             raise CrowdSecRateLimitError("Rate limit exceeded")

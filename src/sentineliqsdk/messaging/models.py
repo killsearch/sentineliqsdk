@@ -7,6 +7,16 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Literal
 
+from sentineliqsdk.constants import (
+    AUTO_COMMIT_INTERVAL_MS,
+    CONNECTION_TIMEOUT,
+    MAX_RETRIES,
+    MAX_RETRY_DELAY,
+    PREFETCH_COUNT,
+    PREFETCH_SIZE,
+    RETRY_BACKOFF,
+    RETRY_DELAY,
+)
 from sentineliqsdk.models import DataType
 
 # Message types for different communication patterns
@@ -27,7 +37,7 @@ class MessageMetadata:
     priority: MessagePriority = "normal"
     status: MessageStatus = "pending"
     retry_count: int = 0
-    max_retries: int = 3
+    max_retries: int = MAX_RETRIES
     # Additional metadata for routing and processing
     tags: Mapping[str, str] = field(default_factory=dict)
 
@@ -81,17 +91,17 @@ class MessageConfig:
 
     # Processing settings
     auto_ack: bool = False
-    prefetch_count: int = 1
-    prefetch_size: int = 0
+    prefetch_count: int = PREFETCH_COUNT
+    prefetch_size: int = PREFETCH_SIZE
 
     # Retry settings
-    retry_delay: float = 1.0
-    retry_backoff: float = 2.0
-    max_retry_delay: float = 300.0
+    retry_delay: float = RETRY_DELAY
+    retry_backoff: float = RETRY_BACKOFF
+    max_retry_delay: float = MAX_RETRY_DELAY
 
     # Timeout settings
     consumer_timeout: float | None = None
-    connection_timeout: float = 30.0
+    connection_timeout: float = CONNECTION_TIMEOUT
 
     # Security settings
     ssl_enabled: bool = False

@@ -15,10 +15,9 @@ from email.utils import parseaddr
 from typing import Protocol
 from urllib.parse import urlparse
 
-from sentineliqsdk.constants import DOMAIN_PARTS, HASH_LENGTHS, MIN_FQDN_LABELS, USER_AGENT_PREFIXES
+from sentineliqsdk.constants import DOMAIN_PARTS, HASH_LENGTHS, MIN_FQDN_LABELS, USER_AGENT_PREFIXES, MAX_PORT_NUMBER
 
-# Port number constants
-MAX_PORT_NUMBER = 65535
+
 
 
 class DetectionContext(Protocol):

@@ -32,6 +32,8 @@ from typing import Any, cast
 from urllib.parse import urlparse, urlunparse
 
 from sentineliqsdk.constants import (
+    DEFAULT_HTTP_PORT,
+    DEFAULT_HTTPS_PORT,
     HASH_LENGTHS,
     USER_AGENT_PREFIXES,
 )
@@ -64,9 +66,7 @@ HEX_DIGITS = frozenset(string.hexdigits)
 MAX_STRING_LENGTH = 10000  # Maximum string length to process
 MAX_ITERABLE_DEPTH = 100  # Maximum nesting depth for iterables
 
-# Default ports for URL normalization
-DEFAULT_HTTP_PORT = 80
-DEFAULT_HTTPS_PORT = 443
+
 
 
 class ExtractionError(Exception):

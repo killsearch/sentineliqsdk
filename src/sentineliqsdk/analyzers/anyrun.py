@@ -36,16 +36,18 @@ from typing import Any, NoReturn, cast
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk.constants import (
+    HTTP_CLIENT_ERROR_MIN,
+    HTTP_CREATED,
+    HTTP_OK,
+    HTTP_RATE_LIMIT,
+    HTTP_SERVER_ERROR_MIN,
+    MALICIOUS_SCORE_THRESHOLD,
+    SUSPICIOUS_SCORE_THRESHOLD,
+)
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
-# Constants for HTTP status codes and scoring thresholds
-HTTP_OK = 200
-HTTP_CREATED = 201
-HTTP_RATE_LIMIT = 429
-HTTP_CLIENT_ERROR_MIN = 400
-HTTP_SERVER_ERROR_MIN = 500
-SUSPICIOUS_SCORE_THRESHOLD = 50
-MALICIOUS_SCORE_THRESHOLD = 100
+
 
 
 class AnyRunAnalyzer(Analyzer):

@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 
+from sentineliqsdk.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_TEXT
 from sentineliqsdk.models import ModuleMetadata, ResponderReport
 from sentineliqsdk.responders.base import Responder
 
@@ -61,10 +62,10 @@ class WebhookResponder(Responder):
             try:
                 parsed = json.loads(body_raw) if isinstance(body_raw, str) else body_raw
                 data_bytes = json.dumps(parsed).encode("utf-8")
-                content_type = "application/json"
+                content_type = CONTENT_TYPE_JSON
             except Exception:
                 data_bytes = str(body_raw).encode("utf-8")
-                content_type = "text/plain"
+                content_type = CONTENT_TYPE_TEXT
 
         full = {
             "action": "webhook",

@@ -8,12 +8,10 @@ from typing import Any, Literal
 
 import httpx
 
-from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk import Analyzer
+from sentineliqsdk.constants import HTTP_UNAUTHORIZED, MALSCORE_MALICIOUS, MALSCORE_SUSPICIOUS
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
-_HTTP_UNAUTHORIZED = 401
-_MALSCORE_SUSPICIOUS = 2.0
-_MALSCORE_MALICIOUS = 6.5
 
 
 class CuckooSandboxAnalyzer(Analyzer):
@@ -65,7 +63,7 @@ class CuckooSandboxAnalyzer(Analyzer):
         with open(filepath, "rb") as f:
             files = {"file": (filename, f)}
             resp = client.post(base + "tasks/create/file", files=files, headers=self._headers())
-        if resp.status_code == _HTTP_UNAUTHORIZED:
+        if resp.status_code == HTTP_UNAUTHORIZED:
             self.error("API token is required by this Cuckoo instance.")
         data = resp.json()
         return int(data.get("task_id") or (data.get("task_ids") or [None])[0] or -1)
@@ -108,9 +106,9 @@ class CuckooSandboxAnalyzer(Analyzer):
         except Exception:
             score = 0.0
         level: Literal["info", "safe", "suspicious", "malicious"]
-        if score > _MALSCORE_MALICIOUS:
+        if score >= MALSCORE_MALICIOUS:
             level = "malicious"
-        elif score > _MALSCORE_SUSPICIOUS:
+        elif score >= MALSCORE_SUSPICIOUS:
             level = "suspicious"
         elif score > 0:
             level = "safe"

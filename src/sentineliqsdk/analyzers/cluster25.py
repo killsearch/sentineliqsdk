@@ -7,11 +7,11 @@ from typing import Any, Literal
 
 from sentineliqsdk import Analyzer
 from sentineliqsdk.clients.cluster25 import Cluster25Client
+from sentineliqsdk.constants import SAFE_SCORE_THRESHOLD, SUSPICIOUS_SCORE_THRESHOLD
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
 # Score thresholds for taxonomy classification
-SAFE_SCORE_THRESHOLD = 50
-SUSPICIOUS_SCORE_THRESHOLD = 80
+
 
 
 class Cluster25Analyzer(Analyzer):

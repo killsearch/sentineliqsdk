@@ -31,6 +31,7 @@ from typing import Any
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk.constants import HTTP_OK_MAX, HTTP_OK_MIN, MALICIOUS_THRESHOLD
 from sentineliqsdk.models import AnalyzerReport, Artifact, ModuleMetadata, TaxonomyLevel
 
 
@@ -106,9 +107,7 @@ class AbuseIPDBAnalyzer(Analyzer):
         except httpx.HTTPError as exc:  # pragma: no cover - network dependent
             self.error(f"HTTP call to AbuseIPDB failed: {exc}")
 
-        http_ok_min = 200
-        http_ok_max = 300
-        if not (http_ok_min <= resp.status_code < http_ok_max):
+        if not (HTTP_OK_MIN <= resp.status_code < HTTP_OK_MAX):
             body = resp.text
             self.error(f"Unable to query AbuseIPDB API (status {resp.status_code})\n{body}")
 
@@ -224,10 +223,9 @@ class AbuseIPDBAnalyzer(Analyzer):
                     "info", "abuseipdb", "usage-type", str(primary["usageType"])
                 ).to_dict()
             )
-        malicious_threshold = 80
         score = int(primary.get("abuseConfidenceScore") or 0)
         level: TaxonomyLevel = (
-            "malicious" if score >= malicious_threshold else ("suspicious" if score > 0 else "safe")
+            "malicious" if score >= MALICIOUS_THRESHOLD else ("suspicious" if score > 0 else "safe")
         )
         taxonomies.append(
             self.build_taxonomy(level, "abuseipdb", "abuse-confidence-score", str(score)).to_dict()

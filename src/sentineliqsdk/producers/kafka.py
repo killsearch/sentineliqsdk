@@ -6,6 +6,7 @@ import json
 import time
 from typing import Any
 
+from sentineliqsdk.constants import REQUEST_TIMEOUT_MS
 from sentineliqsdk.messaging import Message, ProducerReport
 from sentineliqsdk.models import ModuleMetadata, WorkerInput
 from sentineliqsdk.producers.base import Producer
@@ -64,7 +65,7 @@ class KafkaProducer(Producer):
                     acks="all",  # Wait for all replicas to acknowledge
                     retries=3,
                     retry_backoff_ms=1000,
-                    request_timeout_ms=30000,
+                    request_timeout_ms=REQUEST_TIMEOUT_MS,
                     **{k: v for k, v in config.items() if k.startswith(("sasl_", "ssl_"))},
                 )
             except ImportError:

@@ -6,6 +6,7 @@ import smtplib
 from email.message import EmailMessage
 from typing import Any
 
+from sentineliqsdk.constants import SMTP_GMAIL_SERVER, SMTP_PORT
 from sentineliqsdk.models import ModuleMetadata, ResponderReport
 from sentineliqsdk.responders.base import Responder
 
@@ -28,8 +29,8 @@ class GmailSmtpResponder(Responder):
     The target recipient is taken from ``WorkerInput.data`` (``data_type='mail'``).
     """
 
-    SERVER = "smtp.gmail.com"
-    PORT = 587
+    SERVER = SMTP_GMAIL_SERVER
+    PORT = SMTP_PORT
     METADATA = ModuleMetadata(
         name="Gmail SMTP Responder",
         description="Send an email via Gmail SMTP with STARTTLS",

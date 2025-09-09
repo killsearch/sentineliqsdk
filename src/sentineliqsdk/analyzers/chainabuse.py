@@ -32,14 +32,14 @@ from typing import Any, cast
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk.constants import MALICIOUS_REPORT_THRESHOLD
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 # HTTP status codes
 HTTP_OK = 200
 HTTP_NOT_FOUND = 404
 
-# Thresholds
-MALICIOUS_REPORT_THRESHOLD = 5
+
 
 
 class ChainAbuseAnalyzer(Analyzer):

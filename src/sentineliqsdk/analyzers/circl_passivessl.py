@@ -24,15 +24,19 @@ from typing import Any
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk.constants import (
+    HTTP_FORBIDDEN,
+    HTTP_NOT_FOUND,
+    HTTP_UNAUTHORIZED,
+    SAFE_CERTIFICATE_THRESHOLD,
+    SHA1_HASH_LENGTH,
+)
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 # HTTP status codes
-HTTP_UNAUTHORIZED = 401
-HTTP_FORBIDDEN = 403
-HTTP_NOT_FOUND = 404
 
-# Verdict thresholds
-SAFE_CERTIFICATE_THRESHOLD = 3
+
+
 
 
 class CirclPassivesslAnalyzer(Analyzer):
@@ -169,7 +173,7 @@ class CirclPassivesslAnalyzer(Analyzer):
         # Route to appropriate analysis method
         if dtype == "hash":
             # Validate SHA1 hash length
-            sha1_hash_length = 40
+            sha1_hash_length = SHA1_HASH_LENGTH
             if len(str(observable)) != sha1_hash_length:
                 self.error(
                     "CIRCL PassiveSSL expects a SHA1 hash, given hash has more or less than 40 characters."

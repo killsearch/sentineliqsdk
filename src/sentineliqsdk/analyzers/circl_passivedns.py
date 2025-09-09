@@ -26,15 +26,18 @@ from typing import Any
 import httpx
 
 from sentineliqsdk.analyzers.base import Analyzer
+from sentineliqsdk.constants import (
+    HTTP_FORBIDDEN,
+    HTTP_NOT_FOUND,
+    HTTP_UNAUTHORIZED,
+    SAFE_RECORD_THRESHOLD,
+)
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 # HTTP status codes
-HTTP_UNAUTHORIZED = 401
-HTTP_FORBIDDEN = 403
-HTTP_NOT_FOUND = 404
 
-# Verdict thresholds
-SAFE_RECORD_THRESHOLD = 5
+
+
 
 
 class CirclPassivednsAnalyzer(Analyzer):

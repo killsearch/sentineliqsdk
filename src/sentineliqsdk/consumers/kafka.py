@@ -6,6 +6,7 @@ import json
 import time
 from typing import Any
 
+from sentineliqsdk.constants import AUTO_COMMIT_INTERVAL_MS
 from sentineliqsdk.consumers.base import Consumer
 from sentineliqsdk.messaging import ConsumerReport, Message, MessageMetadata
 from sentineliqsdk.models import ModuleMetadata, WorkerInput
@@ -70,7 +71,7 @@ class KafkaConsumer(Consumer):
                     key_deserializer=lambda m: m.decode("utf-8") if m else None,
                     auto_offset_reset="latest",
                     enable_auto_commit=True,
-                    auto_commit_interval_ms=1000,
+                    auto_commit_interval_ms=AUTO_COMMIT_INTERVAL_MS,
                     **{k: v for k, v in config.items() if k.startswith(("sasl_", "ssl_"))},
                 )
             except ImportError:
