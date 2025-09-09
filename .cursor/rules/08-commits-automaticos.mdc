@@ -1,0 +1,312 @@
+# Regra de Commits Automáticos para Agentes
+
+## Objetivo
+Esta regra estabelece diretrizes obrigatórias para commits automáticos realizados por qualquer agente após execução de ações no projeto SentinelIQ SDK.
+
+## 1. Formato Padrão das Mensagens de Commit
+
+### Estrutura Obrigatória
+Todos os commits devem seguir o padrão **Conventional Commits** compatível com o Commitizen configurado no projeto:
+
+```
+<tipo>(<escopo>): <descrição>
+
+[corpo opcional]
+
+[rodapé opcional]
+```
+
+### Tipos Permitidos
+- **feat**: Nova funcionalidade
+- **fix**: Correção de bug
+- **docs**: Alterações na documentação
+- **style**: Formatação, espaços em branco, etc.
+- **refactor**: Refatoração de código
+- **test**: Adição ou modificação de testes
+- **chore**: Tarefas de manutenção, configuração
+- **ci**: Alterações em CI/CD
+- **perf**: Melhorias de performance
+- **build**: Alterações no sistema de build
+
+### Exemplos de Mensagens
+```bash
+# Criação de novo analyzer
+feat(analyzers): add shodan ip reputation analyzer
+
+# Correção de bug
+fix(responders): resolve email notification timeout issue
+
+# Atualização de documentação
+docs(guides): update analyzer development workflow
+
+# Refatoração
+refactor(core): improve error handling in base analyzer
+
+# Testes
+test(analyzers): add unit tests for virus total analyzer
+
+# Configuração
+chore(deps): update dependencies to latest versions
+```
+
+## 2. Frequência Obrigatória dos Commits
+
+### Regra Principal
+**OBRIGATÓRIO**: Realizar commit imediatamente após QUALQUER ação executada por agente, incluindo:
+
+- ✅ Criação de novos arquivos
+- ✅ Modificação de arquivos existentes
+- ✅ Exclusão de arquivos
+- ✅ Alterações em configurações
+- ✅ Adição de dependências
+- ✅ Execução de scaffolding
+- ✅ Correções de bugs
+- ✅ Refatorações
+- ✅ Atualizações de documentação
+
+### Exceções
+- Commits NÃO são necessários para:
+  - Operações de leitura apenas (view, search, list)
+  - Execução de comandos que não alteram arquivos
+  - Verificações de status
+
+## 3. Arquivos que Devem ser Incluídos no Commit
+
+### Inclusão Automática
+Todos os arquivos modificados pela ação do agente devem ser incluídos:
+
+```bash
+# Adicionar todos os arquivos modificados
+git add .
+
+# Ou especificamente os arquivos alterados
+git add <arquivo1> <arquivo2> ...
+```
+
+### Arquivos Especiais
+- **pyproject.toml**: Sempre incluir se modificado
+- **requirements.txt**: Sempre incluir se modificado
+- **Arquivos de configuração**: .pre-commit-config.yaml, mkdocs.yml, etc.
+- **Documentação**: Todos os arquivos .md modificados
+- **Código fonte**: Todos os arquivos .py modificados
+- **Testes**: Todos os arquivos de teste modificados
+
+### Arquivos a Ignorar
+Respeitam o `.gitignore` existente:
+- `reports/`
+- `__pycache__/`
+- `.coverage`
+- `node_modules/`
+- Arquivos temporários
+
+## 4. Validações Pré-Commit Necessárias
+
+### Validações Obrigatórias
+Antes de cada commit, o agente DEVE executar:
+
+```bash
+# 1. Executar pre-commit hooks
+pre-commit run --all-files
+
+# 2. Verificar se não há erros de linting
+ruff check --force-exclude --extend-fixable=F401,F841 --fix-only
+
+# 3. Aplicar formatação automática
+ruff format --force-exclude
+
+# 4. Verificar tipos (se aplicável)
+mypy src/
+
+# 5. Executar testes rápidos (se aplicável)
+pytest --maxfail=1 -x
+```
+
+### Tratamento de Falhas
+Se alguma validação falhar:
+
+1. **Ruff/Formatação**: Aplicar correções automáticas
+2. **Testes**: Incluir apenas se não quebrarem testes existentes
+3. **MyPy**: Corrigir erros de tipo ou adicionar `# type: ignore` se necessário
+4. **Pre-commit**: Corrigir automaticamente quando possível
+
+### Comando de Commit Completo
+```bash
+# Sequência completa para commit automático
+pre-commit run --all-files || true
+git add .
+git commit -m "<tipo>(<escopo>): <descrição>"
+```
+
+### Tratamento de Falhas de Commit
+Se o commit falhar por qualquer motivo:
+
+1. **Analisar o erro**: Identificar a causa da falha (validação, conflitos, etc.)
+2. **Corrigir automaticamente**: Aplicar correções quando possível
+3. **Tentar novamente**: Repetir o processo de commit
+4. **Reportar se necessário**: Informar ao usuário apenas se a correção automática não for possível
+
+```bash
+# Fluxo completo com tratamento de falhas
+function commit_com_tratamento_falhas() {
+    # Tentar pre-commit
+    if ! pre-commit run --all-files; then
+        echo "Pre-commit falhou, aplicando correções automáticas..."
+        pre-commit run --all-files || true
+    fi
+    
+    # Adicionar arquivos
+    git add .
+    
+    # Tentar commit
+    if ! git commit -m "$1"; then
+        echo "Commit falhou, tentando correções..."
+        
+        # Corrigir problemas comuns
+        git add --chmod=+x **/*.py 2>/dev/null || true
+        
+        # Tentar commit novamente
+        git commit -m "$1" || {
+            echo "Erro: Não foi possível realizar o commit automaticamente"
+            return 1
+        }
+    fi
+    
+    echo "Commit realizado com sucesso!"
+}
+```
+
+## 5. Implementação para Agentes
+
+### Template de Ação
+Todo agente deve seguir este fluxo:
+
+```python
+# Pseudocódigo para agentes
+def executar_acao_com_commit(acao, arquivos_modificados, tipo_commit, escopo, descricao):
+    # 1. Executar a ação
+    resultado = executar_acao(acao)
+    
+    # 2. Realizar commit com tratamento de falhas
+    mensagem = f"{tipo_commit}({escopo}): {descricao}"
+    sucesso = commit_com_tratamento_falhas(mensagem, arquivos_modificados)
+    
+    if not sucesso:
+        # Log do erro para auditoria
+        log_erro_commit(mensagem, arquivos_modificados)
+        # Continuar execução mesmo com falha no commit
+    
+    return resultado
+
+def commit_com_tratamento_falhas(mensagem, arquivos):
+    try:
+        # 1. Executar pre-commit com correções automáticas
+        executar_pre_commit_com_correcoes()
+        
+        # 2. Adicionar arquivos
+        git_add(arquivos)
+        
+        # 3. Tentar commit
+        return git_commit(mensagem)
+        
+    except CommitError as e:
+        # 4. Aplicar correções automáticas
+        aplicar_correcoes_automaticas(e)
+        
+        # 5. Tentar commit novamente
+        try:
+            git_add(arquivos)
+            return git_commit(mensagem)
+        except CommitError:
+            return False
+    
+    return True
+```
+
+### Variáveis de Ambiente
+Configurar se necessário:
+```bash
+# Para commits automáticos
+export GIT_AUTHOR_NAME="SentinelIQ Agent"
+export GIT_AUTHOR_EMAIL="agent@sentineliq.com.br"
+export GIT_COMMITTER_NAME="SentinelIQ Agent"
+export GIT_COMMITTER_EMAIL="agent@sentineliq.com.br"
+```
+
+## 6. Monitoramento e Auditoria
+
+### Log de Commits
+Todos os commits automáticos devem ser rastreáveis:
+- Incluir identificação do agente no corpo do commit
+- Timestamp da ação
+- Contexto da execução
+
+### Exemplo de Commit Completo
+```
+feat(analyzers): add new malware detection analyzer
+
+Created by: SentinelIQ Agent v1.0
+Timestamp: 2024-01-15T10:30:00Z
+Context: User requested new analyzer for malware detection
+Files modified:
+- src/sentineliqsdk/analyzers/malware_detector.py
+- tests/analyzers/test_malware_detector.py
+- docs/analyzers/malware-detection.md
+```
+
+## 7. Casos Especiais
+
+### Múltiplas Modificações
+Se uma ação resultar em múltiplas modificações relacionadas, fazer UM commit que englobe todas:
+
+```bash
+feat(analyzers): implement complete shodan analyzer with tests and docs
+
+- Add ShodanAnalyzer class with IP and domain analysis
+- Include comprehensive unit tests
+- Add documentation and usage examples
+- Update project dependencies
+```
+
+### Correções Automáticas Comuns
+Problemas frequentes e suas correções automáticas:
+
+```bash
+# 1. Arquivos com shebang não executáveis
+git add --chmod=+x **/*.py 2>/dev/null || true
+
+# 2. Problemas de formatação
+ruff format --force-exclude
+ruff check --force-exclude --fix-only
+
+# 3. Problemas de linha final
+find . -name "*.py" -exec sed -i -e '$a\' {} \; 2>/dev/null || true
+
+# 4. Problemas de encoding
+find . -name "*.py" -exec dos2unix {} \; 2>/dev/null || true
+```
+
+### Rollback Automático
+Se o commit falhar após todas as tentativas de correção:
+1. Reverter alterações: `git reset --hard HEAD`
+2. Reportar erro ao usuário com detalhes específicos
+3. Não deixar o repositório em estado inconsistente
+4. Manter log detalhado para debugging
+
+## 8. Compliance
+
+### Verificação de Conformidade
+Esta regra é **OBRIGATÓRIA** e deve ser seguida por:
+- ✅ Todos os agentes de IA
+- ✅ Ferramentas de automação
+- ✅ Scripts de scaffolding
+- ✅ Pipelines de CI/CD
+
+### Auditoria
+Commits que não seguem esta regra devem ser:
+1. Identificados em revisões
+2. Corrigidos via `git commit --amend` ou `git rebase`
+3. Reportados para melhoria dos agentes
+
+---
+
+**Nota**: Esta regra garante rastreabilidade completa, qualidade do código e conformidade com as práticas de desenvolvimento do projeto SentinelIQ SDK.

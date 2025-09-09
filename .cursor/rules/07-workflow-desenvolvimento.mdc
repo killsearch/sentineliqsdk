@@ -1,0 +1,290 @@
+---
+alwaysApply: true
+description: Workflow de desenvolvimento e requisitos de ferramentas
+---
+
+# Workflow de Desenvolvimento
+
+## Requisitos de Qualidade de Código
+
+### Ferramentas Obrigatórias
+- **Linting**: `poe lint` (pre-commit com ruff/mypy configurado)
+- **Testes**: `poe test` (pytest com coverage para `reports/`)
+- **Documentação**: `poe docs` (constrói site MkDocs para `docs/`)
+- **Build**: `uv build`; publicação via CI no GitHub release
+
+### Comandos de Scaffolding
+
+Use tarefas Poe para criar novos módulos:
+
+#### Scaffolding Genérico
+```bash
+poe new -- --kind <analyzer|responder|detector> --name <Nome> [--force]
+```
+
+#### Atalhos Específicos
+```bash
+# Analyzer
+poe new-analyzer -- --name Shodan
+
+# Responder  
+poe new-responder -- --name BlockIp
+
+# Detector
+poe new-detector -- --name MyType
+```
+
+### Saídas do Scaffolding
+
+#### Analyzer
+- **Código**: `src/sentineliqsdk/analyzers/<snake>.py`
+- **Exemplo**: `examples/analyzers/<snake>_example.py`
+- **Testes**: `tests/analyzers/test_<snake>.py`
+
+#### Responder
+- **Código**: `src/sentineliqsdk/responders/<snake>.py`
+- **Exemplo**: `examples/responders/<snake>_example.py`
+- **Testes**: `tests/responders/test_<snake>.py`
+
+#### Detector
+- **Código**: `src/sentineliqsdk/extractors/custom/<snake>_detector.py`
+- **Exemplo**: `examples/detectors/<snake>_example.py`
+- **Testes**: `tests/extractors/test_<snake>_detector.py`
+
+## Checklist de Desenvolvimento
+
+Para cada novo módulo:
+
+### Requisitos de Código
+- [ ] Nomenclatura e imports em conformidade
+- [ ] `execute()` implementado; `run()` retorna Report apropriado
+- [ ] Chama `self.report(...)` com um dict
+- [ ] Taxonomia/operações incluídas conforme apropriado
+- [ ] Atributo METADATA declarado e incluído no full_report
+- [ ] Configuração usando `WorkerConfig.secrets` e `WorkerConfig`
+- [ ] **PROIBIDO**: Uso direto de `os.environ`
+
+### Testes
+- [ ] Testes adicionados em `tests/<tipo>/test_<nome>.py`
+- [ ] Cobertura de teste adequada (>80%)
+- [ ] Testes de configuração e credenciais
+- [ ] Testes de casos extremos e tratamento de erros
+- [ ] Testes de integração quando aplicável
+
+### Documentação
+- [ ] Exemplo executável em `examples/<tipo>/<nome>_example.py`
+- [ ] Página MkDocs criada em `docs/modulos/<tipo>/<nome>/`
+- [ ] README atualizado se necessário
+- [ ] Argumentos de linha de comando documentados
+- [ ] Portões de segurança implementados
+
+### Qualidade
+- [ ] `poe lint` passa sem erros
+- [ ] `poe test` passa com cobertura adequada
+- [ ] `poe docs` constrói sem erros
+- [ ] Código segue padrões de formatação
+- [ ] Imports organizados e absolutos
+
+## Padrões de Formatação
+
+### Requisitos Técnicos
+- **Python**: 3.13
+- **Imports**: Absolutos apenas
+- **Indentação**: 4 espaços
+- **Comprimento de linha**: 100 caracteres
+- **Primeira linha**: Sempre `from __future__ import annotations`
+
+### Estrutura de Imports
+```python
+from __future__ import annotations
+
+# Imports da stdlib
+import json
+import sys
+from typing import Any
+
+# Imports de terceiros
+import requests
+
+# Imports do SDK
+from sentineliqsdk import Analyzer, WorkerInput, WorkerConfig
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+```
+
+## Processo de Desenvolvimento
+
+### 1. Planejamento
+- Definir tipo de módulo (Analyzer, Responder, etc.)
+- Identificar requisitos de configuração
+- Planejar estrutura de dados de entrada/saída
+- Definir dependências externas
+
+### 2. Scaffolding
+```bash
+# Criar estrutura básica
+poe new-analyzer -- --name MeuAnalyzer
+
+# Ou manualmente seguindo os padrões
+```
+
+### 3. Implementação
+- Implementar lógica principal no método `execute()`
+- Configurar acesso a credenciais via `get_secret()`
+- Configurar parâmetros via `get_config()`
+- Implementar tratamento de erros
+- Adicionar logging quando necessário
+
+### 4. Testes
+```bash
+# Executar testes específicos
+pytest tests/analyzers/test_meu_analyzer.py -v
+
+# Executar todos os testes
+poe test
+
+# Verificar cobertura
+poe test --cov-report=html
+```
+
+### 5. Documentação
+- Criar exemplo executável
+- Escrever página MkDocs
+- Atualizar documentação geral se necessário
+- Testar exemplos
+
+### 6. Qualidade
+```bash
+# Linting
+poe lint
+
+# Formatação automática
+ruff format .
+
+# Verificação de tipos
+mypy src/
+
+# Build de documentação
+poe docs
+```
+
+### 7. Integração
+- Commit com mensagem descritiva
+- Push para branch de feature
+- Criar Pull Request
+- Aguardar revisão e CI
+
+## Configuração de Ambiente
+
+### Dependências de Desenvolvimento
+```bash
+# Instalar dependências
+uv sync --dev
+
+# Configurar pre-commit
+pre-commit install
+
+# Verificar configuração
+poe lint
+poe test
+poe docs
+```
+
+### Variáveis de Ambiente para Desenvolvimento
+```bash
+# Para testes que requerem credenciais reais
+export TEST_API_KEY="sua_api_key_de_teste"
+export TEST_USERNAME="usuario_teste"
+export TEST_PASSWORD="senha_teste"
+
+# Para desenvolvimento local
+export SENTINELIQ_DEBUG="true"
+export SENTINELIQ_LOG_LEVEL="DEBUG"
+```
+
+## Integração Contínua
+
+### GitHub Actions
+- **Testes**: Executados em Python 3.13
+- **Linting**: ruff e mypy
+- **Cobertura**: Relatórios enviados para Codecov
+- **Documentação**: Deploy automático no GitHub Pages
+- **Publicação**: Automática em releases do GitHub
+
+### Requisitos para Merge
+- [ ] Todos os testes passando
+- [ ] Cobertura de código mantida
+- [ ] Linting sem erros
+- [ ] Documentação atualizada
+- [ ] Revisão de código aprovada
+- [ ] Exemplos funcionais
+
+## Troubleshooting
+
+### Problemas Comuns
+
+#### Erro de Import
+```python
+# INCORRETO
+from sentineliqsdk.analyzers.base import Analyzer
+
+# CORRETO
+from sentineliqsdk import Analyzer
+```
+
+#### Configuração de Credenciais
+```python
+# INCORRETO
+import os
+api_key = os.environ["API_KEY"]
+
+# CORRETO
+api_key = self.get_secret("meu_modulo.api_key")
+```
+
+#### Estrutura de Metadados
+```python
+# INCORRETO
+METADATA = {"name": "Meu Módulo"}
+
+# CORRETO
+METADATA = ModuleMetadata(
+    name="Meu Módulo",
+    description="Descrição",
+    author=("SentinelIQ Team <team@sentineliq.com.br>",),
+    pattern="threat-intel",
+    doc_pattern="MkDocs module page; programmatic usage",
+    doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/meu_modulo/",
+    version_stage="TESTING",
+)
+```
+
+### Comandos de Debug
+```bash
+# Verificar estrutura de projeto
+find src/ -name "*.py" | head -10
+
+# Verificar imports
+python -c "from sentineliqsdk import Analyzer; print('OK')"
+
+# Testar exemplo específico
+python examples/analyzers/meu_analyzer_example.py --help
+
+# Verificar cobertura detalhada
+pytest --cov=src --cov-report=term-missing
+```
+
+## Boas Práticas
+
+### Desenvolvimento
+- Começar sempre com scaffolding
+- Implementar testes antes da lógica complexa
+- Usar configuração via `WorkerConfig` consistentemente
+- Documentar decisões de design em comentários
+- Manter exemplos simples e funcionais
+
+### Manutenção
+- Atualizar dependências regularmente
+- Revisar e atualizar documentação
+- Monitorar cobertura de testes
+- Refatorar código duplicado
+- Manter compatibilidade com versões anteriores

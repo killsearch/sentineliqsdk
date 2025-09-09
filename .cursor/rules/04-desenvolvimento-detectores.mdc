@@ -1,0 +1,193 @@
+---
+globs: src/sentineliqsdk/extractors/custom/*.py,examples/detectors/*.py,tests/extractors/*.py
+description: Padrões e requisitos para desenvolvimento de Detectores
+---
+
+# Desenvolvimento de Detectores
+
+## Estrutura de Detector Customizado
+
+```python
+from __future__ import annotations
+from dataclasses import dataclass
+
+@dataclass
+class MeuDetector:
+    name: str = "meu_tipo"
+
+    def matches(self, value: str) -> bool:
+        return value.startswith("MEU:")
+```
+
+## Requisitos Fundamentais
+
+### Protocolo Obrigatório
+- **Atributo `name: str`**: Identificador único do tipo de dados
+- **Método `matches(value: str) -> bool`**: Lógica de detecção
+- **Localização**: `src/sentineliqsdk/extractors/custom/<nome>_detector.py`
+- **Imports**: Apenas imports absolutos, `from __future__ import annotations` primeiro
+
+### Registro de Detectores
+```python
+from sentineliqsdk.extractors import Extractor
+
+# Registrar antes de detector existente
+Extractor.register_detector(MeuDetector(), before="hash")
+
+# Registrar depois de detector existente
+Extractor.register_detector(MeuDetector(), after="ip")
+
+# Registrar em posição específica
+Extractor.register_detector(MeuDetector(), before="url", after="ip")
+```
+
+## Integração com Detectores Oficiais
+
+Para incluir no core (tipo oficial):
+
+1. **Adicionar literal**: Incluir em `sentineliqsdk.models.DataType`
+2. **Importar/adicionar**: Incluir na lista de precedência em `Extractor` (`extractors/regex.py`)
+3. **Considerar normalização**: Avaliar flags expostas por `DetectionContext` quando relevante
+
+## Ordem de Precedência
+
+**Primeira correspondência vence:**
+```
+ip → cidr → url → domain → hash → user-agent → uri_path → registry → mail → mac → asn → cve → ip_port → fqdn
+```
+
+### Tipos de Dados Suportados
+
+#### Rede
+- **`ip`**: IPv4 e IPv6
+- **`cidr`**: Blocos de rede CIDR
+- **`url`**: URLs completas
+- **`domain`**: Domínios
+- **`fqdn`**: Fully Qualified Domain Names
+- **`mac`**: Endereços MAC
+- **`ip_port`**: IP:porta
+
+#### Segurança
+- **`hash`**: MD5/SHA1/SHA256
+- **`cve`**: Identificadores CVE
+- **`asn`**: Autonomous System Numbers
+
+#### Web
+- **`user-agent`**: User agents
+- **`uri_path`**: Caminhos de URI
+- **`registry`**: Entradas de registro
+
+#### Comunicação
+- **`mail`**: Endereços de email
+
+## Uso do Extractor
+
+### Uso Básico
+```python
+from sentineliqsdk.extractors import Extractor
+
+# Criar extractor
+extractor = Extractor(
+    ignore=None,  # String para ignorar durante extração
+    strict_dns=False,
+    normalize_domains=False,
+    normalize_urls=False,
+    support_mailto=False,
+    max_string_length=10000,
+    max_iterable_depth=100
+)
+
+# Verificar string única
+data_type = extractor.check_string("1.2.3.4")  # Retorna "ip" ou string vazia
+
+# Verificar iterável (list, dict, str, tuple, set)
+results = extractor.check_iterable(alguns_dados)  # Retorna list[ExtractorResult]
+```
+
+### Configurações do Extractor
+
+- **`ignore`**: String para ignorar durante extração
+- **`strict_dns`**: Validação DNS rigorosa
+- **`normalize_domains`**: Normalizar domínios
+- **`normalize_urls`**: Normalizar URLs
+- **`support_mailto`**: Suporte para links mailto
+- **`max_string_length`**: Comprimento máximo de string
+- **`max_iterable_depth`**: Profundidade máxima de iteração
+
+## Implementação Técnica
+
+### Helpers da Stdlib
+O `Extractor` usa helpers da stdlib Python em vez de regex complexas:
+- `ipaddress` para IPs
+- `urllib.parse` para URLs
+- `email.utils` para emails
+
+### Exemplo de Detector Avançado
+```python
+from __future__ import annotations
+import re
+from dataclasses import dataclass
+
+@dataclass
+class CustomHashDetector:
+    name: str = "custom_hash"
+    
+    def matches(self, value: str) -> bool:
+        # Exemplo: detectar hashes customizados com prefixo
+        if not value.startswith("CUSTOM:"):
+            return False
+        
+        hash_part = value[7:]  # Remove "CUSTOM:"
+        
+        # Verificar se é um hash válido (32, 40 ou 64 caracteres hex)
+        if len(hash_part) in [32, 40, 64]:
+            return bool(re.match(r'^[a-fA-F0-9]+$', hash_part))
+        
+        return False
+```
+
+## Estrutura de Arquivos
+
+- **Core**: `src/sentineliqsdk/extractors/detectors.py` (preferido para tipos oficiais)
+- **Custom**: `src/sentineliqsdk/extractors/custom/<nome>_detector.py`
+- **Exemplo**: `examples/detectors/<nome>_example.py`
+- **Testes**: `tests/extractors/test_<nome>_detector.py`
+
+## Checklist de Desenvolvimento
+
+Para cada novo detector:
+
+### Requisitos de Código
+- [ ] Protocolo implementado (`name` e `matches()`)
+- [ ] Imports em conformidade
+- [ ] Lógica de detecção eficiente
+- [ ] Registro adequado no Extractor
+- [ ] Consideração da ordem de precedência
+
+### Testes
+- [ ] Testes adicionados em `tests/extractors/test_<nome>_detector.py`
+- [ ] Casos de teste positivos e negativos
+- [ ] Testes de performance para grandes volumes
+- [ ] Testes de integração com Extractor
+
+### Documentação
+- [ ] Exemplo executável em `examples/detectors/<nome>_example.py`
+- [ ] Documentação do padrão de detecção
+- [ ] Exemplos de uso e casos de teste
+
+## Boas Práticas
+
+### Performance
+- Implementar lógica de detecção eficiente
+- Evitar regex complexas quando possível
+- Considerar impacto na ordem de precedência
+
+### Precisão
+- Minimizar falsos positivos
+- Validar adequadamente o formato
+- Considerar casos extremos
+
+### Manutenibilidade
+- Usar nomes descritivos
+- Documentar padrões complexos
+- Manter código simples e legível

@@ -1,0 +1,165 @@
+---
+globs: src/sentineliqsdk/responders/*.py,examples/responders/*.py,tests/responders/*.py
+description: Padrões e requisitos para desenvolvimento de Responders
+---
+
+# Desenvolvimento de Responders
+
+## Estrutura de Classe Obrigatória
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Responder
+from sentineliqsdk.models import ResponderReport, ModuleMetadata
+
+class MeuResponder(Responder):
+    METADATA = ModuleMetadata(
+        name="Meu Responder",
+        description="Faz algo útil",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="webhook",
+        doc_pattern="Página de módulo MkDocs; uso programático",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/responders/meu_responder/",
+        version_stage="TESTING",
+    )
+
+    def execute(self) -> ResponderReport:
+        target = self.get_data()
+        ops = [self.build_operation("block", target=target)]
+        full = {
+            "action": "block", 
+            "target": target,
+            "metadata": self.METADATA.to_dict()
+        }
+        return self.report(full)
+
+    def run(self) -> ResponderReport:
+        return self.execute()
+```
+
+## Requisitos Fundamentais
+
+### Nomenclatura e Herança
+- **Nome da classe**: Deve terminar com `Responder`
+- **Herança**: Estender `sentineliqsdk.responders.Responder`
+- **Imports**: Apenas imports absolutos, `from __future__ import annotations` primeiro
+
+### Métodos Obrigatórios
+- **`execute() -> ResponderReport`**: Implementar lógica principal
+- **`run() -> ResponderReport`**: Deve retornar `self.execute()`
+
+### Metadados e Operações
+- **METADATA**: Incluir atributo `METADATA` e adicionar ao `full_report` sob chave `metadata`
+- **Operações**: Construir operações com `self.build_operation(...)` e chamar `self.report(full_report)`
+
+### Configuração
+- **Entrada**: Usar apenas dataclasses (`WorkerInput` é obrigatório)
+- **Configuração**: Usar `WorkerConfig.secrets` para credenciais, `WorkerConfig` para configurações
+- **PROIBIDO**: Uso direto de `os.environ` em módulos
+
+## Métodos da Classe Responder
+
+### Métodos Principais
+- `get_data()`: Retorna o campo `data`
+- `build_operation(op_type: str, **parameters) -> Operation`: Descreve operações de follow-up
+- `report(full_report: dict) -> ResponderReport`: Retorna envelope com `success/full_report/operations`
+
+### Diferenças do Analyzer
+- **Envelope mais simples**: ResponderReport tem estrutura mais direta
+- **Foco em ações**: Responders executam ações em vez de análises
+- **Sem taxonomia**: Não usa sistema de taxonomia como analyzers
+
+## Padrões Comuns de Responders
+
+### Webhook
+```python
+pattern="webhook"
+# Para responders que enviam dados via HTTP/HTTPS
+```
+
+### SMTP
+```python
+pattern="smtp"
+# Para responders que enviam emails
+```
+
+### Kafka
+```python
+pattern="kafka"
+# Para responders que publicam em tópicos Kafka
+```
+
+### RabbitMQ
+```python
+pattern="rabbitmq"
+# Para responders que usam RabbitMQ
+```
+
+## Exemplo de Configuração
+
+```python
+# Acesso a credenciais
+api_key = self.get_secret("meu_responder.api_key", message="API key obrigatória")
+webhook_url = self.get_secret("meu_responder.webhook_url")
+username = self.get_secret("meu_responder.username")
+password = self.get_secret("meu_responder.password")
+
+# Acesso a configurações
+timeout = self.get_config("meu_responder.timeout", 30)
+max_retries = self.get_config("meu_responder.max_retries", 3)
+verify_ssl = self.get_config("meu_responder.verify_ssl", True)
+```
+
+## Tipos de Operações Comuns
+
+- **`block`**: Bloquear um recurso/IP/domínio
+- **`allow`**: Permitir um recurso
+- **`quarantine`**: Colocar em quarentena
+- **`notify`**: Enviar notificação
+- **`escalate`**: Escalar para análise manual
+- **`remediate`**: Executar remediação automática
+
+## Estrutura de Arquivos
+
+- **Código**: `src/sentineliqsdk/responders/<nome>.py`
+- **Exemplo**: `examples/responders/<nome>_example.py`
+- **Testes**: `tests/responders/test_<nome>.py`
+
+## Checklist de Desenvolvimento
+
+Para cada novo responder:
+
+### Requisitos de Código
+- [ ] Nomenclatura e imports em conformidade
+- [ ] `execute()` implementado; `run()` retorna ResponderReport apropriado
+- [ ] Chama `self.report(...)` com um dict
+- [ ] Operações construídas com `self.build_operation()`
+- [ ] Atributo METADATA declarado e incluído no full_report
+- [ ] Configuração usando `WorkerConfig.secrets` e `WorkerConfig`
+
+### Testes
+- [ ] Testes adicionados em `tests/responders/test_<nome>.py`
+- [ ] Cobertura de teste adequada
+- [ ] Testes de configuração e credenciais
+- [ ] Testes de operações e ações
+
+### Documentação
+- [ ] Exemplo executável em `examples/responders/<nome>_example.py`
+- [ ] Documentação MkDocs criada
+- [ ] README atualizado se necessário
+
+## Exemplo de ResponderReport
+
+```python
+# Estrutura típica de retorno
+full_report = {
+    "action": "block",
+    "target": "malicious-domain.com",
+    "status": "success",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "metadata": self.METADATA.to_dict()
+}
+
+return self.report(full_report)
+```

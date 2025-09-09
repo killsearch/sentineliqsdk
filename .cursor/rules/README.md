@@ -1,89 +1,92 @@
-# SentinelIQ SDK Rules
+# SentinelIQ SDK - Regras de Desenvolvimento
 
-This directory contains development rules and patterns for the SentinelIQ SDK.
+Este diretório contém as regras de desenvolvimento organizadas de forma sequencial e profissional para o SentinelIQ SDK.
 
-## Rule Files
+## Estrutura Organizada
 
-### Core Development Rules
-- **`worker-core-concepts.mdc`** - Core worker concepts and base class patterns
-- **`configuration-patterns.mdc`** - Configuration patterns and requirements (MANDATORY)
-- **`input-output-patterns.mdc`** - Input/output patterns and dataclass usage
-- **`module-metadata.mdc`** - Module metadata requirements for analyzers and responders
+### 📋 1. Fundamentos Core
+- **`01-fundamentos-core.mdc`** - Conceitos fundamentais, configuração e segurança
 
-### Module Development Rules
-- **`analyzer-development.mdc`** - Analyzer development patterns and requirements
-- **`responder-development.mdc`** - Responder development patterns and requirements
-- **`detector-development.mdc`** - Detector development patterns and requirements
+### 🔍 2. Desenvolvimento de Módulos
+- **`02-desenvolvimento-analyzers.mdc`** - Padrões para desenvolvimento de Analyzers
+- **`03-desenvolvimento-responders.mdc`** - Padrões para desenvolvimento de Responders
+- **`04-desenvolvimento-detectores.mdc`** - Padrões para desenvolvimento de Detectores
+- **`05-desenvolvimento-messaging.mdc`** - Padrões para Producers, Consumers e Pipelines
 
-### Documentation and Examples
-- **`examples-and-docs.mdc`** - Mandatory examples and documentation requirements
-- **`extractor-usage.mdc`** - Extractor usage patterns and IOC detection
+### 📚 3. Documentação e Qualidade
+- **`06-exemplos-documentacao.mdc`** - Requisitos para exemplos e documentação
+- **`07-workflow-desenvolvimento.mdc`** - Workflow de desenvolvimento e ferramentas
+- **`08-commits-automaticos.mdc`** - Regras obrigatórias para commits automáticos por agentes
 
-### Project Management
-- **`development-workflow.mdc`** - Development workflow and tooling requirements
-- **`project-structure.mdc`** - Project structure and file organization
+## ⚠️ Regras Críticas de Configuração
 
-## Key Configuration Rules (CRITICAL)
+### ❌ PROIBIDO
+- **NUNCA** usar `os.environ` diretamente em módulos
+- **NUNCA** hardcodar credenciais no código fonte
+- **NUNCA** usar variáveis de ambiente para configuração específica de módulos
 
-### PROHIBITED
-- **NEVER** use `os.environ` directly in modules
-- **NEVER** hardcode credentials in source code
+### ✅ OBRIGATÓRIO
+- **SEMPRE** usar `WorkerConfig.secrets` para credenciais
+- **SEMPRE** usar métodos `get_secret()` e `get_config()`
+- **SEMPRE** seguir os padrões de configuração em `01-fundamentos-core.mdc`
 
-### REQUIRED
-- **ALWAYS** use `WorkerConfig.secrets` for credentials
-- **ALWAYS** use `get_secret()` and `get_config()` methods
-- **ALWAYS** follow the configuration patterns in `configuration-patterns.mdc`
+## 🚀 Guia Rápido de Desenvolvimento
 
-## Quick Reference
+### Para Analyzers
+1. Ler `01-fundamentos-core.mdc` para conceitos básicos
+2. Seguir `02-desenvolvimento-analyzers.mdc` para implementação
+3. Criar exemplos conforme `06-exemplos-documentacao.mdc`
+4. Seguir workflow em `07-workflow-desenvolvimento.mdc`
 
-### For Analyzers
-1. Read `analyzer-development.mdc`
-2. Follow `configuration-patterns.mdc` for credentials
-3. Include `module-metadata.mdc` requirements
-4. Create examples per `examples-and-docs.mdc`
+### Para Responders
+1. Ler `01-fundamentos-core.mdc` para conceitos básicos
+2. Seguir `03-desenvolvimento-responders.mdc` para implementação
+3. Criar exemplos conforme `06-exemplos-documentacao.mdc`
+4. Seguir workflow em `07-workflow-desenvolvimento.mdc`
 
-### For Responders
-1. Read `responder-development.mdc`
-2. Follow `configuration-patterns.mdc` for credentials
-3. Include `module-metadata.mdc` requirements
-4. Create examples per `examples-and-docs.mdc`
+### Para Detectores
+1. Ler `01-fundamentos-core.mdc` para conceitos básicos
+2. Seguir `04-desenvolvimento-detectores.mdc` para implementação
+3. Criar exemplos conforme `06-exemplos-documentacao.mdc`
 
-### For Detectors
-1. Read `detector-development.mdc`
-2. Follow `extractor-usage.mdc` patterns
-3. Create examples per `examples-and-docs.mdc`
+### Para Messaging (Producers/Consumers/Pipelines)
+1. Ler `01-fundamentos-core.mdc` para conceitos básicos
+2. Seguir `05-desenvolvimento-messaging.mdc` para implementação
+3. Criar exemplos conforme `06-exemplos-documentacao.mdc`
 
-## Configuration Examples
+## 📖 Como Usar Este Guia
 
-### Correct Configuration Usage
-```python
-# CORRECT: Use WorkerConfig.secrets
-secrets = {
-    "my_module": {
-        "api_key": "secret_key",
-        "username": "user",
-        "password": "pass"
-    }
-}
-input_data = WorkerInput(..., config=WorkerConfig(secrets=secrets))
+1. **Iniciantes**: Comece com `01-fundamentos-core.mdc`
+2. **Desenvolvimento**: Siga a sequência numérica dos arquivos
+3. **Referência Rápida**: Use este README para navegação
+4. **Troubleshooting**: Consulte `07-workflow-desenvolvimento.mdc`
 
-# In module:
-api_key = self.get_secret("my_module.api_key")
+## 🔧 Ferramentas de Desenvolvimento
+
+```bash
+# Scaffolding de novos módulos
+poe new-analyzer -- --name MeuAnalyzer
+poe new-responder -- --name MeuResponder
+poe new-detector -- --name MeuDetector
+
+# Qualidade de código
+poe lint    # Linting e formatação
+poe test    # Testes com coverage
+poe docs    # Documentação MkDocs
 ```
 
-### Incorrect Configuration Usage
-```python
-# INCORRECT: Direct os.environ usage (PROHIBITED)
-import os
-api_key = os.environ["API_KEY"]  # DON'T DO THIS
-```
+## 📋 Checklist Rápido
 
-## Enforcement
+Para cada novo módulo:
+- [ ] Seguir padrões de nomenclatura
+- [ ] Usar `WorkerConfig.secrets` para credenciais
+- [ ] Implementar `METADATA` obrigatório
+- [ ] Criar exemplo executável
+- [ ] Adicionar testes adequados
+- [ ] Documentar no MkDocs
+- [ ] Passar em `poe lint` e `poe test`
+- [ ] **Realizar commit automático** seguindo `08-commits-automaticos.mdc`
 
-These rules are enforced through:
-- Code review processes
-- Linting and type checking
-- Documentation validation
-- Example testing
+---
 
-All modules must follow these patterns for consistency and security.
+> **💡 Dica**: Para informações detalhadas sobre configuração e exemplos, consulte os arquivos numerados em ordem sequencial. Cada arquivo contém informações específicas e exemplos práticos para facilitar o desenvolvimento.

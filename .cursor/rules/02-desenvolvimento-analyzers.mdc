@@ -1,0 +1,119 @@
+---
+globs: src/sentineliqsdk/analyzers/*.py,examples/analyzers/*.py,tests/analyzers/*.py
+description: Padrões e requisitos para desenvolvimento de Analyzers
+---
+
+# Desenvolvimento de Analyzers
+
+## Estrutura de Classe Obrigatória
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk import Analyzer
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+
+class MeuAnalyzer(Analyzer):
+    METADATA = ModuleMetadata(
+        name="Meu Analyzer",
+        description="Faz algo útil",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="threat-intel",
+        doc_pattern="Página de módulo MkDocs; uso programático",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/meu_analyzer/",
+        version_stage="TESTING",
+    )
+
+    def execute(self) -> AnalyzerReport:
+        observable = self.get_data()
+        taxonomy = self.build_taxonomy("safe", "namespace", "predicate", str(observable))
+        full = {
+            "observable": observable, 
+            "verdict": "safe", 
+            "taxonomy": [taxonomy.to_dict()],
+            "metadata": self.METADATA.to_dict()
+        }
+        return self.report(full)
+
+    def run(self) -> AnalyzerReport:
+        return self.execute()
+```
+
+## Requisitos Fundamentais
+
+### Nomenclatura e Herança
+- **Nome da classe**: Deve terminar com `Analyzer`
+- **Herança**: Estender `sentineliqsdk.analyzers.Analyzer`
+- **Imports**: Apenas imports absolutos, `from __future__ import annotations` primeiro
+
+### Métodos Obrigatórios
+- **`execute() -> AnalyzerReport`**: Implementar lógica principal
+- **`run() -> AnalyzerReport`**: Deve retornar `self.execute()`
+
+### Metadados e Taxonomia
+- **METADATA**: Incluir atributo `METADATA` e adicionar ao `full_report` sob chave `metadata`
+- **Taxonomia**: Usar `self.build_taxonomy()` e incluir `taxonomy.to_dict()` no payload
+
+### Configuração
+- **Entrada**: Usar apenas dataclasses (`WorkerInput` é obrigatório)
+- **Configuração**: Usar `WorkerConfig.secrets` para credenciais, `WorkerConfig` para configurações
+- **PROIBIDO**: Uso direto de `os.environ` em módulos
+
+## Métodos da Classe Analyzer
+
+### Métodos Principais
+- `get_data()`: Retorna `filename` quando `data_type == "file"`, senão retorna o campo `data`
+- `build_taxonomy(level, namespace, predicate, value) -> TaxonomyEntry`: Helper para entradas de taxonomia
+- `build_artifact(data_type, data, **kwargs) -> Artifact`: Constrói um dataclass de artefato
+- `report(full_report: dict) -> AnalyzerReport`: Retorna envelope com `success/summary/artifacts/operations/full_report`
+
+### Auto-extração
+- **auto_extract**: Habilitado por padrão, a menos que `config.auto_extract` seja `False`
+- **artifacts(raw)**: Quando habilitado, usa `Extractor(ignore=self.get_data())` e retorna `list[Artifact]`
+
+## Níveis de Taxonomia
+
+- **`info`**: Informacional
+- **`safe`**: Seguro/limpo
+- **`suspicious`**: Suspeito mas não malicioso
+- **`malicious`**: Confirmadamente malicioso
+
+## Exemplo de Configuração
+
+```python
+# Acesso a credenciais
+api_key = self.get_secret("meu_analyzer.api_key", message="API key obrigatória")
+username = self.get_secret("meu_analyzer.username")
+
+# Acesso a configurações
+timeout = self.get_config("meu_analyzer.timeout", 30)
+max_retries = self.get_config("meu_analyzer.max_retries", 3)
+```
+
+## Estrutura de Arquivos
+
+- **Código**: `src/sentineliqsdk/analyzers/<nome>.py`
+- **Exemplo**: `examples/analyzers/<nome>_example.py`
+- **Testes**: `tests/analyzers/test_<nome>.py`
+
+## Checklist de Desenvolvimento
+
+Para cada novo analyzer:
+
+### Requisitos de Código
+- [ ] Nomenclatura e imports em conformidade
+- [ ] `execute()` implementado; `run()` retorna AnalyzerReport apropriado
+- [ ] Chama `self.report(...)` com um dict
+- [ ] Taxonomia incluída conforme apropriado
+- [ ] Atributo METADATA declarado e incluído no full_report
+- [ ] Configuração usando `WorkerConfig.secrets` e `WorkerConfig`
+
+### Testes
+- [ ] Testes adicionados em `tests/analyzers/test_<nome>.py`
+- [ ] Cobertura de teste adequada
+- [ ] Testes de configuração e credenciais
+
+### Documentação
+- [ ] Exemplo executável em `examples/analyzers/<nome>_example.py`
+- [ ] Documentação MkDocs criada
+- [ ] README atualizado se necessário

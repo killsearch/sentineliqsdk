@@ -1,0 +1,143 @@
+---
+alwaysApply: true
+globs: src/sentineliqsdk/**/*.py,examples/**/*.py,tests/**/*.py
+description: Fundamentos e conceitos centrais do SentinelIQ SDK
+---
+
+# Fundamentos do SentinelIQ SDK
+
+## Princípios Fundamentais
+
+### Estrutura de Classes Base
+Todos os módulos devem seguir a hierarquia:
+- `Worker` (classe base)
+  - `Analyzer` (para análise de dados)
+  - `Responder` (para ações de resposta)
+  - `Producer` (para publicação de mensagens)
+  - `Consumer` (para consumo de mensagens)
+  - `Pipeline` (para orquestração)
+
+### Padrões de Importação OBRIGATÓRIOS
+```python
+from __future__ import annotations
+
+# Imports do SDK
+from sentineliqsdk import Analyzer, WorkerInput, WorkerConfig
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+```
+
+### Convenções de Nomenclatura
+- **Analyzers**: `<Nome>Analyzer`
+- **Responders**: `<Nome>Responder`
+- **Producers**: `<Nome>Producer`
+- **Consumers**: `<Nome>Consumer`
+- **Pipelines**: `<Nome>Pipeline`
+
+## Configuração e Segurança
+
+### REGRAS CRÍTICAS DE CONFIGURAÇÃO
+
+#### PROIBIDO ❌
+- **NUNCA** usar `os.environ` diretamente em módulos
+- **NUNCA** hardcodar credenciais no código fonte
+- **NUNCA** usar variáveis de ambiente para configuração específica de módulos
+
+#### OBRIGATÓRIO ✅
+- **SEMPRE** usar `WorkerConfig.secrets` para credenciais (API keys, senhas, tokens)
+- **SEMPRE** usar `WorkerConfig` para configurações específicas de módulos
+- **SEMPRE** usar métodos `get_secret()` e `get_config()`
+
+### Métodos de Acesso à Configuração
+
+#### Para Credenciais (Secrets)
+```python
+# CORRETO: Use get_secret() para credenciais
+api_key = self.get_secret("meu_modulo.api_key", message="API key obrigatória")
+username = self.get_secret("meu_modulo.username")
+password = self.get_secret("meu_modulo.password")
+```
+
+#### Para Configurações (Settings)
+```python
+# CORRETO: Use get_config() para configurações
+timeout = self.get_config("meu_modulo.timeout", 30)
+max_retries = self.get_config("meu_modulo.max_retries", 3)
+debug_mode = self.get_config("meu_modulo.debug", False)
+```
+
+## Estrutura de Entrada de Dados
+
+### WorkerInput (Apenas Dataclasses)
+```python
+from sentineliqsdk import WorkerInput, WorkerConfig
+
+input_data = WorkerInput(
+    data_type="ip",
+    data="1.2.3.4",
+    filename=None,  # Opcional, para tipos de arquivo
+    tlp=2,
+    pap=2,
+    config=WorkerConfig(
+        check_tlp=True,
+        max_tlp=2,
+        check_pap=True,
+        max_pap=2,
+        auto_extract=True,
+        secrets={
+            "meu_modulo": {
+                "api_key": "chave_secreta",
+                "username": "usuario",
+                "password": "senha"
+            }
+        }
+    )
+)
+```
+
+### Tipos de Dados Suportados
+- `ip`, `url`, `domain`, `fqdn`, `hash`, `mail`, `user-agent`
+- `uri_path`, `registry`, `file`, `other`, `asn`, `cve`
+- `ip_port`, `mac`, `cidr`
+
+## Metadados de Módulo OBRIGATÓRIOS
+
+### Estrutura ModuleMetadata
+```python
+from sentineliqsdk.models import ModuleMetadata
+
+class MeuModulo(Worker):
+    METADATA = ModuleMetadata(
+        name="Meu Módulo",
+        description="Descrição do que o módulo faz",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="threat-intel",  # ou "smtp", "webhook", "kafka", etc.
+        doc_pattern="Página de módulo MkDocs; uso programático",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/meu_modulo/",
+        version_stage="TESTING",  # ou "DEVELOPER", "STABLE"
+    )
+```
+
+### Estágios de Versão
+- **DEVELOPER**: Estágio de desenvolvimento/experimental
+- **TESTING**: Estágio de teste, não pronto para produção
+- **STABLE**: Pronto para produção, versão estável
+
+## Padrões de Qualidade
+
+### Formatação de Código
+- Python 3.13
+- Imports absolutos apenas
+- Indentação de 4 espaços
+- Comprimento de linha: 100 caracteres
+- Sempre usar `from __future__ import annotations` primeiro
+
+### Estrutura de Arquivos
+- **Código**: `src/sentineliqsdk/<tipo>/<nome>.py`
+- **Exemplo**: `examples/<tipo>/<nome>_example.py`
+- **Testes**: `tests/<tipo>/test_<nome>.py`
+
+### Ferramentas de Qualidade
+- **Linting**: `poe lint` (pre-commit com ruff/mypy)
+- **Testes**: `poe test` (pytest com coverage)
+- **Documentação**: `poe docs` (MkDocs)
+- **Build**: `uv build`

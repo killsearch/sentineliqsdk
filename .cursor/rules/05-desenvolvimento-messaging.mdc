@@ -1,0 +1,264 @@
+---
+globs: src/sentineliqsdk/producers/*.py,src/sentineliqsdk/consumers/*.py,src/sentineliqsdk/pipelines/*.py,examples/producers/*.py,examples/consumers/*.py,examples/pipelines/*.py
+description: Padrões para desenvolvimento de Producers, Consumers e Pipelines
+---
+
+# Desenvolvimento de Messaging
+
+## Estrutura de Arquivos
+
+### Producers
+- **Código**: `src/sentineliqsdk/producers/<nome>.py`
+- **Exemplo**: `examples/producers/<nome>_example.py`
+- **Testes**: `tests/producers/test_<nome>.py`
+- **Nomenclatura**: `<Nome>Producer` estendendo `sentineliqsdk.producers.Producer`
+
+### Consumers
+- **Código**: `src/sentineliqsdk/consumers/<nome>.py`
+- **Exemplo**: `examples/consumers/<nome>_example.py`
+- **Testes**: `tests/consumers/test_<nome>.py`
+- **Nomenclatura**: `<Nome>Consumer` estendendo `sentineliqsdk.consumers.Consumer`
+
+### Pipelines
+- **Código**: `src/sentineliqsdk/pipelines/<nome>.py`
+- **Exemplo**: `examples/pipelines/<nome>_example.py`
+- **Testes**: `tests/pipelines/test_<nome>.py`
+- **Nomenclatura**: `<Nome>Pipeline` estendendo `sentineliqsdk.pipelines.Pipeline`
+
+## Estrutura de Producer
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk.messaging import Message, ProducerReport
+from sentineliqsdk.models import ModuleMetadata, WorkerInput
+from sentineliqsdk.producers.base import Producer
+
+class MeuProducer(Producer):
+    METADATA = ModuleMetadata(
+        name="Meu Producer",
+        description="Descrição do que este producer faz",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="kafka",  # ou "rabbitmq", "redis", etc.
+        doc_pattern="Padrão de documentação de Producer",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/producers/meu_producer/",
+        version_stage="TESTING",
+    )
+
+    def publish(self, message: Message) -> ProducerReport:
+        """Publicar uma mensagem na fila configurada."""
+        # Implementação aqui
+        pass
+
+    def run(self) -> ProducerReport:
+        """Override para implementar lógica de publicação."""
+        # Implementação aqui
+        pass
+```
+
+## Estrutura de Consumer
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk.messaging import Message, ConsumerReport
+from sentineliqsdk.models import ModuleMetadata, WorkerInput
+from sentineliqsdk.consumers.base import Consumer
+
+class MeuConsumer(Consumer):
+    METADATA = ModuleMetadata(
+        name="Meu Consumer",
+        description="Descrição do que este consumer faz",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="kafka",  # ou "rabbitmq", "redis", etc.
+        doc_pattern="Padrão de documentação de Consumer",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/consumers/meu_consumer/",
+        version_stage="TESTING",
+    )
+
+    def consume(self) -> list[Message]:
+        """Consumir mensagens da fila configurada."""
+        # Implementação aqui
+        pass
+
+    def process_message(self, message: Message) -> dict:
+        """Processar uma mensagem individual."""
+        # Implementação aqui
+        pass
+
+    def run(self) -> ConsumerReport:
+        """Override para implementar lógica de consumo."""
+        # Implementação aqui
+        pass
+```
+
+## Estrutura de Pipeline
+
+```python
+from __future__ import annotations
+
+from sentineliqsdk.messaging import Message
+from sentineliqsdk.models import ModuleMetadata, WorkerInput
+from sentineliqsdk.pipelines.base import Pipeline
+
+class MeuPipeline(Pipeline):
+    METADATA = ModuleMetadata(
+        name="Meu Pipeline",
+        description="Descrição do que este pipeline faz",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="pipeline",
+        doc_pattern="Padrão de documentação de Pipeline",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/pipelines/meu_pipeline/",
+        version_stage="TESTING",
+    )
+
+    def process_message(self, message: Message) -> dict[str, Any]:
+        """Processar uma mensagem através do pipeline."""
+        # Implementação aqui
+        pass
+
+    def run(self) -> None:
+        """Override para implementar lógica do pipeline."""
+        # Implementação aqui
+        pass
+```
+
+## Modelos de Mensagem
+
+### Estrutura de Message
+```python
+from sentineliqsdk.messaging import Message, MessageMetadata
+
+message = Message(
+    message_type="event",  # event, command, query, response, notification
+    data_type="ip",       # ip, url, domain, hash, etc.
+    data="1.2.3.4",
+    metadata=MessageMetadata(
+        message_id="msg_1234567890",
+        correlation_id="corr_123",
+        reply_to="response_queue",
+        timestamp=time.time(),
+        ttl=3600.0,
+        priority="normal",  # low, normal, high, critical
+        status="pending",   # pending, processing, completed, failed, retry
+        retry_count=0,
+        max_retries=3,
+        tags={"environment": "production", "service": "security"},
+    ),
+    payload={"additional": "data"},
+)
+```
+
+### Configuração de Fila
+```python
+from sentineliqsdk.messaging import QueueConfig
+
+queue_config = QueueConfig(
+    queue_name="security-events",
+    exchange="security",           # Opcional para alguns brokers
+    routing_key="events",         # Opcional para alguns brokers
+    durable=True,                # Fila sobrevive a reinicializações do broker
+    auto_delete=False,           # Não auto-deletar quando vazia
+    exclusive=False,             # Permitir múltiplos consumidores
+    arguments={"x-message-ttl": 3600000}  # TTL de mensagem em ms
+)
+```
+
+## Padrões de Configuração
+
+### Para Credenciais
+```python
+# Kafka
+bootstrap_servers = self.get_secret("kafka.bootstrap_servers")
+sasl_username = self.get_secret("kafka.sasl_username")
+sasl_password = self.get_secret("kafka.sasl_password")
+
+# RabbitMQ
+rabbitmq_url = self.get_secret("rabbitmq.url")
+username = self.get_secret("rabbitmq.username")
+password = self.get_secret("rabbitmq.password")
+
+# Redis
+redis_url = self.get_secret("redis.url")
+redis_password = self.get_secret("redis.password")
+```
+
+### Para Configurações
+```python
+# Configurações de timeout e retry
+connection_timeout = self.get_config("messaging.connection_timeout", 30)
+max_retries = self.get_config("messaging.max_retries", 3)
+batch_size = self.get_config("messaging.batch_size", 100)
+
+# Configurações específicas do broker
+kafka_group_id = self.get_config("kafka.group_id", "default-group")
+rabbitmq_prefetch = self.get_config("rabbitmq.prefetch_count", 10)
+```
+
+## Exemplos Obrigatórios
+
+### Estrutura de Argumentos
+```python
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Meu Producer/Consumer Example")
+    
+    # Argumentos de dados
+    parser.add_argument("--data", default="Hello World!", help="Dados para publicar/processar")
+    parser.add_argument("--topic", default="my-topic", help="Nome do tópico/fila")
+    
+    # Argumentos específicos do Consumer
+    parser.add_argument("--group-id", default="my-consumer", help="ID do grupo de consumidores")
+    parser.add_argument("--max-messages", type=int, default=5, help="Máximo de mensagens para consumir")
+    
+    # Portões de segurança (OBRIGATÓRIO)
+    parser.add_argument("--execute", action="store_true", help="Executar operações reais")
+    parser.add_argument("--include-dangerous", action="store_true", help="Incluir operações perigosas")
+    
+    args = parser.parse_args()
+```
+
+### Configuração de Exemplo
+```python
+if __name__ == "__main__":
+    # CORRETO: Usar WorkerConfig.secrets para credenciais
+    secrets = {
+        "kafka": {
+            "bootstrap_servers": "localhost:9092",
+            "sasl_username": "user",
+            "sasl_password": "pass"
+        }
+    }
+    
+    input_data = WorkerInput(
+        data_type="event",
+        data="security_alert",
+        config=WorkerConfig(secrets=secrets)
+    )
+    
+    producer = MeuProducer(input_data)
+    report = producer.run()
+    print(json.dumps(report.full_report, ensure_ascii=False))
+```
+
+## Checklist de Desenvolvimento
+
+Para cada novo módulo de messaging:
+
+### Requisitos de Código
+- [ ] Nomenclatura e imports em conformidade
+- [ ] Métodos principais implementados
+- [ ] Configuração usando `WorkerConfig.secrets` e `WorkerConfig`
+- [ ] Atributo METADATA declarado
+- [ ] Tratamento adequado de erros e retry
+
+### Testes
+- [ ] Testes unitários adicionados
+- [ ] Testes de integração com brokers
+- [ ] Testes de configuração e credenciais
+- [ ] Testes de tratamento de erros
+
+### Documentação
+- [ ] Exemplo executável criado
+- [ ] Documentação MkDocs
+- [ ] Argumentos de linha de comando documentados
+- [ ] Portões de segurança implementados

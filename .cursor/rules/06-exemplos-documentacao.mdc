@@ -1,0 +1,287 @@
+---
+globs: examples/**/*.py,docs/**/*.md
+description: Requisitos obrigatórios para exemplos e documentação
+---
+
+# Exemplos e Documentação
+
+## Regra de Exemplos Obrigatórios
+
+Sempre adicionar um exemplo executável em `examples/` ao introduzir um novo Analyzer, Responder, Detector, Producer, Consumer ou Pipeline.
+
+## Convenção de Nomenclatura
+
+- **Analyzers**: `examples/analyzers/<nome>_example.py`
+- **Responders**: `examples/responders/<nome>_example.py`
+- **Detectors**: `examples/detectors/<nome>_example.py`
+- **Producers**: `examples/producers/<nome>_example.py`
+- **Consumers**: `examples/consumers/<nome>_example.py`
+- **Pipelines**: `examples/pipelines/<nome>_example.py`
+
+## Requisitos dos Exemplos
+
+### Estrutura Básica
+- Usar entrada dataclass (`WorkerInput`) e chamar `.run()` (ou `.execute()` quando fornecido)
+- Ser executável localmente apenas com stdlib + SDK
+- Imprimir resultado compacto para STDOUT
+- Chamadas de rede padrão para dry-run e requerem `--execute`
+- Operações impactantes (ex: scans) devem ser protegidas por `--include-dangerous`
+- Referenciar exemplos do README ou docs quando útil
+- **OBRIGATÓRIO**: Usar `WorkerConfig.secrets` para credenciais, nunca `os.environ`
+- **PROIBIDO**: Uso direto de `os.environ` em exemplos
+
+### Estrutura de Exemplo Padrão
+
+```python
+from __future__ import annotations
+import argparse
+import json
+import sys
+from typing import Any
+
+from sentineliqsdk import Analyzer, WorkerInput, WorkerConfig
+from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+
+class MeuAnalyzer(Analyzer):
+    METADATA = ModuleMetadata(
+        name="Meu Analyzer",
+        description="Exemplo de analyzer",
+        author=("SentinelIQ Team <team@sentineliq.com.br>",),
+        pattern="threat-intel",
+        doc_pattern="Página de módulo MkDocs; uso programático",
+        doc="https://killsearch.github.io/sentineliqsdk/modulos/analyzers/meu_analyzer/",
+        version_stage="TESTING",
+    )
+    
+    def execute(self) -> AnalyzerReport:
+        # Implementação do analyzer
+        pass
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Exemplo do Meu Analyzer")
+    
+    # Argumentos de dados
+    parser.add_argument("--data", default="1.2.3.4", help="Dados para analisar")
+    parser.add_argument("--data-type", default="ip", help="Tipo de dados")
+    
+    # Portões de segurança (OBRIGATÓRIO)
+    parser.add_argument("--execute", action="store_true", help="Executar operações reais")
+    parser.add_argument("--include-dangerous", action="store_true", help="Incluir operações perigosas")
+    
+    # Argumentos específicos do módulo
+    parser.add_argument("--api-key", help="API key (ou use variável de ambiente)")
+    parser.add_argument("--timeout", type=int, default=30, help="Timeout em segundos")
+    
+    args = parser.parse_args()
+    
+    # Verificação de segurança
+    if not args.execute:
+        print("Modo dry-run. Use --execute para operações reais.")
+        return
+    
+    # CORRETO: Usar WorkerConfig.secrets para credenciais
+    secrets = {
+        "meu_analyzer": {
+            "api_key": args.api_key or "demo_key",
+        }
+    }
+    
+    config = {
+        "meu_analyzer": {
+            "timeout": args.timeout,
+        }
+    }
+    
+    input_data = WorkerInput(
+        data_type=args.data_type,
+        data=args.data,
+        config=WorkerConfig(
+            secrets=secrets,
+            **config
+        )
+    )
+    
+    try:
+        analyzer = MeuAnalyzer(input_data)
+        report = analyzer.run()
+        print(json.dumps(report.full_report, ensure_ascii=False, indent=2))
+    except Exception as e:
+        print(f"Erro: {e}", file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+## Argumentos Padrão Obrigatórios
+
+### Argumentos de Dados
+```python
+parser.add_argument("--data", help="Dados para processar")
+parser.add_argument("--data-type", help="Tipo de dados")
+```
+
+### Portões de Segurança (OBRIGATÓRIO)
+```python
+parser.add_argument("--execute", action="store_true", help="Executar operações reais")
+parser.add_argument("--include-dangerous", action="store_true", help="Incluir operações perigosas")
+```
+
+### Argumentos Específicos de Messaging
+```python
+# Para Producers/Consumers
+parser.add_argument("--topic", default="my-topic", help="Nome do tópico/fila")
+parser.add_argument("--group-id", default="my-consumer", help="ID do grupo de consumidores")
+parser.add_argument("--max-messages", type=int, default=5, help="Máximo de mensagens")
+```
+
+## Configuração de Credenciais
+
+### Estrutura Recomendada
+```python
+# CORRETO: Estrutura de secrets organizada
+secrets = {
+    "nome_modulo": {
+        "api_key": args.api_key or os.getenv("API_KEY", "demo_key"),
+        "username": args.username or os.getenv("USERNAME", "demo_user"),
+        "password": args.password or os.getenv("PASSWORD", "demo_pass"),
+    }
+}
+
+# Configurações não-sensíveis
+config = {
+    "nome_modulo": {
+        "timeout": args.timeout,
+        "max_retries": args.max_retries,
+        "debug": args.debug,
+    }
+}
+```
+
+### Verificações de Segurança
+```python
+# Verificação de modo dry-run
+if not args.execute:
+    print("Modo dry-run. Use --execute para operações reais.")
+    # Mostrar exemplo de saída ou executar versão simulada
+    return
+
+# Verificação de operações perigosas
+if operacao_perigosa and not args.include_dangerous:
+    print("Operação perigosa detectada. Use --include-dangerous para prosseguir.")
+    return
+```
+
+## Documentação MkDocs
+
+### Estrutura de Página de Módulo
+```markdown
+# Nome do Módulo
+
+## Descrição
+Descrição detalhada do que o módulo faz.
+
+## Instalação
+Instruções de instalação se necessário.
+
+## Configuração
+### Credenciais Obrigatórias
+- `api_key`: Chave da API
+- `username`: Nome de usuário
+- `password`: Senha
+
+### Configurações Opcionais
+- `timeout`: Timeout em segundos (padrão: 30)
+- `max_retries`: Máximo de tentativas (padrão: 3)
+
+## Uso Programático
+```python
+from sentineliqsdk import WorkerInput, WorkerConfig
+from sentineliqsdk.analyzers import MeuAnalyzer
+
+# Configuração
+secrets = {
+    "meu_analyzer": {
+        "api_key": "sua_api_key"
+    }
+}
+
+input_data = WorkerInput(
+    data_type="ip",
+    data="1.2.3.4",
+    config=WorkerConfig(secrets=secrets)
+)
+
+# Execução
+analyzer = MeuAnalyzer(input_data)
+report = analyzer.run()
+print(report.full_report)
+```
+
+## Exemplo de Linha de Comando
+```bash
+python examples/analyzers/meu_analyzer_example.py \
+    --data "1.2.3.4" \
+    --data-type "ip" \
+    --api-key "sua_api_key" \
+    --execute
+```
+
+## Saída Esperada
+```json
+{
+  "observable": "1.2.3.4",
+  "verdict": "safe",
+  "taxonomy": [...],
+  "metadata": {...}
+}
+```
+```
+
+### URLs de Documentação
+Seguir o padrão: `https://killsearch.github.io/sentineliqsdk/modulos/<tipo>/<nome>/`
+
+## Checklist de Documentação
+
+Para cada novo módulo:
+
+### Exemplo Executável
+- [ ] Arquivo de exemplo criado no diretório correto
+- [ ] Argumentos de linha de comando implementados
+- [ ] Portões de segurança (`--execute`, `--include-dangerous`) implementados
+- [ ] Configuração usando `WorkerConfig.secrets`
+- [ ] Tratamento de erros adequado
+- [ ] Saída JSON formatada
+
+### Documentação MkDocs
+- [ ] Página de módulo criada
+- [ ] Seção de configuração documentada
+- [ ] Exemplo de uso programático incluído
+- [ ] Exemplo de linha de comando incluído
+- [ ] Saída esperada documentada
+
+### Integração
+- [ ] README principal atualizado se necessário
+- [ ] Índice de documentação atualizado
+- [ ] Links internos verificados
+- [ ] Exemplos testados e funcionais
+
+## Boas Práticas
+
+### Exemplos
+- Manter exemplos simples e focados
+- Incluir comentários explicativos quando necessário
+- Usar dados de exemplo realistas mas seguros
+- Implementar tratamento de erros robusto
+
+### Documentação
+- Usar linguagem clara e objetiva
+- Incluir exemplos práticos
+- Documentar todos os parâmetros de configuração
+- Manter consistência com outros módulos
+
+### Segurança
+- Nunca incluir credenciais reais em exemplos
+- Sempre implementar portões de segurança
+- Documentar implicações de segurança
+- Usar valores padrão seguros
