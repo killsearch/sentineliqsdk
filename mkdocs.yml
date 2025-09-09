@@ -50,6 +50,7 @@ nav:
       - MCAP: modulos/analyzers/mcap.md
       - Censys: modulos/analyzers/censys.md
       - CyberChef: modulos/analyzers/cyberchef.md
+      - CyberCrime Tracker: modulos/analyzers/cybercrime_tracker.md
     - Responders:
       - Webhook: modulos/responders/webhook.md
       - Gmail SMTP: modulos/responders/gmail_smtp.md
