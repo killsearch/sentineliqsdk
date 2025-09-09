@@ -32,10 +32,12 @@ class DummyClient:
         return DummyResp(404, "")
 
     def __enter__(self) -> DummyClient:
+        """Enter context manager and return self."""
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        return None
+        """Exit context manager without special handling."""
+        return
 
 
 def test_execute_domain_monolithic_json(monkeypatch: Any) -> None:
@@ -67,11 +69,12 @@ def test_execute_domain_monolithic_json(monkeypatch: Any) -> None:
     assert report.success is True
     assert report.full_report["observable"] == "example.com"
     certs = report.full_report["certificates"]
-    assert isinstance(certs, list) and len(certs) >= 2
+    assert isinstance(certs, list)
+    assert len(certs) >= 2
     assert all("sha1" in c for c in certs)
 
 
 def test_unsupported_dtype() -> None:
     analyzer = CrtshAnalyzer(WorkerInput(data_type="ip", data="1.2.3.4"))
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         analyzer.execute()

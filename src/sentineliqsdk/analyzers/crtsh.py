@@ -23,6 +23,8 @@ import httpx
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
+_HTTP_OK = 200
+
 
 class CrtshAnalyzer(Analyzer):
     """Analyzer that queries crt.sh for certificates of a domain/FQDN."""
@@ -62,7 +64,7 @@ class CrtshAnalyzer(Analyzer):
         # The output should be a JSON array; ensure brackets
         if not normalized.strip().startswith("["):
             normalized = f"[{normalized}]"
-        return httpx.Response(200, text=normalized).json()
+        return httpx.Response(_HTTP_OK, text=normalized).json()
 
     def _augment_sha1(self, client: httpx.Client, rows: list[dict[str, Any]]) -> None:
         for row in rows:
@@ -72,7 +74,7 @@ class CrtshAnalyzer(Analyzer):
                 continue
             try:
                 detail = client.get(f"https://crt.sh/?q={cert_id}")
-                if detail.status_code == 200:
+                if detail.status_code == _HTTP_OK:
                     m = self._DETAIL_SHA1_RE.search(detail.text)
                     row["sha1"] = m.group(1) if m else ""
                 else:
@@ -102,6 +104,7 @@ class CrtshAnalyzer(Analyzer):
             return data
 
     def execute(self) -> AnalyzerReport:
+        """Execute a query on crt.sh and return an AnalyzerReport."""
         dtype = self.data_type
         if dtype not in ("domain", "fqdn"):
             self.error("CrtshAnalyzer supports only data_type 'domain' or 'fqdn'.")
@@ -125,4 +128,5 @@ class CrtshAnalyzer(Analyzer):
         return self.report(full_report)
 
     def run(self) -> AnalyzerReport:
+        """Compatibility wrapper calling execute()."""
         return self.execute()

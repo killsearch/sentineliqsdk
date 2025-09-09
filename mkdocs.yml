@@ -60,6 +60,12 @@ nav:
       - Cluster25 Client: modulos/clients/cluster25.md
       - CrowdSec Client: modulos/clients/crowdsec.md
       - Shodan Client: modulos/clients/shodan.md
+    - Producers:
+      - Kafka Producer: modulos/producers/kafka_producer.md
+    - Consumers:
+      - Kafka Consumer: modulos/consumers/kafka_consumer.md
+    - Pipelines:
+      - Security Pipeline: modulos/pipelines/security_pipeline.md
     - Detectors:
       - ip: modulos/detectors/ip.md
       - url: modulos/detectors/url.md
@@ -76,6 +82,7 @@ nav:
       - cve: modulos/detectors/cve.md
       - ip_port: modulos/detectors/ip_port.md
       - crt.sh: modulos/analyzers/crtsh.md
+      - Cuckoo Sandbox: modulos/analyzers/cuckoo.md
   - Reference:
     - Worker: reference/api/worker.md
     - Analyzer: reference/api/analyzer.md

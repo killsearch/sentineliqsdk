@@ -1,3 +1,8 @@
+"""Minimal crt.sh analyzer example.
+
+Run with a domain or FQDN and print a compact JSON result.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +13,7 @@ from sentineliqsdk.analyzers.crtsh import CrtshAnalyzer
 
 
 def main() -> None:
+    """Parse CLI args, run analyzer, and print the result."""
     parser = argparse.ArgumentParser(description="Run crt.sh analyzer example")
     parser.add_argument("domain", help="Domain or FQDN to query (e.g., example.com)")
     parser.add_argument(
