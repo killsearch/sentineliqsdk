@@ -189,11 +189,9 @@ def test_extract_artifacts() -> None:
         "dns_records": {
             "dns": [
                 {"domain": "test.example.com", "ip": "1.2.3.4"},
-                {"domain": "mail.example.com", "ip": "5.6.7.8"}
+                {"domain": "mail.example.com", "ip": "5.6.7.8"},
             ],
-            "mx": [
-                {"domain": "mx1.example.com", "ip": "9.10.11.12"}
-            ]
+            "mx": [{"domain": "mx1.example.com", "ip": "9.10.11.12"}],
         }
     }
 

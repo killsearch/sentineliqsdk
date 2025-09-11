@@ -68,16 +68,16 @@ class DnsdumpsterAnalyzer(Analyzer):
 
             if not csrf_input:
                 self.error("Could not find CSRF token on DNSdumpster homepage")
-                return "", {}
+                raise RuntimeError("Could not find CSRF token on DNSdumpster homepage")
 
-            csrf_token = csrf_input.get("value", "")
+            csrf_token = csrf_input.get("value", "") if csrf_input else ""
             cookies = {"csrftoken": csrf_token}
 
             return csrf_token, cookies
 
         except httpx.HTTPError as e:
             self.error(f"Error getting CSRF token from DNSdumpster: {e}")
-            return "", {}
+            raise RuntimeError(f"Error getting CSRF token from DNSdumpster: {e}")
 
     def _query_domain(self, domain: str) -> dict[str, Any]:
         """Query DNS information for a domain via DNSdumpster.com."""
@@ -93,37 +93,32 @@ class DnsdumpsterAnalyzer(Analyzer):
                 "User-Agent": self._UA,
             }
 
-            data = {
-                "csrfmiddlewaretoken": csrf_token,
-                "targetip": domain,
-                "user": "free"
-            }
+            data = {"csrfmiddlewaretoken": csrf_token, "targetip": domain, "user": "free"}
 
             try:
                 resp = client.post(
-                    "https://dnsdumpster.com",
-                    cookies=cookies,
-                    data=data,
-                    headers=headers
+                    "https://dnsdumpster.com", cookies=cookies, data=data, headers=headers
                 )
 
                 if resp.status_code != _HTTP_OK:
                     self.error(f"Unexpected status code from DNSdumpster: {resp.status_code}")
-                    return {}
+                    raise RuntimeError(
+                        f"Unexpected status code from DNSdumpster: {resp.status_code}"
+                    )
 
                 content = resp.content.decode("utf-8")
                 if "There was an error getting results" in content:
                     self.error("DNSdumpster reported an error getting results")
-                    return {}
+                    raise RuntimeError("DNSdumpster reported an error getting results")
 
                 return self._parse_response(content, domain)
 
             except httpx.HTTPError as e:
                 self.error(f"Error querying DNSdumpster API: {e}")
-                return {}
+                raise RuntimeError(f"Error querying DNSdumpster API: {e}")
             except Exception as e:
                 self.error(f"Unexpected error: {e}")
-                return {}
+                raise RuntimeError(f"Unexpected error: {e}")
 
     def _parse_response(self, content: str, domain: str) -> dict[str, Any]:
         """Parse DNSdumpster HTML response."""
@@ -140,8 +135,8 @@ class DnsdumpsterAnalyzer(Analyzer):
                 "mx": self._retrieve_results(tables[1]),
                 "txt": self._retrieve_txt_record(tables[2]),
                 "host": self._retrieve_results(tables[3]),
-                "map_url": f"https://dnsdumpster.com/static/map/{domain}.png"
-            }
+                "map_url": f"https://dnsdumpster.com/static/map/{domain}.png",
+            },
         }
 
         return result
@@ -202,7 +197,7 @@ class DnsdumpsterAnalyzer(Analyzer):
                     "as": autonomous_system,
                     "provider": provider,
                     "country": country,
-                    "header": header
+                    "header": header,
                 }
 
                 results.append(record)
@@ -215,11 +210,11 @@ class DnsdumpsterAnalyzer(Analyzer):
 
     def _extract_artifacts(self, data: dict[str, Any]) -> list[dict[str, str]]:
         """Extract IP addresses, domains and URLs as artifacts."""
-        artifacts = []
+        artifacts: list[dict[str, str]] = []
         seen = set()
 
         if "dns_records" not in data:
-            return artifacts
+            return [artifact.to_dict() for artifact in artifacts]
 
         dns_records = data["dns_records"]
 
