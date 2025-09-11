@@ -161,7 +161,7 @@ class DnsLookingglassAnalyzer(Analyzer):
         )
 
         full_report = {
-            "observable": observable,
+            "observable": domain,
             "verdict": "info",
             "taxonomy": [taxonomy.to_dict()],
             "source": "ISC SANS DNS Lookingglass",
