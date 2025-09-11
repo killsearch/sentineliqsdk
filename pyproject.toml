@@ -15,6 +15,7 @@ dependencies = [
     "autofocus-client-library>=4.0.12",
     "beautifulsoup4>=4.13.5",
     "censys-platform>=0.8.0",
+    "checkdmarc>=5.10.5",
     "crowdstrike-falconpy>=1.5.4",
     "cyapi>=1.0.20",
     "cybercrimetracker>=0.0.2",
