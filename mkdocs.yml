@@ -52,6 +52,7 @@ nav:
       - Cuckoo Sandbox: modulos/analyzers/cuckoo.md
       - CyberChef: modulos/analyzers/cyberchef.md
       - CyberCrime Tracker: modulos/analyzers/cybercrime_tracker.md
+      - Domain Mail SPF DMARC: modulos/analyzers/domain_mail_spf_dmarc.md
       - DShield: modulos/analyzers/dshield.md
       - MCAP: modulos/analyzers/mcap.md
       - Shodan: modulos/analyzers/shodan.md

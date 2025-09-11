@@ -20,6 +20,7 @@ dependencies = [
     "cyapi>=1.0.20",
     "cybercrimetracker>=0.0.2",
     "dnspython>=2.8.0",
+    "domaintools-api>=2.5.1",
     "httpx>=0.27.0",
     "iocextract>=1.16.1",
     "mkdocs-mermaid2-plugin>=1.2.2",
