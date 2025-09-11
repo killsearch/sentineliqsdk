@@ -1,0 +1,4014 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Utility classes for building SentinelIQ analyzers and responders">
+      
+      
+      
+        <link rel="canonical" href="https://killsearch.github.io/sentineliqsdk/guides/guide/">
+      
+      
+        <link rel="prev" href="../../getting-started/quick-start/">
+      
+      
+        <link rel="next" href="../httpx-client/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+    
+    
+      
+        <title>Agent Guide - SentinelIQ SDK</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sentineliq-sdk-guia-do-agente" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="SentinelIQ SDK" class="md-header__button md-logo" aria-label="SentinelIQ SDK" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SentinelIQ SDK
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Agent Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/killsearch/sentineliqsdk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    killsearch/sentineliqsdk
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="SentinelIQ SDK" class="md-nav__button md-logo" aria-label="SentinelIQ SDK" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    SentinelIQ SDK
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/killsearch/sentineliqsdk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    killsearch/sentineliqsdk
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/documentation-style-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Style Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/malware-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Malware Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/responders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Responders
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/threat-intelligence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Threat Intelligence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-analyzer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    First Analyzer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Agent Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Agent Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#metadados-do-modulo-novo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadados do Módulo (Novo)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplos-obrigatorios-regra-do-agente" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplos Obrigatórios (Regra do Agente)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atualizacoes-de-documentacao-sempre" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atualizações de Documentação (Sempre)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaffolding-tarefas-poe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scaffolding (Tarefas Poe)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inicio-rapido" class="md-nav__link">
+    <span class="md-ellipsis">
+      Início Rápido
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regras-de-desenvolvimento-criando-novo-analyzerresponderdetector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regras de Desenvolvimento — Criando Novo Analyzer/Responder/Detector
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regras de Desenvolvimento — Criando Novo Analyzer/Responder/Detector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analyzer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detector
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visao-geral-dos-modulos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visão Geral dos Módulos
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contrato-de-entradasaida" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contrato de Entrada/Saída
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contrato de Entrada/Saída">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entrada-dataclasses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Entrada (Dataclasses)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conceitos-principais-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conceitos Principais: Worker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyzer_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#responder_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responder
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extractor
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplo-de-analyzer-minimo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplo de Analyzer Mínimo
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exemplo de Analyzer Mínimo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataclasses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplo-de-responder-minimo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplo de Responder Mínimo
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exemplo de Responder Mínimo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataclasses_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplo-de-entrada-e-saida" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplo de Entrada e Saída
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operacoes-e-artefatos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operações e Artefatos
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execucao-e-depuracao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execução e Depuração
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uso-programatico-sem-io-de-arquivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Uso Programático (Sem I/O de Arquivo)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uso Programático (Sem I/O de Arquivo)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataclasses_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resultados-em-memoria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resultados em Memória
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processamento-em-lote" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processamento em Lote
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataclasses-e-seguranca-de-tipos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses e Segurança de Tipos
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataclasses e Segurança de Tipos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dicas-de-projeto-e-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dicas de Projeto e CI
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#releases-cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Releases (CI/CD)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../httpx-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HTTPX Client Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Analyzers
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            Analyzers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/abuseipdb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AbuseIPDB
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/anyrun/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AnyRun
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/autofocus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AutoFocus
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/axur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Axur
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/censys/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Censys
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/chainabuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ChainAbuse
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/circl_hashlookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CIRCL Hashlookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/circl_passivedns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CIRCL Passive DNS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/circl_passivessl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CIRCL PassiveSSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/circl_vulnerability_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CIRCL Vulnerability Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/clamav/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ClamAV
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/cluster25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cluster25
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/crowdsec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CrowdSec
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/crowdstrike_falcon/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CrowdStrike Falcon
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/crtsh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Crt.sh
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/cuckoo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cuckoo Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/cyberchef/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CyberChef
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/cybercrime_tracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CyberCrime Tracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/domain_mail_spf_dmarc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Domain Mail SPF DMARC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/domaintools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DomainTools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/dshield/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DShield
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/mcap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/analyzers/shodan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shodan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Clients
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            Clients
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/clients/axur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Axur Client
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/clients/cluster25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cluster25 Client
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/clients/crowdsec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CrowdSec Client
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/clients/shodan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shodan Client
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Consumers
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            Consumers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/consumers/kafka_consumer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka Consumer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Detectors
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Detectors
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/asn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ASN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/cidr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CIDR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/cve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CVE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/domain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Domain
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/fqdn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FQDN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/hash/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hash
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/ip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/ip_port/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IP Port
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/mac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/mail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mail
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/registry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Registry
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/uri_path/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    URI Path
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/url/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    URL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/detectors/user-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User-Agent
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_5" id="__nav_7_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pipelines
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            Pipelines
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/pipelines/security_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Pipeline
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_6" id="__nav_7_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Producers
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_6">
+            <span class="md-nav__icon md-icon"></span>
+            Producers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/producers/kafka_producer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka Producer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_7" id="__nav_7_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Responders
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_7">
+            <span class="md-nav__icon md-icon"></span>
+            Responders
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/responders/gmail_smtp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gmail SMTP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/responders/kafka_rest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka REST
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/responders/outlook_smtp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Outlook SMTP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/responders/rabbitmq_http/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RabbitMQ HTTP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modulos/responders/webhook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Webhook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/analyzer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Analyzer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/extractor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Extractor
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Models
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/responder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Responder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/worker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Worker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Troubleshooting
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/common-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Common Issues
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/building-analyzers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Building Analyzers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/building-responders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Building Responders
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/file-processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    File Processing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#metadados-do-modulo-novo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadados do Módulo (Novo)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplos-obrigatorios-regra-do-agente" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplos Obrigatórios (Regra do Agente)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atualizacoes-de-documentacao-sempre" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atualizações de Documentação (Sempre)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaffolding-tarefas-poe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scaffolding (Tarefas Poe)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inicio-rapido" class="md-nav__link">
+    <span class="md-ellipsis">
+      Início Rápido
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regras-de-desenvolvimento-criando-novo-analyzerresponderdetector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regras de Desenvolvimento — Criando Novo Analyzer/Responder/Detector
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regras de Desenvolvimento — Criando Novo Analyzer/Responder/Detector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analyzer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detector
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visao-geral-dos-modulos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visão Geral dos Módulos
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contrato-de-entradasaida" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contrato de Entrada/Saída
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contrato de Entrada/Saída">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entrada-dataclasses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Entrada (Dataclasses)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conceitos-principais-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conceitos Principais: Worker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyzer_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#responder_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responder
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extractor
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplo-de-analyzer-minimo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplo de Analyzer Mínimo
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exemplo de Analyzer Mínimo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataclasses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplo-de-responder-minimo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplo de Responder Mínimo
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exemplo de Responder Mínimo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataclasses_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemplo-de-entrada-e-saida" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exemplo de Entrada e Saída
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operacoes-e-artefatos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operações e Artefatos
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execucao-e-depuracao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execução e Depuração
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uso-programatico-sem-io-de-arquivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Uso Programático (Sem I/O de Arquivo)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uso Programático (Sem I/O de Arquivo)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataclasses_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resultados-em-memoria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resultados em Memória
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processamento-em-lote" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processamento em Lote
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataclasses-e-seguranca-de-tipos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataclasses e Segurança de Tipos
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataclasses e Segurança de Tipos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dicas-de-projeto-e-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dicas de Projeto e CI
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#releases-cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Releases (CI/CD)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/killsearch/sentineliqsdk/edit/master/docs/guides/guide.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="sentineliq-sdk-guia-do-agente">SentinelIQ SDK — Guia do Agente<a class="headerlink" href="#sentineliq-sdk-guia-do-agente" title="Permanent link">&para;</a></h1>
+<p>Esta é a fonte única de verdade para construir analisadores, respondedores e detectores com
+o SentinelIQ SDK em <code>src/sentineliqsdk</code>. Reflete a implementação atual neste
+repositório.</p>
+<p><strong>Requisitos</strong>: Python 3.13, imports absolutos, indentação de 4 espaços, comprimento de linha 100.</p>
+<h2 id="metadados-do-modulo-novo">Metadados do Módulo (Novo)<a class="headerlink" href="#metadados-do-modulo-novo" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Todo Analyzer/Responder deve declarar um atributo <code>METADATA</code> usando
+  <code>sentineliqsdk.models.ModuleMetadata</code> e incluí-lo no <code>full_report</code> sob a
+  chave <code>metadata</code>.</li>
+<li><strong>Campos obrigatórios</strong> (chaves quando serializadas via <code>to_dict()</code>):</li>
+<li><code>Name</code>, <code>Description</code>, <code>Author</code> (lista de "Nome <email>"), <code>License</code></li>
+<li><code>pattern</code> (ex.: "smtp", "webhook", "kafka", "threat-intel")</li>
+<li><code>doc_pattern</code> (descrição curta do formato da documentação)</li>
+<li><code>doc</code> (URL pública da documentação do módulo — site do SentinelIQ)</li>
+<li><code>VERSION</code> (um de: <code>DEVELOPER</code>, <code>TESTING</code>, <code>STABLE</code>)</li>
+</ul>
+<p><strong>Exemplo</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleMetadata</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyResponder</span><span class="p">(</span><span class="n">Responder</span><span class="p">):</span>
+    <span class="n">METADATA</span> <span class="o">=</span> <span class="n">ModuleMetadata</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;My Responder&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Does something useful&quot;</span><span class="p">,</span>
+        <span class="n">author</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;SentinelIQ Team &lt;team@sentineliq.com.br&gt;&quot;</span><span class="p">,),</span>
+        <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;webhook&quot;</span><span class="p">,</span>
+        <span class="n">doc_pattern</span><span class="o">=</span><span class="s2">&quot;MkDocs module page; programmatic usage&quot;</span><span class="p">,</span>
+        <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;https://killsearch.github.io/sentineliqsdk/modulos/responders/my_responder/&quot;</span><span class="p">,</span>
+        <span class="n">version_stage</span><span class="o">=</span><span class="s2">&quot;TESTING&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResponderReport</span><span class="p">:</span>
+        <span class="n">full</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;noop&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">METADATA</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">full</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="exemplos-obrigatorios-regra-do-agente">Exemplos Obrigatórios (Regra do Agente)<a class="headerlink" href="#exemplos-obrigatorios-regra-do-agente" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Sempre adicione um exemplo executável em <code>examples/</code> quando introduzir um novo Analyzer, Responder
+  ou Detector.</li>
+<li><strong>Nomenclatura</strong>: <code>examples/&lt;kind&gt;/&lt;name&gt;_example.py</code> onde <code>&lt;kind&gt;</code> ∈ {<code>analyzers</code>, <code>responders</code>,
+  <code>detectors</code>}.</li>
+<li><strong>O exemplo deve</strong>:</li>
+<li>Usar entrada dataclass (<code>WorkerInput</code>) e chamar <code>.run()</code> (ou <code>.execute()</code> quando fornecido).</li>
+<li>Ser executável localmente apenas com stdlib + SDK.</li>
+<li>Imprimir um resultado compacto para STDOUT. Chamadas de rede padrão para dry-run e requerem <code>--execute</code>.
+    Operações impactantes (ex.: scans) devem ser protegidas por <code>--include-dangerous</code>.</li>
+<li>Referencie seu exemplo no README ou documentação quando útil.</li>
+</ul>
+<h2 id="atualizacoes-de-documentacao-sempre">Atualizações de Documentação (Sempre)<a class="headerlink" href="#atualizacoes-de-documentacao-sempre" title="Permanent link">&para;</a></h2>
+<p>Mantenha a documentação sincronizada sempre que adicionar ou alterar comportamento:</p>
+<ul>
+<li>Atualize páginas em <code>docs/</code> (Guias, Tutoriais, Exemplos, Referência) para refletir o
+  comportamento atual, flags e portões de segurança (<code>--execute</code>, <code>--include-dangerous</code>).</li>
+<li>Vincule novos exemplos nas páginas relevantes (<code>docs/examples/*.md</code>) e, quando útil, no README.</li>
+<li>Adicione uma página de uso programático para cada módulo em <code>docs/modulos/&lt;kind&gt;/&lt;name&gt;.md</code>.
+  A página deve mostrar entrada dataclass (<code>WorkerInput</code>) e chamar <code>.execute()</code> (ou <code>.run()</code>),
+  usando apenas stdlib + SDK. Atualize a navegação em <code>mkdocs.yml</code> na seção "Modules".</li>
+<li>Se adicionar nova API pública ou módulos, garanta que páginas mkdocstrings existam e a navegação em
+  <code>mkdocs.yml</code> seja atualizada.</li>
+<li>Valide localmente com <code>poe docs</code> (ou pré-visualize com <code>poe docs-serve</code>).</li>
+</ul>
+<h2 id="scaffolding-tarefas-poe">Scaffolding (Tarefas Poe)<a class="headerlink" href="#scaffolding-tarefas-poe" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Genérico</strong>: <code>poe new -- --kind &lt;analyzer|responder|detector&gt; --name &lt;Nome&gt; [--force]</code></li>
+<li><strong>Atalhos</strong>:</li>
+<li>Analyzer: <code>poe new-analyzer -- --name Shodan</code></li>
+<li>Responder: <code>poe new-responder -- --name BlockIp</code></li>
+<li>Detector: <code>poe new-detector -- --name MyType</code></li>
+</ul>
+<p><strong>Saídas (código + exemplo)</strong>:
+- Analyzer: <code>src/sentineliqsdk/analyzers/&lt;snake&gt;.py</code> e <code>examples/analyzers/&lt;snake&gt;_example.py</code>
+- Responder: <code>src/sentineliqsdk/responders/&lt;snake&gt;.py</code> e
+  <code>examples/responders/&lt;snake&gt;_example.py</code>
+- Detector: <code>src/sentineliqsdk/extractors/custom/&lt;snake&gt;_detector.py</code> e
+  <code>examples/detectors/&lt;snake&gt;_example.py</code></p>
+<h2 id="inicio-rapido">Início Rápido<a class="headerlink" href="#inicio-rapido" title="Permanent link">&para;</a></h2>
+<p>Analyzer mínimo usando dataclasses:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Analyzer</span><span class="p">,</span> <span class="n">WorkerInput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalyzerReport</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReputationAnalyzer</span><span class="p">(</span><span class="n">Analyzer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marca 1.2.3.4 como malicioso, outros como seguros.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnalyzerReport</span><span class="p">:</span>
+        <span class="n">observable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="n">verdict</span> <span class="o">=</span> <span class="s2">&quot;malicious&quot;</span> <span class="k">if</span> <span class="n">observable</span> <span class="o">==</span> <span class="s2">&quot;1.2.3.4&quot;</span> <span class="k">else</span> <span class="s2">&quot;safe&quot;</span>
+        <span class="n">tax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_taxonomy</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">verdict</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;reputation&quot;</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span>
+                                  <span class="n">value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">observable</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">({</span>
+            <span class="s2">&quot;observable&quot;</span><span class="p">:</span> <span class="n">observable</span><span class="p">,</span>
+            <span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="n">verdict</span><span class="p">,</span>
+            <span class="s2">&quot;taxonomy&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">tax</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()],</span>
+        <span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnalyzerReport</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">ReputationAnalyzer</span><span class="p">(</span><span class="n">WorkerInput</span><span class="p">(</span><span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">full_report</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
+
+<p>Execute exemplos diretamente, ex.: <code>python examples/analyzers/shodan_analyzer_all_methods.py --help</code>.</p>
+<h2 id="regras-de-desenvolvimento-criando-novo-analyzerresponderdetector">Regras de Desenvolvimento — Criando Novo Analyzer/Responder/Detector<a class="headerlink" href="#regras-de-desenvolvimento-criando-novo-analyzerresponderdetector" title="Permanent link">&para;</a></h2>
+<p>Siga estas regras para componentes consistentes. Cada receita lista o layout de arquivos, nomenclatura de classes
+e um esqueleto mínimo alinhado com este SDK.</p>
+<h3 id="analyzer">Analyzer<a class="headerlink" href="#analyzer" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Arquivos</strong>:</li>
+<li>Código: <code>src/sentineliqsdk/analyzers/&lt;name&gt;.py</code></li>
+<li>Exemplo: <code>examples/analyzers/&lt;name&gt;_example.py</code></li>
+<li>Testes: <code>tests/analyzers/test_&lt;name&gt;.py</code></li>
+<li><strong>Nome da classe</strong>: <code>&lt;Nome&gt;Analyzer</code> estendendo <code>sentineliqsdk.analyzers.Analyzer</code>.</li>
+<li><strong>Imports</strong>: absolutos; sempre <code>from __future__ import annotations</code> primeiro.</li>
+<li><strong>Implementar</strong> <code>execute() -&gt; AnalyzerReport</code> e fazer <code>run()</code> retornar <code>self.execute()</code>.</li>
+<li><strong>Construir taxonomia</strong> via <code>self.build_taxonomy(...)</code>; incluir <code>taxonomy.to_dict()</code> no seu payload.</li>
+<li><strong>Usar apenas dataclasses</strong> (<code>WorkerInput</code> é obrigatório). TLP/PAP e proxies são aplicados pelo <code>Worker</code>.</li>
+<li><strong>Exemplos</strong> devem ser dry-run por padrão e suportar <code>--execute</code> para chamadas reais.</li>
+</ul>
+<p><strong>Esqueleto</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Analyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalyzerReport</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyAnalyzer</span><span class="p">(</span><span class="n">Analyzer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnalyzerReport</span><span class="p">:</span>
+        <span class="n">observable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="n">taxonomy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_taxonomy</span><span class="p">(</span><span class="s2">&quot;safe&quot;</span><span class="p">,</span> <span class="s2">&quot;namespace&quot;</span><span class="p">,</span> <span class="s2">&quot;predicate&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">observable</span><span class="p">))</span>
+        <span class="n">full</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;observable&quot;</span><span class="p">:</span> <span class="n">observable</span><span class="p">,</span> <span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;safe&quot;</span><span class="p">,</span> <span class="s2">&quot;taxonomy&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">taxonomy</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()]}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">full</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnalyzerReport</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</code></pre></div>
+
+<p><strong>Checklist</strong>:</p>
+<ul>
+<li>Nomenclatura e imports em conformidade; classe termina com <code>Analyzer</code>.</li>
+<li><code>execute()</code> implementado; <code>run()</code> retorna <code>AnalyzerReport</code>.</li>
+<li>Chama <code>self.report(...)</code> com um dict; taxonomia incluída.</li>
+<li>Exemplo em <code>examples/analyzers/</code> executável e imprime resultado compacto.</li>
+<li>Testes adicionados; <code>poe lint</code> e <code>poe test</code> passam.</li>
+<li>Documentação atualizada (Guia/Tutoriais/Exemplos/Referência), links adicionados, <code>mkdocs.yml</code> atualizado se necessário;
+  <code>poe docs</code> passa localmente.</li>
+<li>Página de documentação programática adicionada: <code>docs/modulos/analyzers/&lt;name&gt;.md</code>.</li>
+</ul>
+<h3 id="responder">Responder<a class="headerlink" href="#responder" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Arquivos</strong>:</li>
+<li>Código: <code>src/sentineliqsdk/responders/&lt;name&gt;.py</code></li>
+<li>Exemplo: <code>examples/responders/&lt;name&gt;_example.py</code></li>
+<li>Testes: <code>tests/responders/test_&lt;name&gt;.py</code></li>
+<li><strong>Nome da classe</strong>: <code>&lt;Nome&gt;Responder</code> estendendo <code>sentineliqsdk.responders.Responder</code>.</li>
+<li><strong>Implementar</strong> <code>execute() -&gt; ResponderReport</code> e fazer <code>run()</code> retornar <code>self.execute()</code>.</li>
+<li><strong>Construir operações</strong> via <code>self.build_operation(...)</code> e chamar <code>self.report(full_report)</code>.</li>
+</ul>
+<p><strong>Esqueleto</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Responder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResponderReport</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyResponder</span><span class="p">(</span><span class="n">Responder</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResponderReport</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">build_operation</span><span class="p">(</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)]</span>
+        <span class="n">full</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">target</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">full</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResponderReport</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</code></pre></div>
+
+<p><strong>Checklist</strong>:</p>
+<ul>
+<li>Nomenclatura e caminhos corretos; imports absolutos.</li>
+<li><code>execute()</code> e <code>run()</code> retornam <code>ResponderReport</code>.</li>
+<li>Operações criadas via <code>build_operation</code> e reportadas.</li>
+<li>Exemplo em <code>examples/responders/</code> executável e imprime resultado compacto.</li>
+<li>Documentação atualizada (Guia/Tutoriais/Exemplos/Referência), links adicionados, <code>mkdocs.yml</code> atualizado se necessário;
+  <code>poe docs</code> passa localmente.</li>
+<li>Página de documentação programática adicionada: <code>docs/modulos/responders/&lt;name&gt;.md</code>.</li>
+</ul>
+<h3 id="detector">Detector<a class="headerlink" href="#detector" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Arquivos</strong>:</li>
+<li>Principal: estender <code>src/sentineliqsdk/extractors/detectors.py</code> (preferido para tipos oficiais), ou
+    criar um detector customizado em <code>src/sentineliqsdk/extractors/custom/&lt;name&gt;_detector.py</code> e
+    registrá-lo via <code>Extractor.register_detector(...)</code> no seu analyzer.</li>
+<li>Exemplo: <code>examples/detectors/&lt;name&gt;_example.py</code></li>
+<li>Testes: <code>tests/extractors/test_&lt;name&gt;_detector.py</code></li>
+<li><strong>Protocolo</strong>: <code>Detector</code> com atributo <code>name: str</code> e método <code>matches(value: str) -&gt; bool</code>.</li>
+<li><strong>Para incluir no core (tipo oficial)</strong>:</li>
+<li>Adicionar o literal em <code>sentineliqsdk.models.DataType</code>.</li>
+<li>Importar/adicionar o detector na lista de precedência em <code>Extractor</code> (<code>extractors/regex.py</code>).</li>
+<li>Considerar normalização/flags expostas por <code>DetectionContext</code> quando relevante.</li>
+<li><strong>Para uso local apenas (sem tocar no core)</strong>:</li>
+<li>Registrar via <code>Extractor.register_detector(MyDetector(), before="hash")</code>, por exemplo.</li>
+</ul>
+<p><strong>Esqueleto</strong> (customizado):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyDetector</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;my_type&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;MY:&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Checklist</strong>:</p>
+<ul>
+<li>Tipo incluído em <code>DataType</code> (se core) e precedência ajustada em <code>Extractor</code>.</li>
+<li>Testes cobrem positivos/negativos; evitar falsos positivos óbvios.</li>
+<li>Exemplo em <code>examples/detectors/</code> demonstrando <code>Extractor.check_string/iterable</code>.</li>
+<li>Documentação atualizada (Guia/Tutoriais/Exemplos/Referência), links adicionados, <code>mkdocs.yml</code> atualizado se necessário;
+  <code>poe docs</code> passa localmente.</li>
+<li>Página de documentação programática adicionada: <code>docs/modulos/detectors/&lt;name&gt;.md</code>.</li>
+</ul>
+<h2 id="visao-geral-dos-modulos">Visão Geral dos Módulos<a class="headerlink" href="#visao-geral-dos-modulos" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sentineliqsdk.Worker</code>: base comum para analyzers/responders (config, env, hooks de relatório).</li>
+<li><code>sentineliqsdk.Analyzer</code>: classe base para analyzers; inclui helpers de auto-extração.</li>
+<li><code>sentineliqsdk.Responder</code>: classe base para responders; envelope mais simples.</li>
+<li><code>sentineliqsdk.Extractor</code>: extrator de IOC guiado por stdlib (ip/url/domain/hash/...).</li>
+<li><code>sentineliqsdk.runner(worker_cls, input_data)</code>: conveniência para instanciar e executar.</li>
+<li><code>sentineliqsdk.models</code>: dataclasses para estruturas type-safe.</li>
+</ul>
+<p>Layout interno (para mantenedores):
+- <code>src/sentineliqsdk/core/worker.py</code> implementa <code>Worker</code>.
+- <code>src/sentineliqsdk/analyzers/base.py</code> implementa <code>Analyzer</code>.
+- <code>src/sentineliqsdk/responders/base.py</code> implementa <code>Responder</code>.
+- <code>src/sentineliqsdk/extractors/regex.py</code> implementa <code>Extractor</code>.
+- <code>src/sentineliqsdk/core/config/proxy.py</code> define proxies de env (<code>EnvProxyConfigurator</code>).
+- <code>src/sentineliqsdk/core/config/secrets.py</code> sanitiza config de payload de erro.</p>
+<h2 id="contrato-de-entradasaida">Contrato de Entrada/Saída<a class="headerlink" href="#contrato-de-entradasaida" title="Permanent link">&para;</a></h2>
+<p>Workers recebem dados de entrada como dataclasses e retornam resultados na memória. Este SDK removeu
+a entrada de dicionário legada da API pública neste repositório.</p>
+<ul>
+<li>Entrada: passe um dataclass <code>WorkerInput</code> para o construtor do worker.</li>
+<li>Saída: <code>Analyzer.report(...)</code> retorna <code>AnalyzerReport</code>; <code>Responder.report(...)</code> retorna
+  <code>ResponderReport</code>. Exemplos podem imprimir JSON compacto para STDOUT explicitamente.</li>
+</ul>
+<h3 id="entrada-dataclasses">Entrada (Dataclasses)<a class="headerlink" href="#entrada-dataclasses" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkerInput</span><span class="p">,</span> <span class="n">WorkerConfig</span><span class="p">,</span> <span class="n">ProxyConfig</span>
+
+<span class="n">input_data</span> <span class="o">=</span> <span class="n">WorkerInput</span><span class="p">(</span>
+    <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span>
+    <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional, for file datatypes</span>
+    <span class="n">tlp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">pap</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">WorkerConfig</span><span class="p">(</span>
+        <span class="n">check_tlp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_tlp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">check_pap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_pap</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">auto_extract</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">proxy</span><span class="o">=</span><span class="n">ProxyConfig</span><span class="p">(</span>
+            <span class="n">http</span><span class="o">=</span><span class="s2">&quot;http://proxy:8080&quot;</span><span class="p">,</span>
+            <span class="n">https</span><span class="o">=</span><span class="s2">&quot;https://proxy:8080&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Campos de entrada comuns:</p>
+<ul>
+<li><code>data_type</code>: um de <code>ip</code>, <code>url</code>, <code>domain</code>, <code>fqdn</code>, <code>hash</code>, <code>mail</code>, <code>user-agent</code>,
+  <code>uri_path</code>, <code>registry</code>, <code>file</code>, <code>other</code>, <code>asn</code>, <code>cve</code>, <code>ip_port</code>, <code>mac</code>, <code>cidr</code>.</li>
+<li><code>data</code> ou <code>filename</code>: valor observável ou nome do arquivo para <code>data_type == "file"</code>.</li>
+<li><code>tlp</code> e <code>pap</code>: números aplicados via config quando habilitado.</li>
+<li><code>config.*</code> inclui:</li>
+<li><code>config.check_tlp</code> / <code>config.max_tlp</code></li>
+<li><code>config.check_pap</code> / <code>config.max_pap</code></li>
+<li><code>config.proxy.http</code> / <code>config.proxy.https</code> (exportado internamente para clientes stdlib)</li>
+<li><code>config.auto_extract</code> para analyzers</li>
+<li><code>config.params</code> (dict/mapping): parâmetros programáticos por módulo</li>
+<li><code>config.secrets</code> (dict/mapping): segredos/credenciais por módulo</li>
+</ul>
+<p>Em caso de erro, chaves sensíveis em <code>config</code> contendo qualquer um de <code>key</code>, <code>password</code>, <code>secret</code>, <code>token</code>
+são substituídas por <code>"REMOVED"</code> no payload de erro.</p>
+<h2 id="conceitos-principais-worker">Conceitos Principais: Worker<a class="headerlink" href="#conceitos-principais-worker" title="Permanent link">&para;</a></h2>
+<p>Assinatura: <code>Worker(input_data: WorkerInput, secret_phrases: tuple[str, ...] | None)</code></p>
+<ul>
+<li><code>get_param(name, default=None, message=None)</code>: não usado neste repositório (apenas dataclasses).</li>
+<li><code>get_env(key, default=None, message=None)</code>: lê variáveis de ambiente.</li>
+<li><code>get_config(path, default=None)</code>: lê de <code>WorkerConfig.params</code> via caminho pontuado
+  (ex.: <code>"shodan.method"</code>, <code>"webhook.headers"</code>).</li>
+<li><code>get_secret(path, default=None, message=None)</code>: lê de <code>WorkerConfig.secrets</code> via
+  caminho pontuado (ex.: <code>"shodan.api_key"</code>, <code>"smtp.password"</code>).</li>
+<li><code>get_data() -&gt; Any</code>: retorna o valor observável (sobrescrito em subclasses).</li>
+<li><code>build_operation(op_type: str, **parameters) -&gt; Operation</code>: descreve operações de acompanhamento.</li>
+<li><code>operations(raw) -&gt; list[Operation]</code>: hook para trabalho de acompanhamento; padrão <code>[]</code>.</li>
+<li><code>summary(raw) -&gt; dict</code>: resumo curto; padrão <code>{}</code>.</li>
+<li><code>artifacts(raw) -&gt; list[Artifact]</code>: override do analyzer executa auto-extração quando habilitada.</li>
+<li><code>report(output: dict) -&gt; dict | AnalyzerReport | ResponderReport</code>: retorna resultado na memória.</li>
+<li><code>error(message: str, ensure_ascii: bool = False) -&gt; NoReturn</code>: imprime JSON de erro e exit(1).</li>
+<li><code>run() -&gt; None</code>: sua lógica principal (sobrescreva em subclasses).</li>
+</ul>
+<p>Aplicação TLP/PAP:</p>
+<ul>
+<li>Habilite com <code>config.check_tlp</code>/<code>config.check_pap</code>; defina <code>config.max_tlp</code>/<code>config.max_pap</code>.</li>
+<li>Se excedido, o worker chama <code>error("TLP is higher than allowed.")</code> ou o equivalente PAP.</li>
+</ul>
+<h2 id="analyzer_1">Analyzer<a class="headerlink" href="#analyzer_1" title="Permanent link">&para;</a></h2>
+<p><code>Analyzer</code> estende <code>Worker</code> com comportamento específico de analyzer:</p>
+<ul>
+<li><code>get_data()</code>: retorna <code>filename</code> quando <code>data_type == "file"</code>, caso contrário o campo <code>data</code>.</li>
+<li><code>auto_extract</code>: habilitado por padrão a menos que <code>config.auto_extract</code> seja <code>False</code>.</li>
+<li><code>artifacts(raw)</code>: quando habilitado, usa <code>Extractor(ignore=self.get_data())</code> e retorna uma
+  coleção de dataclass <code>list[Artifact]</code> para o relatório completo.</li>
+<li><code>build_taxonomy(level, namespace, predicate, value) -&gt; TaxonomyEntry</code>: helper para entradas
+  de taxonomia onde <code>level</code> é um de <code>info|safe|suspicious|malicious</code>.</li>
+<li><code>build_artifact(data_type, data, **kwargs) -&gt; Artifact</code>: constrói um dataclass artifact.</li>
+<li><code>report(full_report: dict) -&gt; AnalyzerReport</code>: retorna um envelope com
+  <code>success/summary/artifacts/operations/full_report</code>.</li>
+</ul>
+<p>Notas:
+- Helpers legados como <code>getData</code>/<code>checkTlp</code> foram removidos; use apenas a API moderna.
+- Verificações TLP/PAP executam automaticamente em <code>Worker.__init__</code>.</p>
+<h2 id="responder_1">Responder<a class="headerlink" href="#responder_1" title="Permanent link">&para;</a></h2>
+<p><code>Responder</code> espelha <code>Analyzer</code> com um envelope mais simples:</p>
+<ul>
+<li><code>get_data()</code>: retorna o campo <code>data</code>.</li>
+<li><code>report(full_report) -&gt; ResponderReport</code> com <code>success/full_report/operations</code>.</li>
+</ul>
+<h2 id="extractor">Extractor<a class="headerlink" href="#extractor" title="Permanent link">&para;</a></h2>
+<p>Extrator de IOC usando helpers da stdlib do Python (ex.: <code>ipaddress</code>, <code>urllib.parse</code>, <code>email.utils</code>)
+em vez de regexes complexas. Tipos típicos detectados incluem:</p>
+<ul>
+<li><code>ip</code> (IPv4 e IPv6), <code>cidr</code>, <code>url</code>, <code>domain</code>, <code>fqdn</code>, <code>hash</code> (MD5/SHA1/SHA256), <code>mail</code>,
+  <code>user-agent</code>, <code>uri_path</code>, <code>registry</code>, <code>mac</code>, <code>asn</code>, <code>cve</code>, <code>ip_port</code>.</li>
+</ul>
+<p>API:</p>
+<ul>
+<li><code>Extractor(ignore: str | None = None, strict_dns: bool = False, normalize_domains: bool = False,
+  normalize_urls: bool = False, support_mailto: bool = False, max_string_length: int = 10000,
+  max_iterable_depth: int = 100)</code></li>
+<li><code>check_string(value: str) -&gt; str</code>: retorna um nome de tipo de dados ou string vazia.</li>
+<li><code>check_iterable(iterable: list | dict | str | tuple | set) -&gt; list[ExtractorResult]</code>:
+  retorna uma lista de-duplicada de resultados dataclass.</li>
+</ul>
+<p>Ordem de precedência (primeira correspondência ganha): ip → cidr → url → domain → hash → user-agent → uri_path →
+registry → mail → mac → asn → cve → ip_port → fqdn.
+Use <code>Extractor.register_detector(detector, before=..., after=...)</code> para customizar.</p>
+<h2 id="exemplo-de-analyzer-minimo">Exemplo de Analyzer Mínimo<a class="headerlink" href="#exemplo-de-analyzer-minimo" title="Permanent link">&para;</a></h2>
+<h3 id="dataclasses">Dataclasses<a class="headerlink" href="#dataclasses" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Analyzer</span><span class="p">,</span> <span class="n">WorkerInput</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReputationAnalyzer</span><span class="p">(</span><span class="n">Analyzer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyzer de exemplo que marca &quot;1.2.3.4&quot; como malicioso e outros como seguros.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">observable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+
+        <span class="n">verdict</span> <span class="o">=</span> <span class="s2">&quot;malicious&quot;</span> <span class="k">if</span> <span class="n">observable</span> <span class="o">==</span> <span class="s2">&quot;1.2.3.4&quot;</span> <span class="k">else</span> <span class="s2">&quot;safe&quot;</span>
+
+        <span class="c1"># Construir taxonomia usando dataclass</span>
+        <span class="n">taxonomy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_taxonomy</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">verdict</span><span class="p">,</span>
+            <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;reputation&quot;</span><span class="p">,</span>
+            <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">observable</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">full</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;observable&quot;</span><span class="p">:</span> <span class="n">observable</span><span class="p">,</span>
+            <span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="n">verdict</span><span class="p">,</span>
+            <span class="s2">&quot;taxonomy&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">taxonomy</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()],</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">full</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">WorkerInput</span><span class="p">(</span><span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">)</span>
+    <span class="n">ReputationAnalyzer</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+
+<h2 id="exemplo-de-responder-minimo">Exemplo de Responder Mínimo<a class="headerlink" href="#exemplo-de-responder-minimo" title="Permanent link">&para;</a></h2>
+<h3 id="dataclasses_1">Dataclasses<a class="headerlink" href="#dataclasses_1" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Responder</span><span class="p">,</span> <span class="n">WorkerInput</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BlockIpResponder</span><span class="p">(</span><span class="n">Responder</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">ip</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">WorkerInput</span><span class="p">(</span><span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">)</span>
+    <span class="n">BlockIpResponder</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+
+<h2 id="exemplo-de-entrada-e-saida">Exemplo de Entrada e Saída<a class="headerlink" href="#exemplo-de-entrada-e-saida" title="Permanent link">&para;</a></h2>
+<p>Entrada (programática): <code>WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)</code></p>
+<p>Resultado programático do Analyzer (dataclass <code>AnalyzerReport</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">  </span><span class="nt">&quot;artifacts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;operations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;full_report&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;observable&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;verdict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;malicious&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;taxonomy&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;malicious&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;namespace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reputation&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;predicate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;static&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Em caso de erro, o worker imprime para STDOUT e sai com código 1:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">&quot;errorMessage&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;reason&gt;&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+
+<h2 id="operacoes-e-artefatos">Operações e Artefatos<a class="headerlink" href="#operacoes-e-artefatos" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Use <code>build_operation("&lt;type&gt;", **params)</code> e retorne uma lista de <code>operations(full_report)</code> para
+  disparar trabalho de acompanhamento.</li>
+<li>Construa artefatos em analyzers com <code>build_artifact("file", "/path/to/file")</code> ou com
+  tipos não-arquivo: <code>build_artifact("ip", "8.8.8.8", tlp=2)</code>.</li>
+<li>Quando <code>auto_extract</code> está habilitado (padrão), <code>artifacts(full_report)</code> usa <code>Extractor</code> para detectar
+  IOCs no relatório, excluindo o valor observável original.</li>
+</ul>
+<h2 id="execucao-e-depuracao">Execução e Depuração<a class="headerlink" href="#execucao-e-depuracao" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Execute exemplos diretamente em <code>examples/</code> com <code>python ...</code>.</li>
+<li>Use <code>--execute</code> para chamadas de rede reais; caso contrário permaneça em dry‑run.</li>
+<li>Use <code>--include-dangerous</code> para habilitar ações impactantes quando aplicável.</li>
+<li>Proxies: defina <code>WorkerInput.config.proxy.http</code> / <code>.https</code>.</li>
+</ul>
+<h2 id="uso-programatico-sem-io-de-arquivo">Uso Programático (Sem I/O de Arquivo)<a class="headerlink" href="#uso-programatico-sem-io-de-arquivo" title="Permanent link">&para;</a></h2>
+<p>Use o SDK diretamente passando <code>WorkerInput</code> para o construtor e imprimindo conforme necessário.</p>
+<h3 id="dataclasses_2">Dataclasses<a class="headerlink" href="#dataclasses_2" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Analyzer</span><span class="p">,</span> <span class="n">WorkerInput</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyAnalyzer</span><span class="p">(</span><span class="n">Analyzer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">observable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="c1"># Your analysis logic here</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;observable&quot;</span><span class="p">:</span> <span class="n">observable</span><span class="p">,</span> <span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;safe&quot;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+
+<span class="c1"># Criar dados de entrada usando dataclass</span>
+<span class="n">input_data</span> <span class="o">=</span> <span class="n">WorkerInput</span><span class="p">(</span>
+    <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span>
+    <span class="n">tlp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">pap</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">MyAnalyzer</span><span class="p">(</span><span class="n">input_data</span><span class="o">=</span><span class="n">input_data</span><span class="p">)</span>
+<span class="n">analyzer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+
+<h3 id="resultados-em-memoria">Resultados em Memória<a class="headerlink" href="#resultados-em-memoria" title="Permanent link">&para;</a></h3>
+<p>Para obter resultados em memória, chame <code>execute()</code> (ou <code>run()</code> se sua classe retorna o relatório):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">report</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>  <span class="c1"># or analyzer.run() if run() returns the report</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">full_report</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="processamento-em-lote">Processamento em Lote<a class="headerlink" href="#processamento-em-lote" title="Permanent link">&para;</a></h3>
+<p>Processe múltiplos observáveis sem I/O de arquivo:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkerInput</span>
+
+<span class="n">observables</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span> <span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;5.6.7.8&quot;</span><span class="p">]</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="n">observables</span><span class="p">:</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">WorkerInput</span><span class="p">(</span>
+        <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">obs</span><span class="p">,</span>
+        <span class="n">tlp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">pap</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">analyzer</span> <span class="o">=</span> <span class="n">MyAnalyzer</span><span class="p">(</span><span class="n">input_data</span><span class="o">=</span><span class="n">input_data</span><span class="p">)</span>
+    <span class="c1"># Processar e obter resultado em memória</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="dataclasses-e-seguranca-de-tipos">Dataclasses e Segurança de Tipos<a class="headerlink" href="#dataclasses-e-seguranca-de-tipos" title="Permanent link">&para;</a></h2>
+<p>O SDK fornece dataclasses para melhor segurança de tipos e experiência do desenvolvedor:</p>
+<ul>
+<li><code>WorkerInput</code>: Input data for workers</li>
+<li><code>WorkerConfig</code>: Worker configuration (TLP/PAP, proxy, etc.)</li>
+<li><code>ProxyConfig</code>: HTTP/HTTPS proxy configuration</li>
+<li><code>TaxonomyEntry</code>: Taxonomy entries for analyzers</li>
+<li><code>Artifact</code>: Extracted artifacts</li>
+<li><code>Operation</code>: Follow‑up operations</li>
+<li><code>AnalyzerReport</code>: Complete analyzer report</li>
+<li><code>ResponderReport</code>: Complete responder report</li>
+<li><code>WorkerError</code>: Error responses</li>
+<li><code>ExtractorResult</code>: Individual extraction results</li>
+<li><code>ExtractorResults</code>: Collection of extraction results</li>
+</ul>
+<h3 id="example-usage">Example Usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">sentineliqsdk</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WorkerInput</span><span class="p">,</span> <span class="n">WorkerConfig</span><span class="p">,</span> <span class="n">ProxyConfig</span><span class="p">,</span>
+    <span class="n">TaxonomyEntry</span><span class="p">,</span> <span class="n">Artifact</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Criar entrada estruturada</span>
+<span class="n">input_data</span> <span class="o">=</span> <span class="n">WorkerInput</span><span class="p">(</span>
+    <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">WorkerConfig</span><span class="p">(</span>
+        <span class="n">check_tlp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_tlp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">proxy</span><span class="o">=</span><span class="n">ProxyConfig</span><span class="p">(</span><span class="n">http</span><span class="o">=</span><span class="s2">&quot;http://proxy:8080&quot;</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Criar entrada de taxonomia</span>
+<span class="n">taxonomy</span> <span class="o">=</span> <span class="n">TaxonomyEntry</span><span class="p">(</span>
+    <span class="n">level</span><span class="o">=</span><span class="s2">&quot;malicious&quot;</span><span class="p">,</span>
+    <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;reputation&quot;</span><span class="p">,</span>
+    <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Criar artefato</span>
+<span class="n">artifact</span> <span class="o">=</span> <span class="n">Artifact</span><span class="p">(</span>
+    <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span>
+    <span class="n">tlp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Criar operação</span>
+<span class="n">operation</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
+    <span class="n">operation_type</span><span class="o">=</span><span class="s2">&quot;hunt&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;1.2.3.4&quot;</span><span class="p">,</span> <span class="s2">&quot;priority&quot;</span><span class="p">:</span> <span class="s2">&quot;high&quot;</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Converter para dict para serialização JSON</span>
+<span class="c1"># Nota: use dataclasses.asdict para dataclasses sem to_dict() customizado</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
+<span class="n">json_data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;taxonomy&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">taxonomy</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()],</span>
+    <span class="s2">&quot;artifacts&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">asdict</span><span class="p">(</span><span class="n">artifact</span><span class="p">)],</span>
+    <span class="s2">&quot;operations&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">asdict</span><span class="p">(</span><span class="n">operation</span><span class="p">)],</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="dicas-de-projeto-e-ci">Dicas de Projeto e CI<a class="headerlink" href="#dicas-de-projeto-e-ci" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Lint e verificação de tipos: <code>poe lint</code> (pre-commit com ruff/mypy configurado).</li>
+<li>Testes: <code>poe test</code> (pytest com cobertura para <code>reports/</code>).</li>
+<li>Docs: <code>poe docs</code> constrói site MkDocs para <code>docs/</code> (veja <code>.github/workflows/docs.yml</code>).</li>
+<li>Build: <code>uv build</code>; publica via CI no release do GitHub.</li>
+</ul>
+<h2 id="releases-cicd">Releases (CI/CD)<a class="headerlink" href="#releases-cicd" title="Permanent link">&para;</a></h2>
+<p>Este repositório publica no PyPI via GitHub Actions quando você cria um GitHub Release.</p>
+<ul>
+<li>Workflow: veja <code>.github/workflows/publish.yml</code> (executa <code>uv build</code> então <code>uv publish</code>).</li>
+<li>Auth: GitHub OIDC (<code>permissions: id-token: write</code>) com um PyPI Trusted Publisher.</li>
+<li>Trigger: GitHub Release para uma tag como <code>vX.Y.Z</code>.</li>
+</ul>
+<p>Checklist de release (mantenedores):</p>
+<ol>
+<li>Garantir que <code>main</code> está verde</li>
+<li>Abrir um PR e aguardar o workflow "Test" passar.</li>
+<li>Fazer merge para <code>main</code> quando lint, tipos e testes passarem.</li>
+<li>Atualizar versão e changelog com Commitizen</li>
+<li>Recomendado (usa o env do projeto): <code>uv run cz bump</code></li>
+<li>Exemplos não-interativos:<ul>
+<li>Patch: <code>uv run cz bump --increment patch</code></li>
+<li>Minor: <code>uv run cz bump --increment minor</code></li>
+<li>Major: <code>uv run cz bump --increment major</code></li>
+</ul>
+</li>
+<li>Pré-releases:<ul>
+<li>Primeiro RC: <code>uv run cz bump --prerelease rc</code></li>
+<li>Próximo RC: <code>uv run cz bump --prerelease rc</code></li>
+<li>RC para próximo minor: <code>uv run cz bump --increment minor --prerelease rc</code></li>
+</ul>
+</li>
+<li>Commitizen atualiza <code>[project].version</code> em <code>pyproject.toml</code>, atualiza <code>CHANGELOG.md</code>, cria
+     a tag <code>vX.Y.Z</code> e faz commit da mudança (conforme <code>[tool.commitizen]</code>).</li>
+<li>Push do branch e tags</li>
+<li><code>git push origin main --follow-tags</code></li>
+<li>Se seu branch local estiver atrasado: <code>git pull --rebase origin main</code> então push novamente.</li>
+<li>Criar um GitHub Release para a nova tag</li>
+<li>UI: Releases → New release → Escolher tag <code>vX.Y.Z</code> → Publish.</li>
+<li>CLI: <code>gh release create vX.Y.Z --title "vX.Y.Z" --notes-file CHANGELOG.md --latest</code></li>
+<li>CI publica no PyPI</li>
+<li>O workflow "Publish" executa e chama <code>uv publish</code> usando OIDC.</li>
+<li>Acompanhar em Actions → Publish (ou <code>gh run list --workflow=Publish</code>).</li>
+<li>Verificar o release</li>
+<li><code>pip install sentineliqsdk==X.Y.Z</code></li>
+<li><code>python -c "import importlib.metadata as m; print(m.version('sentineliqsdk'))"</code></li>
+</ol>
+<p>Pré-requisitos (uma vez, org/mantenedores):</p>
+<ul>
+<li>Configurar um PyPI Trusted Publisher para este repo:</li>
+<li>PyPI: Project → Settings → Collaboration → Trusted Publishers → Add → GitHub<ul>
+<li>Repository: <code>killsearch/sentineliqsdk</code></li>
+<li>Workflows: permitir <code>.github/workflows/publish.yml</code></li>
+</ul>
+</li>
+<li>Sem tokens de API clássicos; OIDC é concedido por <code>id-token: write</code>.</li>
+<li>Opcional: proteger o ambiente <code>pypi</code> no GitHub com revisores obrigatórios.</li>
+</ul>
+<p>Notas e dicas:</p>
+<ul>
+<li>Formato da tag é <code>v$version</code> (config Commitizen); deve corresponder ao <code>pyproject.toml</code>.</li>
+<li>Marcar GitHub Releases como "Pre-release" ao publicar RCs (<code>X.Y.Z-rc.N</code>).</li>
+<li>Se o job Publish falhar com erro de permissão PyPI, revisar as configurações do Trusted Publisher
+  e as <code>permissions</code> do workflow.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/killsearch/sentineliqsdk" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>
