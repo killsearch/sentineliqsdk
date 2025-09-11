@@ -1,8 +1,8 @@
-# Building Responders
+# Construindo Responders
 
-Responders wrap actions like blocking an IP or notifying an external system.
+Responders encapsulam ações como bloquear um endereço IP ou notificar um sistema externo.
 
-1) Define the class
+## 1) Definindo a Classe
 
 ```python
 from __future__ import annotations
@@ -21,14 +21,13 @@ class BlockIpResponder(Responder):
         return self.execute()
 ```
 
-2) Examples and safety flags
+## 2) Exemplos e Flags de Segurança
 
-- Put examples under `examples/responders/<name>_example.py`.
-- Default to dry‑run; add `--execute` to perform changes.
-- Use `--include-dangerous` to explicitly gate impactful operations.
+- Coloque os exemplos em `examples/responders/<nome>_example.py`.
+- Por padrão, o exemplo deve ser dry-run; adicione `--execute` para realizar as alterações.
+- Use `--include-dangerous` para explicitamente proteger operações de alto impacto.
 
-3) Input and output
+## 3) Entrada e Saída
 
-- Use `WorkerInput(data_type=..., data=...)` to pass the target.
-- Return a `ResponderReport` using `self.report(full_report)`, optionally including
-  `operations` for follow‑up tasks.
+- Use `WorkerInput(data_type=..., data=...)` para passar o alvo.
+- Retorne um `ResponderReport` usando `self.report(full_report)`, opcionalmente incluindo `operations` para tarefas de acompanhamento.

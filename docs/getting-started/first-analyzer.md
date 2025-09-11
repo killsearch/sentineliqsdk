@@ -1,22 +1,24 @@
-# First Analyzer
+# Seu Primeiro Analisador
 
-This tutorial scaffolds, implements, and runs your first analyzer.
+Este tutorial irá guiá-lo através do processo de scaffolding, implementação e execução do seu primeiro analisador no SentinelIQ SDK.
 
-1) Scaffold with Poe
+## 1) Scaffolding com Poe
+
+Comece criando a estrutura básica do seu analisador usando o comando `poe new-analyzer`:
 
 ```bash
 poe new-analyzer -- --name Reputation
 ```
 
-This creates:
+Este comando irá gerar os seguintes arquivos:
 
-- `src/sentineliqsdk/analyzers/reputation.py`
-- `examples/analyzers/reputation_example.py`
-- `tests/analyzers/test_reputation.py` (if templates enable tests)
+- `src/sentineliqsdk/analyzers/reputation.py`: Onde a lógica principal do seu analisador será implementada.
+- `examples/analyzers/reputation_example.py`: Um exemplo executável para testar seu analisador.
+- `tests/analyzers/test_reputation.py`: Arquivo de testes (se os templates de scaffolding incluírem testes).
 
-2) Implement `execute()` and `run()`
+## 2) Implementando `execute()` e `run()`
 
-Edit `src/sentineliqsdk/analyzers/reputation.py` to follow the skeleton:
+Edite o arquivo `src/sentineliqsdk/analyzers/reputation.py` para incluir a lógica do seu analisador. O esqueleto abaixo demonstra como marcar um IP específico como malicioso:
 
 ```python
 from __future__ import annotations
@@ -40,21 +42,25 @@ class ReputationAnalyzer(Analyzer):
         return self.execute()
 ```
 
-3) Run the example
+## 3) Executando o Exemplo
+
+Para testar seu analisador, execute o arquivo de exemplo gerado:
 
 ```bash
 python examples/analyzers/reputation_example.py
 ```
 
-4) Lint and test
+## 4) Lint e Testes
+
+É crucial garantir a qualidade do código. Execute as ferramentas de linting e testes para verificar conformidade e funcionalidade:
 
 ```bash
-poe lint
-poe test
+pore lint
+pore test
 ```
 
-Tips:
+## Dicas Importantes
 
-- Examples must be dry‑run by default; require `--execute` for network calls.
-- Always include taxonomy in `full_report` using `.to_dict()`.
-- Use `auto_extract` (default) to extract IOCs from your full report.
+- **Modo Dry-Run**: Exemplos devem ser executados em modo dry-run por padrão. Exija o uso de `--execute` para chamadas de rede ou operações que alteram o estado.
+- **Taxonomia**: Sempre inclua a taxonomia no `full_report` usando `.to_dict()`.
+- **Extração Automática**: Utilize `auto_extract` (padrão) para extrair IOCs (Indicadores de Compromisso) automaticamente do seu relatório completo.

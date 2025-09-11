@@ -1,4 +1,4 @@
-# API Reference: Analyzer
+# Referência da API: Analisador
 
 ::: sentineliqsdk.analyzers.base.Analyzer
 

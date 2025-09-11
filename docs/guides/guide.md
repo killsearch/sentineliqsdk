@@ -1,24 +1,24 @@
-# SentinelIQ SDK — Agent Guide
+# SentinelIQ SDK — Guia do Agente
 
-This is the single source of truth for building analyzers, responders, and detectors with
-the SentinelIQ SDK under `src/sentineliqsdk`. It reflects the current implementation in
-this repository.
+Esta é a fonte única de verdade para construir analisadores, respondedores e detectores com
+o SentinelIQ SDK em `src/sentineliqsdk`. Reflete a implementação atual neste
+repositório.
 
-Requirements: Python 3.13, absolute imports, 4‑space indentation, line length 100.
+**Requisitos**: Python 3.13, imports absolutos, indentação de 4 espaços, comprimento de linha 100.
 
-## Module Metadata (New)
+## Metadados do Módulo (Novo)
 
-- Every Analyzer/Responder must declare a `METADATA` attribute using
-  `sentineliqsdk.models.ModuleMetadata` and include it in the `full_report` under the
-  `metadata` key.
-- Required fields (keys when serialized via `to_dict()`):
-  - `Name`, `Description`, `Author` (list of "Name <email>"), `License`
+- Todo Analyzer/Responder deve declarar um atributo `METADATA` usando
+  `sentineliqsdk.models.ModuleMetadata` e incluí-lo no `full_report` sob a
+  chave `metadata`.
+- **Campos obrigatórios** (chaves quando serializadas via `to_dict()`):
+  - `Name`, `Description`, `Author` (lista de "Nome <email>"), `License`
   - `pattern` (ex.: "smtp", "webhook", "kafka", "threat-intel")
-  - `doc_pattern` (curta descrição do formato da documentação)
+  - `doc_pattern` (descrição curta do formato da documentação)
   - `doc` (URL pública da documentação do módulo — site do SentinelIQ)
   - `VERSION` (um de: `DEVELOPER`, `TESTING`, `STABLE`)
 
-Example:
+**Exemplo**:
 
 ```python
 from sentineliqsdk.models import ModuleMetadata
@@ -39,51 +39,51 @@ class MyResponder(Responder):
         return self.report(full)
 ```
 
-## Mandatory Examples (Agent Rule)
+## Exemplos Obrigatórios (Regra do Agente)
 
-- Always add a runnable example in `examples/` when you introduce a new Analyzer, Responder,
-  or Detector.
-- Naming: `examples/<kind>/<name>_example.py` where `<kind>` ∈ {`analyzers`, `responders`,
+- Sempre adicione um exemplo executável em `examples/` quando introduzir um novo Analyzer, Responder
+  ou Detector.
+- **Nomenclatura**: `examples/<kind>/<name>_example.py` onde `<kind>` ∈ {`analyzers`, `responders`,
   `detectors`}.
-- The example must:
-  - Use dataclass input (`WorkerInput`) and call `.run()` (or `.execute()` when provided).
-  - Be runnable locally with only stdlib + SDK.
-  - Print a compact result to STDOUT. Network calls default to dry‑run and require `--execute`.
-    Impactful operations (e.g., scans) must be gated behind `--include-dangerous`.
-- Reference your example from README or docs when helpful.
+- **O exemplo deve**:
+  - Usar entrada dataclass (`WorkerInput`) e chamar `.run()` (ou `.execute()` quando fornecido).
+  - Ser executável localmente apenas com stdlib + SDK.
+  - Imprimir um resultado compacto para STDOUT. Chamadas de rede padrão para dry-run e requerem `--execute`.
+    Operações impactantes (ex.: scans) devem ser protegidas por `--include-dangerous`.
+- Referencie seu exemplo no README ou documentação quando útil.
 
-## Documentation Updates (Always)
+## Atualizações de Documentação (Sempre)
 
-Keep the documentation in sync whenever you add or change behavior:
+Mantenha a documentação sincronizada sempre que adicionar ou alterar comportamento:
 
-- Update pages under `docs/` (Guides, Tutorials, Examples, Reference) to reflect the current
-  behavior, flags, and safety gates (`--execute`, `--include-dangerous`).
-- Link new examples in the relevant pages (`docs/examples/*.md`) and, when helpful, in README.
-- Add a programmatic usage page for each module under `docs/modulos/<kind>/<name>.md`.
-  The page must show dataclass input (`WorkerInput`) and calling `.execute()` (or `.run()`),
-  using only stdlib + SDK. Update the navigation in `mkdocs.yml` under the "Modules" section.
-- If you add new public API or modules, ensure mkdocstrings pages exist and the navigation in
-  `mkdocs.yml` is updated.
-- Validate locally with `poe docs` (or preview with `poe docs-serve`).
+- Atualize páginas em `docs/` (Guias, Tutoriais, Exemplos, Referência) para refletir o
+  comportamento atual, flags e portões de segurança (`--execute`, `--include-dangerous`).
+- Vincule novos exemplos nas páginas relevantes (`docs/examples/*.md`) e, quando útil, no README.
+- Adicione uma página de uso programático para cada módulo em `docs/modulos/<kind>/<name>.md`.
+  A página deve mostrar entrada dataclass (`WorkerInput`) e chamar `.execute()` (ou `.run()`),
+  usando apenas stdlib + SDK. Atualize a navegação em `mkdocs.yml` na seção "Modules".
+- Se adicionar nova API pública ou módulos, garanta que páginas mkdocstrings existam e a navegação em
+  `mkdocs.yml` seja atualizada.
+- Valide localmente com `poe docs` (ou pré-visualize com `poe docs-serve`).
 
-## Scaffolding (Poe tasks)
+## Scaffolding (Tarefas Poe)
 
-- Generic: `poe new -- --kind <analyzer|responder|detector> --name <Name> [--force]`
-- Shortcuts:
+- **Genérico**: `poe new -- --kind <analyzer|responder|detector> --name <Nome> [--force]`
+- **Atalhos**:
   - Analyzer: `poe new-analyzer -- --name Shodan`
   - Responder: `poe new-responder -- --name BlockIp`
   - Detector: `poe new-detector -- --name MyType`
 
-Outputs (code + example):
-- Analyzer: `src/sentineliqsdk/analyzers/<snake>.py` and `examples/analyzers/<snake>_example.py`
-- Responder: `src/sentineliqsdk/responders/<snake>.py` and
+**Saídas (código + exemplo)**:
+- Analyzer: `src/sentineliqsdk/analyzers/<snake>.py` e `examples/analyzers/<snake>_example.py`
+- Responder: `src/sentineliqsdk/responders/<snake>.py` e
   `examples/responders/<snake>_example.py`
-- Detector: `src/sentineliqsdk/extractors/custom/<snake>_detector.py` and
+- Detector: `src/sentineliqsdk/extractors/custom/<snake>_detector.py` e
   `examples/detectors/<snake>_example.py`
 
-## Quick Start
+## Início Rápido
 
-Minimal analyzer using dataclasses:
+Analyzer mínimo usando dataclasses:
 
 ```python
 from __future__ import annotations
@@ -95,7 +95,7 @@ from sentineliqsdk.models import AnalyzerReport
 
 
 class ReputationAnalyzer(Analyzer):
-    """Marks 1.2.3.4 as malicious, others as safe."""
+    """Marca 1.2.3.4 como malicioso, outros como seguros."""
 
     def execute(self) -> AnalyzerReport:
         observable = self.get_data()
@@ -117,27 +117,27 @@ if __name__ == "__main__":
     print(json.dumps(report.full_report, ensure_ascii=False))
 ```
 
-Run examples directly, e.g. `python examples/analyzers/shodan_analyzer_all_methods.py --help`.
+Execute exemplos diretamente, ex.: `python examples/analyzers/shodan_analyzer_all_methods.py --help`.
 
-## Development Rules — Creating New Analyzer/Responder/Detector
+## Regras de Desenvolvimento — Criando Novo Analyzer/Responder/Detector
 
-Follow these rules for consistent components. Each recipe lists the file layout, class naming,
-and a minimal skeleton aligned with this SDK.
+Siga estas regras para componentes consistentes. Cada receita lista o layout de arquivos, nomenclatura de classes
+e um esqueleto mínimo alinhado com este SDK.
 
 ### Analyzer
 
-- Files:
-  - Code: `src/sentineliqsdk/analyzers/<name>.py`
-  - Example: `examples/analyzers/<name>_example.py`
-  - Tests: `tests/analyzers/test_<name>.py`
-- Class name: `<Name>Analyzer` extending `sentineliqsdk.analyzers.Analyzer`.
-- Imports: absolute; always `from __future__ import annotations` first.
-- Implement `execute() -> AnalyzerReport` and make `run()` return `self.execute()`.
-- Build taxonomy via `self.build_taxonomy(...)`; include `taxonomy.to_dict()` in your payload.
-- Use dataclasses only (`WorkerInput` is required). TLP/PAP and proxies are enforced by `Worker`.
-- Examples should be dry‑run by default and support `--execute` for real calls.
+- **Arquivos**:
+  - Código: `src/sentineliqsdk/analyzers/<name>.py`
+  - Exemplo: `examples/analyzers/<name>_example.py`
+  - Testes: `tests/analyzers/test_<name>.py`
+- **Nome da classe**: `<Nome>Analyzer` estendendo `sentineliqsdk.analyzers.Analyzer`.
+- **Imports**: absolutos; sempre `from __future__ import annotations` primeiro.
+- **Implementar** `execute() -> AnalyzerReport` e fazer `run()` retornar `self.execute()`.
+- **Construir taxonomia** via `self.build_taxonomy(...)`; incluir `taxonomy.to_dict()` no seu payload.
+- **Usar apenas dataclasses** (`WorkerInput` é obrigatório). TLP/PAP e proxies são aplicados pelo `Worker`.
+- **Exemplos** devem ser dry-run por padrão e suportar `--execute` para chamadas reais.
 
-Skeleton:
+**Esqueleto**:
 
 ```python
 from __future__ import annotations
@@ -157,28 +157,28 @@ class MyAnalyzer(Analyzer):
         return self.execute()
 ```
 
-Checklist:
+**Checklist**:
 
-- Naming and imports compliant; class ends with `Analyzer`.
-- `execute()` implemented; `run()` returns `AnalyzerReport`.
-- Calls `self.report(...)` with a dict; taxonomy included.
-- Example under `examples/analyzers/` runnable and prints a compact result.
-- Tests added; `poe lint` and `poe test` pass.
-- Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
-  `poe docs` passes locally.
-- Programmatic docs page added: `docs/modulos/analyzers/<name>.md`.
+- Nomenclatura e imports em conformidade; classe termina com `Analyzer`.
+- `execute()` implementado; `run()` retorna `AnalyzerReport`.
+- Chama `self.report(...)` com um dict; taxonomia incluída.
+- Exemplo em `examples/analyzers/` executável e imprime resultado compacto.
+- Testes adicionados; `poe lint` e `poe test` passam.
+- Documentação atualizada (Guia/Tutoriais/Exemplos/Referência), links adicionados, `mkdocs.yml` atualizado se necessário;
+  `poe docs` passa localmente.
+- Página de documentação programática adicionada: `docs/modulos/analyzers/<name>.md`.
 
 ### Responder
 
-- Files:
-  - Code: `src/sentineliqsdk/responders/<name>.py`
-  - Example: `examples/responders/<name>_example.py`
-  - Tests: `tests/responders/test_<name>.py`
-- Class name: `<Name>Responder` extending `sentineliqsdk.responders.Responder`.
-- Implement `execute() -> ResponderReport` and make `run()` return it.
-- Build operations with `self.build_operation(...)` and call `self.report(full_report)`.
+- **Arquivos**:
+  - Código: `src/sentineliqsdk/responders/<name>.py`
+  - Exemplo: `examples/responders/<name>_example.py`
+  - Testes: `tests/responders/test_<name>.py`
+- **Nome da classe**: `<Nome>Responder` estendendo `sentineliqsdk.responders.Responder`.
+- **Implementar** `execute() -> ResponderReport` e fazer `run()` retornar `self.execute()`.
+- **Construir operações** via `self.build_operation(...)` e chamar `self.report(full_report)`.
 
-Skeleton:
+**Esqueleto**:
 
 ```python
 from __future__ import annotations
@@ -198,33 +198,33 @@ class MyResponder(Responder):
         return self.execute()
 ```
 
-Checklist:
+**Checklist**:
 
-- Naming/paths correct; absolute imports.
-- `execute()` and `run()` return `ResponderReport`.
-- Operations created via `build_operation` and reported.
-- Example under `examples/responders/` runnable and prints compact result.
-- Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
-  `poe docs` passes locally.
-- Programmatic docs page added: `docs/modulos/responders/<name>.md`.
+- Nomenclatura e caminhos corretos; imports absolutos.
+- `execute()` e `run()` retornam `ResponderReport`.
+- Operações criadas via `build_operation` e reportadas.
+- Exemplo em `examples/responders/` executável e imprime resultado compacto.
+- Documentação atualizada (Guia/Tutoriais/Exemplos/Referência), links adicionados, `mkdocs.yml` atualizado se necessário;
+  `poe docs` passa localmente.
+- Página de documentação programática adicionada: `docs/modulos/responders/<name>.md`.
 
 ### Detector
 
-- Files:
-  - Core: extend `src/sentineliqsdk/extractors/detectors.py` (preferred for official types), or
-    create a custom detector under `src/sentineliqsdk/extractors/custom/<name>_detector.py` and
-    register it via `Extractor.register_detector(...)` in your analyzer.
-  - Example: `examples/detectors/<name>_example.py`
-  - Tests: `tests/extractors/test_<name>_detector.py`
-- Protocol: `Detector` with attribute `name: str` and method `matches(value: str) -> bool`.
-- To include in core (official type):
-  - Add the literal to `sentineliqsdk.models.DataType`.
-  - Import/add the detector in the precedence list in `Extractor` (`extractors/regex.py`).
-  - Consider normalization/flags exposed by `DetectionContext` when relevant.
-- For local-only use (without touching the core):
-  - Register via `Extractor.register_detector(MyDetector(), before="hash")`, for example.
+- **Arquivos**:
+  - Principal: estender `src/sentineliqsdk/extractors/detectors.py` (preferido para tipos oficiais), ou
+    criar um detector customizado em `src/sentineliqsdk/extractors/custom/<name>_detector.py` e
+    registrá-lo via `Extractor.register_detector(...)` no seu analyzer.
+  - Exemplo: `examples/detectors/<name>_example.py`
+  - Testes: `tests/extractors/test_<name>_detector.py`
+- **Protocolo**: `Detector` com atributo `name: str` e método `matches(value: str) -> bool`.
+- **Para incluir no core (tipo oficial)**:
+  - Adicionar o literal em `sentineliqsdk.models.DataType`.
+  - Importar/adicionar o detector na lista de precedência em `Extractor` (`extractors/regex.py`).
+  - Considerar normalização/flags expostas por `DetectionContext` quando relevante.
+- **Para uso local apenas (sem tocar no core)**:
+  - Registrar via `Extractor.register_detector(MyDetector(), before="hash")`, por exemplo.
 
-Skeleton (custom):
+**Esqueleto** (customizado):
 
 ```python
 from __future__ import annotations
@@ -239,42 +239,42 @@ class MyDetector:
         return value.startswith("MY:")
 ```
 
-Checklist:
+**Checklist**:
 
-- Type included in `DataType` (if core) and precedence adjusted in `Extractor`.
-- Tests cover positives/negatives; avoid obvious false positives.
-- Example in `examples/detectors/` demonstrating `Extractor.check_string/iterable`.
-- Docs updated (Guide/Tutorials/Examples/Reference), links added, `mkdocs.yml` updated if needed;
-  `poe docs` passes locally.
-- Programmatic docs page added: `docs/modulos/detectors/<name>.md`.
+- Tipo incluído em `DataType` (se core) e precedência ajustada em `Extractor`.
+- Testes cobrem positivos/negativos; evitar falsos positivos óbvios.
+- Exemplo em `examples/detectors/` demonstrando `Extractor.check_string/iterable`.
+- Documentação atualizada (Guia/Tutoriais/Exemplos/Referência), links adicionados, `mkdocs.yml` atualizado se necessário;
+  `poe docs` passa localmente.
+- Página de documentação programática adicionada: `docs/modulos/detectors/<name>.md`.
 
-## Modules Overview
+## Visão Geral dos Módulos
 
-- `sentineliqsdk.Worker`: common base for analyzers/responders (config, env, reporting hooks).
-- `sentineliqsdk.Analyzer`: base class for analyzers; includes auto‑extraction helpers.
-- `sentineliqsdk.Responder`: base class for responders; simpler envelope.
-- `sentineliqsdk.Extractor`: stdlib‑guided IOC extractor (ip/url/domain/hash/...).
-- `sentineliqsdk.runner(worker_cls, input_data)`: convenience to instantiate and run.
-- `sentineliqsdk.models`: dataclasses for type‑safe structures.
+- `sentineliqsdk.Worker`: base comum para analyzers/responders (config, env, hooks de relatório).
+- `sentineliqsdk.Analyzer`: classe base para analyzers; inclui helpers de auto-extração.
+- `sentineliqsdk.Responder`: classe base para responders; envelope mais simples.
+- `sentineliqsdk.Extractor`: extrator de IOC guiado por stdlib (ip/url/domain/hash/...).
+- `sentineliqsdk.runner(worker_cls, input_data)`: conveniência para instanciar e executar.
+- `sentineliqsdk.models`: dataclasses para estruturas type-safe.
 
-Internal layout (for maintainers):
-- `src/sentineliqsdk/core/worker.py` implements `Worker`.
-- `src/sentineliqsdk/analyzers/base.py` implements `Analyzer`.
-- `src/sentineliqsdk/responders/base.py` implements `Responder`.
-- `src/sentineliqsdk/extractors/regex.py` implements `Extractor`.
-- `src/sentineliqsdk/core/config/proxy.py` sets env proxies (`EnvProxyConfigurator`).
-- `src/sentineliqsdk/core/config/secrets.py` sanitizes error payload config.
+Layout interno (para mantenedores):
+- `src/sentineliqsdk/core/worker.py` implementa `Worker`.
+- `src/sentineliqsdk/analyzers/base.py` implementa `Analyzer`.
+- `src/sentineliqsdk/responders/base.py` implementa `Responder`.
+- `src/sentineliqsdk/extractors/regex.py` implementa `Extractor`.
+- `src/sentineliqsdk/core/config/proxy.py` define proxies de env (`EnvProxyConfigurator`).
+- `src/sentineliqsdk/core/config/secrets.py` sanitiza config de payload de erro.
 
-## Input/Output Contract
+## Contrato de Entrada/Saída
 
-Workers receive input data as dataclasses and return results in memory. This SDK has removed
-legacy dictionary input from the public API in this repository.
+Workers recebem dados de entrada como dataclasses e retornam resultados na memória. Este SDK removeu
+a entrada de dicionário legada da API pública neste repositório.
 
-- Input: pass a `WorkerInput` dataclass to the worker constructor.
-- Output: `Analyzer.report(...)` returns `AnalyzerReport`; `Responder.report(...)` returns
-  `ResponderReport`. Examples can print compact JSON to STDOUT explicitly.
+- Entrada: passe um dataclass `WorkerInput` para o construtor do worker.
+- Saída: `Analyzer.report(...)` retorna `AnalyzerReport`; `Responder.report(...)` retorna
+  `ResponderReport`. Exemplos podem imprimir JSON compacto para STDOUT explicitamente.
 
-### Input (Dataclasses)
+### Entrada (Dataclasses)
 
 ```python
 from sentineliqsdk import WorkerInput, WorkerConfig, ProxyConfig
@@ -299,78 +299,78 @@ input_data = WorkerInput(
 )
 ```
 
-Common input fields:
+Campos de entrada comuns:
 
-- `data_type`: one of `ip`, `url`, `domain`, `fqdn`, `hash`, `mail`, `user-agent`,
+- `data_type`: um de `ip`, `url`, `domain`, `fqdn`, `hash`, `mail`, `user-agent`,
   `uri_path`, `registry`, `file`, `other`, `asn`, `cve`, `ip_port`, `mac`, `cidr`.
-- `data` or `filename`: observable value or filename for `data_type == "file"`.
-- `tlp` and `pap`: numbers enforced via config when enabled.
-- `config.*` includes:
+- `data` ou `filename`: valor observável ou nome do arquivo para `data_type == "file"`.
+- `tlp` e `pap`: números aplicados via config quando habilitado.
+- `config.*` inclui:
   - `config.check_tlp` / `config.max_tlp`
   - `config.check_pap` / `config.max_pap`
-  - `config.proxy.http` / `config.proxy.https` (exported internally for stdlib clients)
-  - `config.auto_extract` for analyzers
+  - `config.proxy.http` / `config.proxy.https` (exportado internamente para clientes stdlib)
+  - `config.auto_extract` para analyzers
   - `config.params` (dict/mapping): parâmetros programáticos por módulo
   - `config.secrets` (dict/mapping): segredos/credenciais por módulo
 
-On error, sensitive keys in `config` containing any of `key`, `password`, `secret`, `token`
-are replaced with `"REMOVED"` in the error payload.
+Em caso de erro, chaves sensíveis em `config` contendo qualquer um de `key`, `password`, `secret`, `token`
+são substituídas por `"REMOVED"` no payload de erro.
 
-## Core Concepts: Worker
+## Conceitos Principais: Worker
 
-Signature: `Worker(input_data: WorkerInput, secret_phrases: tuple[str, ...] | None)`
+Assinatura: `Worker(input_data: WorkerInput, secret_phrases: tuple[str, ...] | None)`
 
-- `get_param(name, default=None, message=None)`: not used in this repository (dataclasses only).
-- `get_env(key, default=None, message=None)`: read environment variables.
+- `get_param(name, default=None, message=None)`: não usado neste repositório (apenas dataclasses).
+- `get_env(key, default=None, message=None)`: lê variáveis de ambiente.
 - `get_config(path, default=None)`: lê de `WorkerConfig.params` via caminho pontuado
   (ex.: `"shodan.method"`, `"webhook.headers"`).
 - `get_secret(path, default=None, message=None)`: lê de `WorkerConfig.secrets` via
   caminho pontuado (ex.: `"shodan.api_key"`, `"smtp.password"`).
-- `get_data() -> Any`: returns the observable value (overridden in subclasses).
-- `build_operation(op_type: str, **parameters) -> Operation`: describe follow‑up operations.
-- `operations(raw) -> list[Operation]`: hook for follow‑up work; default `[]`.
-- `summary(raw) -> dict`: short summary; default `{}`.
-- `artifacts(raw) -> list[Artifact]`: analyzer override performs auto-extraction when enabled.
-- `report(output: dict) -> dict | AnalyzerReport | ResponderReport`: returns result in memory.
-- `error(message: str, ensure_ascii: bool = False) -> NoReturn`: print error JSON and exit(1).
-- `run() -> None`: your main logic (override in subclasses).
+- `get_data() -> Any`: retorna o valor observável (sobrescrito em subclasses).
+- `build_operation(op_type: str, **parameters) -> Operation`: descreve operações de acompanhamento.
+- `operations(raw) -> list[Operation]`: hook para trabalho de acompanhamento; padrão `[]`.
+- `summary(raw) -> dict`: resumo curto; padrão `{}`.
+- `artifacts(raw) -> list[Artifact]`: override do analyzer executa auto-extração quando habilitada.
+- `report(output: dict) -> dict | AnalyzerReport | ResponderReport`: retorna resultado na memória.
+- `error(message: str, ensure_ascii: bool = False) -> NoReturn`: imprime JSON de erro e exit(1).
+- `run() -> None`: sua lógica principal (sobrescreva em subclasses).
 
-TLP/PAP enforcement:
+Aplicação TLP/PAP:
 
-- Enable with `config.check_tlp`/`config.check_pap`; set `config.max_tlp`/`config.max_pap`.
-- If exceeded, the worker calls `error("TLP is higher than allowed.")` or the PAP equivalent.
+- Habilite com `config.check_tlp`/`config.check_pap`; defina `config.max_tlp`/`config.max_pap`.
+- Se excedido, o worker chama `error("TLP is higher than allowed.")` ou o equivalente PAP.
 
 ## Analyzer
 
-`Analyzer` extends `Worker` with analyzer‑specific behavior:
+`Analyzer` estende `Worker` com comportamento específico de analyzer:
 
-- `get_data()`: returns `filename` when `data_type == "file"`, otherwise the `data` field.
-- `auto_extract`: enabled by default unless `config.auto_extract` is `False`.
-- `artifacts(raw)`: when enabled, uses `Extractor(ignore=self.get_data())` and returns a
-  `list[Artifact]` dataclass collection for the full report.
-- `build_taxonomy(level, namespace, predicate, value) -> TaxonomyEntry`: helper for taxonomy
-  entries where `level` is one of `info|safe|suspicious|malicious`.
-- `build_artifact(data_type, data, **kwargs) -> Artifact`: build an artifact dataclass.
-- `report(full_report: dict) -> AnalyzerReport`: returns an envelope with
+- `get_data()`: retorna `filename` quando `data_type == "file"`, caso contrário o campo `data`.
+- `auto_extract`: habilitado por padrão a menos que `config.auto_extract` seja `False`.
+- `artifacts(raw)`: quando habilitado, usa `Extractor(ignore=self.get_data())` e retorna uma
+  coleção de dataclass `list[Artifact]` para o relatório completo.
+- `build_taxonomy(level, namespace, predicate, value) -> TaxonomyEntry`: helper para entradas
+  de taxonomia onde `level` é um de `info|safe|suspicious|malicious`.
+- `build_artifact(data_type, data, **kwargs) -> Artifact`: constrói um dataclass artifact.
+- `report(full_report: dict) -> AnalyzerReport`: retorna um envelope com
   `success/summary/artifacts/operations/full_report`.
 
-Notes:
-- Legacy helpers like `getData`/`checkTlp` are removed; use the modern API only.
-- TLP/PAP checks run automatically in `Worker.__init__`.
+Notas:
+- Helpers legados como `getData`/`checkTlp` foram removidos; use apenas a API moderna.
+- Verificações TLP/PAP executam automaticamente em `Worker.__init__`.
 
 ## Responder
 
-`Responder` mirrors `Analyzer` with a simpler envelope:
+`Responder` espelha `Analyzer` com um envelope mais simples:
 
-- `get_data()`: returns the `data` field.
-- `report(full_report) -> ResponderReport` with `success/full_report/operations`.
+- `get_data()`: retorna o campo `data`.
+- `report(full_report) -> ResponderReport` com `success/full_report/operations`.
 
 ## Extractor
 
-IOC extractor using Python stdlib helpers (e.g., `ipaddress`, `urllib.parse`, `email.utils`)
-instead of complex regexes. Typical types detected include:
+Extrator de IOC usando helpers da stdlib do Python (ex.: `ipaddress`, `urllib.parse`, `email.utils`)
+em vez de regexes complexas. Tipos típicos detectados incluem:
 
-- `ip` (IPv4 and IPv6), `cidr`, `url`, `domain`, `fqdn`, `hash` (MD5/SHA1/SHA256), `mail`,
+- `ip` (IPv4 e IPv6), `cidr`, `url`, `domain`, `fqdn`, `hash` (MD5/SHA1/SHA256), `mail`,
   `user-agent`, `uri_path`, `registry`, `mac`, `asn`, `cve`, `ip_port`.
 
 API:
@@ -378,15 +378,15 @@ API:
 - `Extractor(ignore: str | None = None, strict_dns: bool = False, normalize_domains: bool = False,
   normalize_urls: bool = False, support_mailto: bool = False, max_string_length: int = 10000,
   max_iterable_depth: int = 100)`
-- `check_string(value: str) -> str`: returns a data type name or empty string.
+- `check_string(value: str) -> str`: retorna um nome de tipo de dados ou string vazia.
 - `check_iterable(iterable: list | dict | str | tuple | set) -> list[ExtractorResult]`:
-  returns a de‑duplicated list of dataclass results.
+  retorna uma lista de-duplicada de resultados dataclass.
 
-Precedence order (first match wins): ip → cidr → url → domain → hash → user-agent → uri_path →
+Ordem de precedência (primeira correspondência ganha): ip → cidr → url → domain → hash → user-agent → uri_path →
 registry → mail → mac → asn → cve → ip_port → fqdn.
-Use `Extractor.register_detector(detector, before=..., after=...)` to customize.
+Use `Extractor.register_detector(detector, before=..., after=...)` para customizar.
 
-## Minimal Analyzer Example
+## Exemplo de Analyzer Mínimo
 
 ### Dataclasses
 
@@ -397,14 +397,14 @@ from sentineliqsdk import Analyzer, WorkerInput
 
 
 class ReputationAnalyzer(Analyzer):
-    """Toy analyzer that marks "1.2.3.4" as malicious and others as safe."""
+    """Analyzer de exemplo que marca "1.2.3.4" como malicioso e outros como seguros."""
 
     def run(self) -> None:
         observable = self.get_data()
 
         verdict = "malicious" if observable == "1.2.3.4" else "safe"
 
-        # Build taxonomy using dataclass
+        # Construir taxonomia usando dataclass
         taxonomy = self.build_taxonomy(
             level=verdict,
             namespace="reputation",
@@ -426,7 +426,7 @@ if __name__ == "__main__":
     ReputationAnalyzer(input_data).run()
 ```
 
-## Minimal Responder Example
+## Exemplo de Responder Mínimo
 
 ### Dataclasses
 
@@ -453,11 +453,11 @@ if __name__ == "__main__":
     BlockIpResponder(input_data).run()
 ```
 
-## Example Input and Output
+## Exemplo de Entrada e Saída
 
-Input (programmatic): `WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)`
+Entrada (programática): `WorkerInput(data_type="ip", data="1.2.3.4", tlp=2, pap=2)`
 
-Analyzer programmatic result (`AnalyzerReport` dataclass):
+Resultado programático do Analyzer (dataclass `AnalyzerReport`):
 
 ```json
 {
@@ -475,31 +475,31 @@ Analyzer programmatic result (`AnalyzerReport` dataclass):
 }
 ```
 
-On an error, the worker prints to STDOUT and exits with code 1:
+Em caso de erro, o worker imprime para STDOUT e sai com código 1:
 
 ```json
 { "success": false, "input": { ... }, "errorMessage": "<reason>" }
 ```
 
-## Operations and Artifacts
+## Operações e Artefatos
 
-- Use `build_operation("<type>", **params)` and return a list from `operations(full_report)` to
-  trigger follow‑up work.
-- Build artifacts in analyzers with `build_artifact("file", "/path/to/file")` or with
-  non‑file types: `build_artifact("ip", "8.8.8.8", tlp=2)`.
-- When `auto_extract` is enabled (default), `artifacts(full_report)` uses `Extractor` to detect
-  IOCs in the report, excluding the original observable value.
+- Use `build_operation("<type>", **params)` e retorne uma lista de `operations(full_report)` para
+  disparar trabalho de acompanhamento.
+- Construa artefatos em analyzers com `build_artifact("file", "/path/to/file")` ou com
+  tipos não-arquivo: `build_artifact("ip", "8.8.8.8", tlp=2)`.
+- Quando `auto_extract` está habilitado (padrão), `artifacts(full_report)` usa `Extractor` para detectar
+  IOCs no relatório, excluindo o valor observável original.
 
-## Running and Debugging
+## Execução e Depuração
 
-- Run examples directly under `examples/` with `python ...`.
-- Use `--execute` for real network calls; otherwise remain in dry‑run.
-- Use `--include-dangerous` to enable impactful actions when applicable.
-- Proxies: set `WorkerInput.config.proxy.http` / `.https`.
+- Execute exemplos diretamente em `examples/` com `python ...`.
+- Use `--execute` para chamadas de rede reais; caso contrário permaneça em dry‑run.
+- Use `--include-dangerous` para habilitar ações impactantes quando aplicável.
+- Proxies: defina `WorkerInput.config.proxy.http` / `.https`.
 
-## Programmatic Usage (No File I/O)
+## Uso Programático (Sem I/O de Arquivo)
 
-Use the SDK directly by passing `WorkerInput` to the constructor and printing as needed.
+Use o SDK diretamente passando `WorkerInput` para o construtor e imprimindo conforme necessário.
 
 ### Dataclasses
 
@@ -515,7 +515,7 @@ class MyAnalyzer(Analyzer):
         self.report(result)
 
 
-# Create input data using dataclass
+# Criar dados de entrada usando dataclass
 input_data = WorkerInput(
     data_type="ip",
     data="1.2.3.4",
@@ -527,18 +527,18 @@ analyzer = MyAnalyzer(input_data=input_data)
 analyzer.run()
 ```
 
-### In-Memory Results
+### Resultados em Memória
 
-To get results in memory, call `execute()` (or `run()` if your class returns the report):
+Para obter resultados em memória, chame `execute()` (ou `run()` se sua classe retorna o relatório):
 
 ```python
 report = analyzer.execute()  # or analyzer.run() if run() returns the report
 print(report.full_report)
 ```
 
-### Batch Processing
+### Processamento em Lote
 
-Process multiple observables without file I/O:
+Processe múltiplos observáveis sem I/O de arquivo:
 
 ```python
 from sentineliqsdk import WorkerInput
@@ -555,14 +555,14 @@ for obs in observables:
     )
 
     analyzer = MyAnalyzer(input_data=input_data)
-    # Process and get result in memory
+    # Processar e obter resultado em memória
     result = analyzer.execute()
     results.append(result)
 ```
 
-## Dataclasses and Type Safety
+## Dataclasses e Segurança de Tipos
 
-The SDK provides dataclasses for better type safety and developer experience:
+O SDK fornece dataclasses para melhor segurança de tipos e experiência do desenvolvedor:
 
 - `WorkerInput`: Input data for workers
 - `WorkerConfig`: Worker configuration (TLP/PAP, proxy, etc.)
@@ -584,7 +584,7 @@ from sentineliqsdk import (
     TaxonomyEntry, Artifact, Operation,
 )
 
-# Create structured input
+# Criar entrada estruturada
 input_data = WorkerInput(
     data_type="ip",
     data="1.2.3.4",
@@ -595,7 +595,7 @@ input_data = WorkerInput(
     ),
 )
 
-# Create taxonomy entry
+# Criar entrada de taxonomia
 taxonomy = TaxonomyEntry(
     level="malicious",
     namespace="reputation",
@@ -603,7 +603,7 @@ taxonomy = TaxonomyEntry(
     value="1.2.3.4",
 )
 
-# Create artifact
+# Criar artefato
 artifact = Artifact(
     data_type="ip",
     data="8.8.8.8",
@@ -611,14 +611,14 @@ artifact = Artifact(
     extra={"confidence": 0.9},
 )
 
-# Create operation
+# Criar operação
 operation = Operation(
     operation_type="hunt",
     parameters={"target": "1.2.3.4", "priority": "high"},
 )
 
-# Convert to dict for JSON serialization
-# Note: use dataclasses.asdict for dataclasses without custom to_dict()
+# Converter para dict para serialização JSON
+# Nota: use dataclasses.asdict para dataclasses sem to_dict() customizado
 from dataclasses import asdict
 json_data = {
     "taxonomy": [taxonomy.to_dict()],
@@ -627,63 +627,63 @@ json_data = {
 }
 ```
 
-## Project and CI Tips
+## Dicas de Projeto e CI
 
-- Lint and type check: `poe lint` (pre-commit with ruff/mypy configured).
-- Tests: `poe test` (pytest with coverage to `reports/`).
-- Docs: `poe docs` builds MkDocs site to `docs/` (see `.github/workflows/docs.yml`).
-- Build: `uv build`; publish via CI on GitHub release.
+- Lint e verificação de tipos: `poe lint` (pre-commit com ruff/mypy configurado).
+- Testes: `poe test` (pytest com cobertura para `reports/`).
+- Docs: `poe docs` constrói site MkDocs para `docs/` (veja `.github/workflows/docs.yml`).
+- Build: `uv build`; publica via CI no release do GitHub.
 
 ## Releases (CI/CD)
 
-This repository publishes to PyPI via GitHub Actions when you create a GitHub Release.
+Este repositório publica no PyPI via GitHub Actions quando você cria um GitHub Release.
 
-- Workflow: see `.github/workflows/publish.yml` (runs `uv build` then `uv publish`).
-- Auth: GitHub OIDC (`permissions: id-token: write`) with a PyPI Trusted Publisher.
-- Trigger: GitHub Release for a tag like `vX.Y.Z`.
+- Workflow: veja `.github/workflows/publish.yml` (executa `uv build` então `uv publish`).
+- Auth: GitHub OIDC (`permissions: id-token: write`) com um PyPI Trusted Publisher.
+- Trigger: GitHub Release para uma tag como `vX.Y.Z`.
 
-Release checklist (maintainers):
+Checklist de release (mantenedores):
 
-1. Ensure `main` is green
-   - Open a PR and wait for the "Test" workflow to pass.
-   - Merge to `main` once lint, types, and tests pass.
-2. Bump version and changelog with Commitizen
-   - Recommended (uses the project env): `uv run cz bump`
-   - Non‑interactive examples:
+1. Garantir que `main` está verde
+   - Abrir um PR e aguardar o workflow "Test" passar.
+   - Fazer merge para `main` quando lint, tipos e testes passarem.
+2. Atualizar versão e changelog com Commitizen
+   - Recomendado (usa o env do projeto): `uv run cz bump`
+   - Exemplos não-interativos:
      - Patch: `uv run cz bump --increment patch`
      - Minor: `uv run cz bump --increment minor`
      - Major: `uv run cz bump --increment major`
-   - Pre‑releases:
-     - First RC: `uv run cz bump --prerelease rc`
-     - Next RC: `uv run cz bump --prerelease rc`
-     - RC for next minor: `uv run cz bump --increment minor --prerelease rc`
-   - Commitizen updates `[project].version` in `pyproject.toml`, updates `CHANGELOG.md`, creates
-     the tag `vX.Y.Z` and commits the change (per `[tool.commitizen]`).
-3. Push branch and tags
+   - Pré-releases:
+     - Primeiro RC: `uv run cz bump --prerelease rc`
+     - Próximo RC: `uv run cz bump --prerelease rc`
+     - RC para próximo minor: `uv run cz bump --increment minor --prerelease rc`
+   - Commitizen atualiza `[project].version` em `pyproject.toml`, atualiza `CHANGELOG.md`, cria
+     a tag `vX.Y.Z` e faz commit da mudança (conforme `[tool.commitizen]`).
+3. Push do branch e tags
    - `git push origin main --follow-tags`
-   - If your local branch is behind: `git pull --rebase origin main` then push again.
-4. Create a GitHub Release for the new tag
-   - UI: Releases → New release → Choose tag `vX.Y.Z` → Publish.
+   - Se seu branch local estiver atrasado: `git pull --rebase origin main` então push novamente.
+4. Criar um GitHub Release para a nova tag
+   - UI: Releases → New release → Escolher tag `vX.Y.Z` → Publish.
    - CLI: `gh release create vX.Y.Z --title "vX.Y.Z" --notes-file CHANGELOG.md --latest`
-5. CI publishes to PyPI
-   - The "Publish" workflow runs and calls `uv publish` using OIDC.
-   - Track in Actions → Publish (or `gh run list --workflow=Publish`).
-6. Verify the release
+5. CI publica no PyPI
+   - O workflow "Publish" executa e chama `uv publish` usando OIDC.
+   - Acompanhar em Actions → Publish (ou `gh run list --workflow=Publish`).
+6. Verificar o release
    - `pip install sentineliqsdk==X.Y.Z`
    - `python -c "import importlib.metadata as m; print(m.version('sentineliqsdk'))"`
 
-Prerequisites (one-time, org/maintainers):
+Pré-requisitos (uma vez, org/mantenedores):
 
-- Configure a PyPI Trusted Publisher for this repo:
+- Configurar um PyPI Trusted Publisher para este repo:
   - PyPI: Project → Settings → Collaboration → Trusted Publishers → Add → GitHub
     - Repository: `killsearch/sentineliqsdk`
-    - Workflows: allow `.github/workflows/publish.yml`
-  - No classic API tokens; OIDC is granted by `id-token: write`.
-- Optional: protect the `pypi` environment in GitHub with required reviewers.
+    - Workflows: permitir `.github/workflows/publish.yml`
+  - Sem tokens de API clássicos; OIDC é concedido por `id-token: write`.
+- Opcional: proteger o ambiente `pypi` no GitHub com revisores obrigatórios.
 
-Notes and tips:
+Notas e dicas:
 
-- Tag format is `v$version` (Commitizen config); it must match `pyproject.toml`.
-- Mark GitHub Releases as "Pre-release" when publishing RCs (`X.Y.Z-rc.N`).
-- If the Publish job fails with a PyPI permission error, review the Trusted Publisher settings
-  and the workflow `permissions`.
+- Formato da tag é `v$version` (config Commitizen); deve corresponder ao `pyproject.toml`.
+- Marcar GitHub Releases como "Pre-release" ao publicar RCs (`X.Y.Z-rc.N`).
+- Se o job Publish falhar com erro de permissão PyPI, revisar as configurações do Trusted Publisher
+  e as `permissions` do workflow.

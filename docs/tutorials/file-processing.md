@@ -1,9 +1,8 @@
-# File Processing
+# Processamento de Arquivos
 
-Analyzers can operate on files by setting `data_type == "file"` and providing
-`WorkerInput.filename`. In this mode, `Analyzer.get_data()` returns the filename.
+Analisadores podem operar em arquivos configurando `data_type == "file"` e fornecendo `WorkerInput.filename`. Neste modo, `Analyzer.get_data()` retorna o caminho do arquivo.
 
-Pattern:
+## Padrão:
 
 ```python
 from __future__ import annotations
@@ -16,7 +15,7 @@ from sentineliqsdk.models import AnalyzerReport
 
 class FileHashAnalyzer(Analyzer):
     def execute(self) -> AnalyzerReport:
-        filename = Path(self.get_data())  # file path
+        filename = Path(self.get_data())  # caminho do arquivo
         data = filename.read_bytes()
         sha256 = __import__("hashlib").sha256(data).hexdigest()
         tax = self.build_taxonomy("info", "file", "sha256", sha256)
@@ -35,8 +34,8 @@ if __name__ == "__main__":
     print(FileHashAnalyzer(inp).execute().full_report)
 ```
 
-Notes:
+## Observações:
 
-- Avoid reading very large files into memory; stream when applicable.
-- Respect TLP/PAP constraints and do not exfiltrate content unless allowed.
-- When `auto_extract` is enabled, IOCs found in the full report are captured as artifacts.
+- Evite ler arquivos muito grandes diretamente na memória; utilize streaming quando aplicável.
+- Respeite as restrições de TLP/PAP e não exfiltre conteúdo a menos que permitido.
+- Quando `auto_extract` está habilitado, os IOCs encontrados no relatório completo são capturados como artefatos.

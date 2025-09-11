@@ -15,89 +15,90 @@ theme:
     repo: fontawesome/brands/github
 
 nav:
-  - Home: index.md
-  - Getting Started:
-    - Installation: getting-started/installation.md
-    - Quick Start: getting-started/quick-start.md
-    - First Analyzer: getting-started/first-analyzer.md
-  - Tutorials:
-    - Building Analyzers: tutorials/building-analyzers.md
-    - Building Responders: tutorials/building-responders.md
-    - File Processing: tutorials/file-processing.md
+  - Architecture:
+    - Overview: architecture/overview.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Documentation Style Guide: development/documentation-style-guide.md
   - Examples:
-    - Threat Intelligence: examples/threat-intelligence.md
     - Malware Analysis: examples/malware-analysis.md
     - Responders: examples/responders.md
+    - Threat Intelligence: examples/threat-intelligence.md
+  - Getting Started:
+    - First Analyzer: getting-started/first-analyzer.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
   - Guides:
     - Agent Guide: guides/guide.md
     - HTTPX Client Pattern: guides/httpx-client.md
+  - Home: index.md
   - Modules:
     - Analyzers:
-      - Shodan: modulos/analyzers/shodan.md
+      - AbuseIPDB: modulos/analyzers/abuseipdb.md
+      - AnyRun: modulos/analyzers/anyrun.md
+      - AutoFocus: modulos/analyzers/autofocus.md
+      - Axur: modulos/analyzers/axur.md
+      - Censys: modulos/analyzers/censys.md
+      - ChainAbuse: modulos/analyzers/chainabuse.md
       - CIRCL Hashlookup: modulos/analyzers/circl_hashlookup.md
       - CIRCL Passive DNS: modulos/analyzers/circl_passivedns.md
       - CIRCL PassiveSSL: modulos/analyzers/circl_passivessl.md
       - CIRCL Vulnerability Lookup: modulos/analyzers/circl_vulnerability_lookup.md
-      - Axur: modulos/analyzers/axur.md
-      - AbuseIPDB: modulos/analyzers/abuseipdb.md
-      - ChainAbuse: modulos/analyzers/chainabuse.md
       - ClamAV: modulos/analyzers/clamav.md
       - Cluster25: modulos/analyzers/cluster25.md
       - CrowdSec: modulos/analyzers/crowdsec.md
       - CrowdStrike Falcon: modulos/analyzers/crowdstrike_falcon.md
-      - AnyRun: modulos/analyzers/anyrun.md
-      - AutoFocus: modulos/analyzers/autofocus.md
-      - MCAP: modulos/analyzers/mcap.md
-      - Censys: modulos/analyzers/censys.md
+      - Crt.sh: modulos/analyzers/crtsh.md
+      - Cuckoo Sandbox: modulos/analyzers/cuckoo.md
       - CyberChef: modulos/analyzers/cyberchef.md
       - CyberCrime Tracker: modulos/analyzers/cybercrime_tracker.md
-    - Responders:
-      - Webhook: modulos/responders/webhook.md
-      - Gmail SMTP: modulos/responders/gmail_smtp.md
-      - Outlook SMTP: modulos/responders/outlook_smtp.md
-      - Kafka REST: modulos/responders/kafka_rest.md
-      - RabbitMQ HTTP: modulos/responders/rabbitmq_http.md
+      - MCAP: modulos/analyzers/mcap.md
+      - Shodan: modulos/analyzers/shodan.md
     - Clients:
       - Axur Client: modulos/clients/axur.md
       - Cluster25 Client: modulos/clients/cluster25.md
       - CrowdSec Client: modulos/clients/crowdsec.md
       - Shodan Client: modulos/clients/shodan.md
-    - Producers:
-      - Kafka Producer: modulos/producers/kafka_producer.md
     - Consumers:
       - Kafka Consumer: modulos/consumers/kafka_consumer.md
+    - Detectors:
+      - ASN: modulos/detectors/asn.md
+      - CIDR: modulos/detectors/cidr.md
+      - CVE: modulos/detectors/cve.md
+      - Domain: modulos/detectors/domain.md
+      - FQDN: modulos/detectors/fqdn.md
+      - Hash: modulos/detectors/hash.md
+      - IP: modulos/detectors/ip.md
+      - IP Port: modulos/detectors/ip_port.md
+      - MAC: modulos/detectors/mac.md
+      - Mail: modulos/detectors/mail.md
+      - Registry: modulos/detectors/registry.md
+      - URI Path: modulos/detectors/uri_path.md
+      - URL: modulos/detectors/url.md
+      - User-Agent: modulos/detectors/user-agent.md
     - Pipelines:
       - Security Pipeline: modulos/pipelines/security_pipeline.md
-    - Detectors:
-      - ip: modulos/detectors/ip.md
-      - url: modulos/detectors/url.md
-      - domain: modulos/detectors/domain.md
-      - hash: modulos/detectors/hash.md
-      - user-agent: modulos/detectors/user-agent.md
-      - uri_path: modulos/detectors/uri_path.md
-      - registry: modulos/detectors/registry.md
-      - mail: modulos/detectors/mail.md
-      - fqdn: modulos/detectors/fqdn.md
-      - cidr: modulos/detectors/cidr.md
-      - mac: modulos/detectors/mac.md
-      - asn: modulos/detectors/asn.md
-      - cve: modulos/detectors/cve.md
-      - ip_port: modulos/detectors/ip_port.md
-      - crt.sh: modulos/analyzers/crtsh.md
-      - Cuckoo Sandbox: modulos/analyzers/cuckoo.md
+    - Producers:
+      - Kafka Producer: modulos/producers/kafka_producer.md
+    - Responders:
+      - Gmail SMTP: modulos/responders/gmail_smtp.md
+      - Kafka REST: modulos/responders/kafka_rest.md
+      - Outlook SMTP: modulos/responders/outlook_smtp.md
+      - RabbitMQ HTTP: modulos/responders/rabbitmq_http.md
+      - Webhook: modulos/responders/webhook.md
   - Reference:
-    - Worker: reference/api/worker.md
     - Analyzer: reference/api/analyzer.md
-    - Responder: reference/api/responder.md
     - Extractor: reference/api/extractor.md
     - Models: reference/api/models.md
-  - Architecture:
-    - Overview: architecture/overview.md
-  - Development:
-    - Contributing: development/contributing.md
+    - Responder: reference/api/responder.md
+    - Worker: reference/api/worker.md
   - Troubleshooting:
     - Common Issues: troubleshooting/common-issues.md
     - FAQ: troubleshooting/faq.md
+  - Tutorials:
+    - Building Analyzers: tutorials/building-analyzers.md
+    - Building Responders: tutorials/building-responders.md
+    - File Processing: tutorials/file-processing.md
 
 plugins:
   - search

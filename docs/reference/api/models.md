@@ -1,4 +1,4 @@
-# API Reference: Models
+# Referência da API: Modelos
 
 ::: sentineliqsdk.models
 

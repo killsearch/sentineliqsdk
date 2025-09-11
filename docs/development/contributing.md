@@ -1,26 +1,26 @@
-# Contributing
+# Contribuindo
 
-Welcome! This SDK follows clear conventions to keep contributions consistent and safe.
+Bem-vindo(a)! Este SDK segue convenções claras para manter as contribuições consistentes e seguras.
 
-Key references:
+**Referências principais:**
 
-- Agent Guide: `docs/guides/guide.md` (full conventions for analyzers/responders/detectors)
-- Development Rules: `DEVELOPMENT_RULES.md` (detailed coding standards and workflow)
+- Guia do Agente: `docs/guides/guide.md` (convenções completas para analisadores/respondedores/detectores)
+- Regras de Desenvolvimento: `DEVELOPMENT_RULES.md` (padrões de codificação e fluxo de trabalho detalhados)
 
-Setup:
+**Configuração:**
 
 ```bash
-uv sync --all-extras --dev  # or: pip install -e .[dev]
+uv sync --all-extras --dev  # ou: pip install -e .[dev]
 pre-commit install --install-hooks
 ```
 
-Common tasks:
+**Tarefas comuns:**
 
-- Lint/Types: `poe lint`
-- Tests: `poe test`
-- Docs: `poe docs` (and `poe docs-serve` to preview)
+- Lint/Tipos: `poe lint`
+- Testes: `poe test`
+- Documentação: `poe docs` (e `poe docs-serve` para pré-visualizar)
 
-Scaffolding:
+**Scaffolding:**
 
 ```bash
 poe new-analyzer  -- --name Shodan
@@ -28,16 +28,16 @@ poe new-responder -- --name BlockIp
 poe new-detector  -- --name MyType
 ```
 
-Checklist (PR):
+**Checklist (PR):**
 
-- Code style: absolute imports, 4 spaces, line length ≤ 100
-- Examples under `examples/` (dry‑run by default; `--execute` for network)
-- Tests added/updated when applicable
-- `poe lint` and `poe test` pass
-- Documentation updated where helpful (Guides/Reference/Examples)
+- Estilo de código: imports absolutos, 4 espaços, comprimento da linha ≤ 100
+- Exemplos em `examples/` (dry-run por padrão; `--execute` para rede)
+- Testes adicionados/atualizados quando aplicável
+- `poe lint` e `poe test` passam
+- Documentação atualizada onde for útil (Guias/Referência/Exemplos)
 
-Releases:
+**Lançamentos:**
 
-- Bump with Commitizen: `uv run cz bump` (or `--increment patch|minor|major`)
-- Push with tags: `git push origin main --follow-tags`
-- Create a GitHub Release for tag `vX.Y.Z` to publish to PyPI via OIDC
+- Bump com Commitizen: `uv run cz bump` (ou `--increment patch|minor|major`)
+- Push com tags: `git push origin main --follow-tags`
+- Crie um GitHub Release para a tag `vX.Y.Z` para publicar no PyPI via OIDC

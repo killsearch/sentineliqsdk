@@ -1,29 +1,28 @@
-# Troubleshooting: Common Issues
+# Solução de Problemas: Problemas Comuns
 
-- Lint failures (ruff/mypy)
-  - Run `poe lint` and fix findings. Ensure imports are absolute and line length ≤ 100.
-  - For typing errors, prefer adding precise types to dataclass fields and method returns.
+- **Falhas de Lint (ruff/mypy)**
+  - Execute `poe lint` e corrija os problemas encontrados. Garanta que os imports sejam absolutos e o comprimento da linha seja ≤ 100 caracteres.
+  - Para erros de tipagem, prefira adicionar tipos precisos aos campos de dataclass e retornos de métodos.
 
-- Tests failing
-  - Run `poe test` locally and focus on the smallest failing unit first.
-  - Use `-k <name>` to select specific tests.
+- **Testes Falhando**
+  - Execute `poe test` localmente e concentre-se na menor unidade que está falhando primeiro.
+  - Use `-k <nome>` para selecionar testes específicos.
 
-- TLP/PAP error on startup
-  - Message: `TLP is higher than allowed.` or `PAP is higher than allowed.`
-  - Fix: lower `tlp`/`pap` in `WorkerInput` or increase `max_tlp`/`max_pap` in `WorkerConfig`.
+- **Erro de TLP/PAP na Inicialização**
+  - Mensagem: `TLP is higher than allowed.` ou `PAP is higher than allowed.`
+  - Correção: diminua o `tlp`/`pap` em `WorkerInput` ou aumente `max_tlp`/`max_pap` em `WorkerConfig`.
 
-- Network behind proxy
-  - Configure `WorkerInput.config.proxy` (preferred). The Worker exports these to the process
-    environment for stdlib HTTP clients.
+- **Rede Atrás de Proxy**
+  - Configure `WorkerInput.config.proxy` (preferencial). O Worker exporta essas configurações para o ambiente do processo para clientes HTTP da stdlib.
 
-- Example prints plan only (no network)
-  - Add `--execute` to perform real network calls.
-  - Some operations also require `--include-dangerous`.
+- **Exemplo Imprime Apenas o Plano (sem rede)**
+  - Adicione `--execute` para realizar chamadas de rede reais.
+  - Algumas operações também exigem `--include-dangerous`.
 
-- Missing credentials
-  - Shodan: set `shodan.api_key` in `WorkerConfig.secrets` or pass `--api-key` to the example.
-  - Axur: set `axur.api_token` in `WorkerConfig.secrets` or pass `--token`.
+- **Credenciais Ausentes**
+  - Shodan: defina `shodan.api_key` em `WorkerConfig.secrets` ou passe `--api-key` para o exemplo.
+  - Axur: defina `axur.api_token` em `WorkerConfig.secrets` ou passe `--token`.
 
-- MkDocs build errors
-  - Ensure dev dependencies are installed: `pip install -e .[dev]` or `uv sync --dev`.
-  - Run `poe docs` and review warnings with `--strict` enabled.
+- **Erros de Build do MkDocs**
+  - Garanta que as dependências de desenvolvimento estejam instaladas: `pip install -e .[dev]` ou `uv sync --dev`.
+  - Execute `poe docs` e revise os avisos com `--strict` habilitado.

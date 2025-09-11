@@ -1,15 +1,15 @@
-# Building Analyzers
+# Construindo Analisadores
 
-This tutorial walks through creating a production‑quality analyzer using the SDK patterns.
+Este tutorial detalha a criação de um analisador com qualidade de produção, seguindo os padrões do SDK.
 
-What you’ll build:
+## O que você irá construir:
 
-- A class `<Name>Analyzer` extending `sentineliqsdk.analyzers.Analyzer`.
-- An `execute() -> AnalyzerReport` that returns a structured envelope via `self.report(...)`.
-- A `run()` that returns `self.execute()` for programmatic use.
-- A runnable example under `examples/analyzers/` using `WorkerInput`.
+- Uma classe `<Nome>Analyzer` que estende `sentineliqsdk.analyzers.Analyzer`.
+- Um método `execute() -> AnalyzerReport` que retorna um envelope estruturado via `self.report(...)`.
+- Um método `run()` que retorna `self.execute()` para uso programático.
+- Um exemplo executável em `examples/analyzers/` utilizando `WorkerInput`.
 
-1) Define the class
+## 1) Definindo a Classe
 
 ```python
 from __future__ import annotations
@@ -33,25 +33,22 @@ class MyAnalyzer(Analyzer):
         return self.execute()
 ```
 
-2) Auto‑extraction of artifacts
+## 2) Autoextração de Artefatos
 
-- Enabled by default unless `WorkerInput.config.auto_extract` is `False`.
-- The analyzer’s `artifacts(full_report)` uses the Extractor to find IOCs in your report,
-  excluding the original observable.
-- For custom items, build artifacts explicitly with `self.build_artifact(...)` and include them
-  in the envelope.
+- A autoextração é habilitada por padrão, a menos que `WorkerInput.config.auto_extract` seja `False`.
+- O método `artifacts(full_report)` do analisador utiliza o Extractor para encontrar IOCs (Indicadores de Compromisso) no seu relatório, excluindo o observável original.
+- Para itens personalizados, construa artefatos explicitamente com `self.build_artifact(...)` e inclua-os no envelope.
 
-3) Operations and follow‑ups
+## 3) Operações e Ações de Acompanhamento
 
-Use `self.build_operation("<type>", **params)` and override `operations(full_report)` when you
-need to suggest next steps (e.g., hunt, enrichment, block).
+Utilize `self.build_operation("<tipo>", **params)` e sobrescreva `operations(full_report)` quando precisar sugerir próximos passos (por exemplo, caça, enriquecimento, bloqueio).
 
-4) Example and CLI flags
+## 4) Exemplo e Flags da CLI
 
-- Place a runnable example at `examples/analyzers/<snake>_example.py`.
-- Default to dry‑run and add `--execute` to perform network calls.
-- Use `--include-dangerous` to gate impactful actions (e.g., scans).
+- Coloque um exemplo executável em `examples/analyzers/<snake>_example.py`.
+- Por padrão, o exemplo deve ser dry-run. Adicione `--execute` para realizar chamadas de rede.
+- Use `--include-dangerous` para proteger ações de alto impacto (por exemplo, varreduras).
 
-5) Validation
+## 5) Validação
 
-- Run `poe lint` (ruff + mypy) and `poe test` (pytest) locally before opening a PR.
+- Execute `poe lint` (ruff + mypy) e `poe test` (pytest) localmente antes de abrir um Pull Request (PR).

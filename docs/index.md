@@ -1,14 +1,13 @@
 # SentinelIQ SDK
 
-Build robust analyzers and responders using the SentinelIQ SDK. This site covers how to
-get started, core concepts, API reference, examples, and contributor guidelines.
+Bem-vindo à documentação oficial do SentinelIQ SDK! Este kit de desenvolvimento de software foi projetado para capacitá-lo a construir analisadores e respondedores robustos para suas necessidades de segurança cibernética. Explore como começar, os conceitos fundamentais, a referência da API, exemplos práticos e diretrizes para contribuidores.
 
-Quick links:
+### Links Rápidos
 
-- Getting Started: installation, quick start, and your first analyzer
-- Guides: full Agent Guide with conventions and patterns
-- Reference: API docs (Worker, Analyzer, Responder, Extractor, Models)
-- Examples: runnable scripts for common providers
-- Troubleshooting: common issues and FAQ
+- **Começando**: Instalação, início rápido e seu primeiro analisador.
+- **Guias**: Guia completo do Agente com convenções e padrões.
+- **Referência**: Documentação da API (Worker, Analyzer, Responder, Extractor, Models).
+- **Exemplos**: Scripts executáveis para provedores comuns.
+- **Solução de Problemas**: Problemas comuns e perguntas frequentes.
 
-Repository: https://github.com/killsearch/sentineliqsdk
+Repositório: https://github.com/killsearch/sentineliqsdk

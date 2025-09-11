@@ -1,8 +1,8 @@
-# Quick Start
+# Início Rápido
 
-This page shows the minimal path to create and run an analyzer using dataclasses.
+Esta página demonstra o caminho mínimo para criar e executar um analisador utilizando dataclasses no SentinelIQ SDK.
 
-Minimal analyzer example:
+## Exemplo Mínimo de Analisador
 
 ```python
 from __future__ import annotations
@@ -14,7 +14,7 @@ from sentineliqsdk.models import AnalyzerReport
 
 
 class ReputationAnalyzer(Analyzer):
-    """Marks 1.2.3.4 as malicious, others as safe."""
+    """Marca '1.2.3.4' como malicioso, e outros como seguros."""
 
     def execute(self) -> AnalyzerReport:
         observable = self.get_data()
@@ -36,13 +36,17 @@ if __name__ == "__main__":
     print(json.dumps(report.full_report, ensure_ascii=False))
 ```
 
-Run it:
+## Como Executar
+
+Para executar o analisador, salve o código acima em um arquivo (por exemplo, `your_script.py`) e execute-o via terminal:
 
 ```bash
 python path/to/your_script.py
 ```
 
-Using the convenience `runner`:
+## Utilizando o `runner` (Facilitador)
+
+O SentinelIQ SDK oferece um `runner` para simplificar a execução de analisadores:
 
 ```python
 from sentineliqsdk import runner, WorkerInput
@@ -50,7 +54,7 @@ from sentineliqsdk import runner, WorkerInput
 runner(ReputationAnalyzer, WorkerInput(data_type="ip", data="1.2.3.4"))
 ```
 
-Next steps:
+## Próximos Passos
 
-- See the full Agent Guide for conventions and patterns.
-- Use `poe new-analyzer -- --name MyAnalyzer` to scaffold a new analyzer.
+- Consulte o [Guia Completo do Agente](https://killsearch.github.io/sentineliqsdk/guides/guide/) para convenções e padrões de desenvolvimento.
+- Utilize `poe new-analyzer -- --name MeuNovoAnalisador` para criar um novo analisador a partir de um template.

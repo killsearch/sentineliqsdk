@@ -1,4 +1,4 @@
-# API Reference: Extractor
+# Referência da API: Extrator
 
 ::: sentineliqsdk.extractors.regex.Extractor
 
