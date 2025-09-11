@@ -13,6 +13,7 @@ authors = [
 requires-python = ">=3.13,<4.0"
 dependencies = [
     "autofocus-client-library>=4.0.12",
+    "beautifulsoup4>=4.13.5",
     "censys-platform>=0.8.0",
     "crowdstrike-falconpy>=1.5.4",
     "cyapi>=1.0.20",
