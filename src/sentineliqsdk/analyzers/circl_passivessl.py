@@ -36,9 +36,6 @@ from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 # HTTP status codes
 
 
-
-
-
 class CirclPassivesslAnalyzer(Analyzer):
     """Analyzer that queries CIRCL PassiveSSL for certificate and IP relationships."""
 

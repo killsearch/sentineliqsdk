@@ -67,8 +67,6 @@ MAX_STRING_LENGTH = 10000  # Maximum string length to process
 MAX_ITERABLE_DEPTH = 100  # Maximum nesting depth for iterables
 
 
-
-
 class ExtractionError(Exception):
     """Extraction error raised for invalid inputs."""
 

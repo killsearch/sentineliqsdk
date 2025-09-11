@@ -13,7 +13,6 @@ from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 # Score thresholds for taxonomy classification
 
 
-
 class Cluster25Analyzer(Analyzer):
     """
     Cluster25 Analyzer - Analyzes indicators using Cluster25 threat intelligence platform.

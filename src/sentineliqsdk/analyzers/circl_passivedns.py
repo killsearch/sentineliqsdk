@@ -37,9 +37,6 @@ from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 # HTTP status codes
 
 
-
-
-
 class CirclPassivednsAnalyzer(Analyzer):
     """Analyzer that queries CIRCL Passive DNS for historical DNS records."""
 

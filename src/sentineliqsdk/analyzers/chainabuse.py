@@ -40,8 +40,6 @@ HTTP_OK = 200
 HTTP_NOT_FOUND = 404
 
 
-
-
 class ChainAbuseAnalyzer(Analyzer):
     """Analyzer that queries ChainAbuse for blockchain address and URL reputation."""
 

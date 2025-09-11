@@ -13,7 +13,6 @@ from sentineliqsdk.constants import HTTP_UNAUTHORIZED, MALSCORE_MALICIOUS, MALSC
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
 
 
-
 class CuckooSandboxAnalyzer(Analyzer):
     """Submit files or URLs to a Cuckoo Sandbox and fetch the JSON report.
 
@@ -71,7 +70,7 @@ class CuckooSandboxAnalyzer(Analyzer):
     def _submit_url(self, client: httpx.Client, base: str, url: str) -> int:
         """Submit a URL to Cuckoo Sandbox."""
         resp = client.post(base + "tasks/create/url", data={"url": url}, headers=self._headers())
-        if resp.status_code == _HTTP_UNAUTHORIZED:
+        if resp.status_code == HTTP_UNAUTHORIZED:
             self.error("API token is required by this Cuckoo instance.")
         data = resp.json()
         return int(data.get("task_id") or -1)

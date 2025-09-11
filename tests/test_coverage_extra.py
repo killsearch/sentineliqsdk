@@ -66,7 +66,7 @@ def test_register_detector_after_with_empty_list_hits_direct_append():
 
 def test_register_detector_conflict_raises():
     extractor = Extractor()
-    with pytest.raises(ValueError, match="Use only one of 'before' or 'after'."):
+    with pytest.raises(ValueError, match=r"Use only one of 'before' or 'after'."):
         extractor.register_detector(DummyDetector("x", "y"), before="url", after="ip")
 
 

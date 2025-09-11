@@ -48,8 +48,6 @@ from sentineliqsdk.constants import (
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 
 
-
-
 class AnyRunAnalyzer(Analyzer):
     """Analyzer that submits files and URLs to AnyRun sandbox for analysis."""
 

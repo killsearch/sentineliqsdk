@@ -72,11 +72,11 @@ SAFE_RECORD_THRESHOLD = 5
 
 # Threat Intelligence Analyzers Thresholds
 SUSPICIOUS_RESULTS_THRESHOLD = 100  # Censys
-MALICIOUS_REPORT_THRESHOLD = 5      # ChainAbuse
-SAFE_SCORE_THRESHOLD = 50           # Cluster25
-SUSPICIOUS_SCORE_THRESHOLD = 80     # Cluster25 and AnyRun
-MALICIOUS_SCORE_THRESHOLD = 100     # AnyRun
-MALICIOUS_THRESHOLD = 80            # AbuseIPDB
+MALICIOUS_REPORT_THRESHOLD = 5  # ChainAbuse
+SAFE_SCORE_THRESHOLD = 50  # Cluster25
+SUSPICIOUS_SCORE_THRESHOLD = 80  # Cluster25 and AnyRun
+MALICIOUS_SCORE_THRESHOLD = 100  # AnyRun
+MALICIOUS_THRESHOLD = 80  # AbuseIPDB
 
 # Messaging and Queue Configuration
 # Retry settings

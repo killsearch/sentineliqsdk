@@ -8,7 +8,6 @@ from types import MappingProxyType
 from typing import Any, Literal
 
 from sentineliqsdk.constants import (
-    AUTO_COMMIT_INTERVAL_MS,
     CONNECTION_TIMEOUT,
     MAX_RETRIES,
     MAX_RETRY_DELAY,

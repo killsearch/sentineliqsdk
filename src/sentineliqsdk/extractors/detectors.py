@@ -15,9 +15,13 @@ from email.utils import parseaddr
 from typing import Protocol
 from urllib.parse import urlparse
 
-from sentineliqsdk.constants import DOMAIN_PARTS, HASH_LENGTHS, MIN_FQDN_LABELS, USER_AGENT_PREFIXES, MAX_PORT_NUMBER
-
-
+from sentineliqsdk.constants import (
+    DOMAIN_PARTS,
+    HASH_LENGTHS,
+    MAX_PORT_NUMBER,
+    MIN_FQDN_LABELS,
+    USER_AGENT_PREFIXES,
+)
 
 
 class DetectionContext(Protocol):
@@ -169,7 +173,7 @@ class MailDetector:
         """Return True for ``local@domain`` addresses validated by ``parseaddr``."""
         if self.ctx.support_mailto and value.startswith("mailto:"):
             value = value[7:]
-        name, addr = parseaddr(value)
+        _name, addr = parseaddr(value)
         if addr != value:
             return False
         if "@" not in addr:
