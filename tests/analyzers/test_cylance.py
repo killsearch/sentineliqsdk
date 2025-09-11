@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
-import pytest
-
 from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.cylance import CylanceAnalyzer
 from sentineliqsdk.models import AnalyzerReport
@@ -69,7 +67,7 @@ class TestCylanceAnalyzer:
 
         assert isinstance(result, AnalyzerReport)
         assert result.full_report["verdict"] == "info"
-        assert "Tipo de dados não suportado" in str(result.full_report)
+        assert "Tipo de dados 'ip' não suportado" in result.full_report["error"]
 
     def test_invalid_hash_format(self) -> None:
         """Testa comportamento com hash inválido."""
@@ -88,8 +86,8 @@ class TestCylanceAnalyzer:
         assert result.full_report["verdict"] == "info"
         assert "Hash inválido" in str(result.full_report)
 
-    def test_missing_credentials(self) -> None:
-        """Testa comportamento sem credenciais."""
+    def test_missing_credentials(self):
+        """Testa comportamento quando credenciais estão ausentes."""
         config_no_secrets = WorkerConfig(
             check_tlp=True,
             max_tlp=2,
@@ -108,9 +106,11 @@ class TestCylanceAnalyzer:
         )
 
         analyzer = CylanceAnalyzer(worker_input)
+        result = analyzer.execute()
 
-        with pytest.raises(ValueError, match="Credencial obrigatória"):
-            analyzer.execute()
+        # Verifica se há erro no resultado
+        assert "error" in result.full_report
+        assert "Credencial obrigatória: Cylance Tenant ID" in result.full_report["error"]
 
     @patch("sentineliqsdk.analyzers.cylance.CyAPI")
     def test_successful_analysis_malicious(self, mock_cyapi: Mock) -> None:
