@@ -1,3 +1,9 @@
+"""Analyzer para consultar a API Cylance.
+
+Este módulo implementa um analyzer que consulta a API da Cylance
+para obter informações de ameaças sobre hashes SHA256.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -6,6 +12,13 @@ from cyapi.cyapi import CyAPI
 
 from sentineliqsdk import Analyzer
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+
+# Cylance score thresholds
+_MALICIOUS_THRESHOLD = -0.7  # Muito negativo = malicioso
+_SUSPICIOUS_THRESHOLD = -0.1  # Negativo = suspeito
+
+# Hash validation constants
+_SHA256_LENGTH = 64  # Comprimento esperado para hash SHA256
 
 
 class CylanceAnalyzer(Analyzer):
@@ -43,7 +56,7 @@ class CylanceAnalyzer(Analyzer):
             return self.report(full)
 
         # Verificar se é SHA256 (64 caracteres)
-        if len(str(observable)) != 64:
+        if len(str(observable)) != _SHA256_LENGTH:
             taxonomy = self.build_taxonomy("info", "cylance", "Search", "invalid hash format")
             full = {
                 "observable": observable,
@@ -88,10 +101,10 @@ class CylanceAnalyzer(Analyzer):
                 # Cylance scores: valores negativos indicam malware, positivos indicam seguro
                 cylance_score = sample_data.get("cylance_score")
                 if cylance_score is not None:
-                    if cylance_score <= -0.7:  # Muito negativo = malicioso
+                    if cylance_score <= _MALICIOUS_THRESHOLD:  # Muito negativo = malicioso
                         verdict = "malicious"
                         predicate = "malware"
-                    elif cylance_score <= -0.1:  # Negativo = suspeito
+                    elif cylance_score <= _SUSPICIOUS_THRESHOLD:  # Negativo = suspeito
                         verdict = "suspicious"
                         predicate = "abnormal"
                     else:  # Positivo ou próximo de zero = seguro

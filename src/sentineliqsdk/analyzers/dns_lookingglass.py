@@ -21,8 +21,8 @@ from typing import Any
 
 import httpx
 
-from sentineliqsdk.analyzers.base import Analyzer
-from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+from sentineliqsdk import Analyzer
+from sentineliqsdk.models import AnalyzerReport, Artifact, ModuleMetadata
 
 _HTTP_OK = 200
 
@@ -146,11 +146,7 @@ class DnsLookingglassAnalyzer(Analyzer):
                     # Skip malformed records
                     continue
 
-        # Extract IP artifacts
-        extracted_ips = self._extract_ips(raw_results)
-        artifacts = []
-        for ip in extracted_ips:
-            artifacts.append(self.build_artifact("ip", ip))
+        # IP artifacts are handled by the artifacts() method
 
         # Determine verdict and taxonomy
         hit_status = self._get_hit_status(results)
@@ -175,13 +171,12 @@ class DnsLookingglassAnalyzer(Analyzer):
 
     def artifacts(self, raw: Any) -> list:
         """Extract IP artifacts from DNS lookup results."""
-        artifacts = []
+        artifacts: list[Artifact] = []
         if isinstance(raw, dict) and "results" in raw:
             for result in raw["results"]:
                 if "answer" in result:
                     ips = self._extract_ips(result["answer"])
-                    for ip in ips:
-                        artifacts.append(self.build_artifact("ip", ip))
+                    artifacts.extend(self.build_artifact("ip", ip) for ip in ips)
 
         # Merge with auto-extracted artifacts when enabled
         try:

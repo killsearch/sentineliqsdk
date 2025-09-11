@@ -28,6 +28,8 @@ from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.models import AnalyzerReport, Artifact, ModuleMetadata
 
 _HTTP_OK = 200
+_MIN_TABLES_REQUIRED = 4
+_MIN_CELLS_REQUIRED = 3
 
 
 class DnsdumpsterAnalyzer(Analyzer):
@@ -80,7 +82,7 @@ class DnsdumpsterAnalyzer(Analyzer):
 
         except httpx.HTTPError as e:
             self.error(f"Error getting CSRF token from DNSdumpster: {e}")
-            raise RuntimeError(f"Error getting CSRF token from DNSdumpster: {e}")
+            raise RuntimeError(f"Error getting CSRF token from DNSdumpster: {e}") from e
 
     def _query_domain(self, domain: str) -> dict[str, Any]:
         """Query DNS information for a domain via DNSdumpster.com."""
@@ -118,17 +120,17 @@ class DnsdumpsterAnalyzer(Analyzer):
 
             except httpx.HTTPError as e:
                 self.error(f"Error querying DNSdumpster API: {e}")
-                raise RuntimeError(f"Error querying DNSdumpster API: {e}")
+                raise RuntimeError(f"Error querying DNSdumpster API: {e}") from e
             except Exception as e:
                 self.error(f"Unexpected error: {e}")
-                raise RuntimeError(f"Unexpected error: {e}")
+                raise RuntimeError(f"Unexpected error: {e}") from e
 
     def _parse_response(self, content: str, domain: str) -> dict[str, Any]:
         """Parse DNSdumpster HTML response."""
         soup = BeautifulSoup(content, "html.parser")
         tables = soup.find_all("table")
 
-        if len(tables) < 4:
+        if len(tables) < _MIN_TABLES_REQUIRED:
             return {"domain": domain, "dns_records": {}}
 
         result = {
@@ -160,7 +162,7 @@ class DnsdumpsterAnalyzer(Analyzer):
 
         for row in rows:
             cells = row.find_all("td")
-            if len(cells) < 3:
+            if len(cells) < _MIN_CELLS_REQUIRED:
                 continue
 
             try:
@@ -211,10 +213,40 @@ class DnsdumpsterAnalyzer(Analyzer):
 
         return results
 
+    def _extract_artifacts_from_records(
+        self, records: list, seen: set, artifacts: list[Artifact]
+    ) -> None:
+        """Extract artifacts from DNS records."""
+        for record in records:
+            if isinstance(record, dict):
+                # Extract IP addresses
+                ip = record.get("ip", "")
+                if ip and ip not in seen:
+                    artifacts.append(self.build_artifact("ip", ip))
+                    seen.add(ip)
+
+                # Extract domains
+                domain = record.get("domain", "")
+                if domain and domain not in seen:
+                    artifacts.append(self.build_artifact("domain", domain))
+                    seen.add(domain)
+
+    def _extract_artifacts_from_txt(
+        self, txt_records: list, seen: set, artifacts: list[Artifact]
+    ) -> None:
+        """Extract artifacts from TXT records."""
+        url_pattern = re.compile(r"https?://[^\s]+")
+        for txt in txt_records:
+            urls = url_pattern.findall(str(txt))
+            for url in urls:
+                if url not in seen:
+                    artifacts.append(self.build_artifact("url", url))
+                    seen.add(url)
+
     def _extract_artifacts(self, data: dict[str, Any]) -> list[dict[str, str]]:
         """Extract IP addresses, domains and URLs as artifacts."""
         artifacts: list[Artifact] = []
-        seen = set()
+        seen: set[str] = set()
 
         if "dns_records" not in data:
             return []
@@ -225,30 +257,11 @@ class DnsdumpsterAnalyzer(Analyzer):
         for record_type in ["dns", "mx", "host"]:
             records = dns_records.get(record_type, [])
             if isinstance(records, list):
-                for record in records:
-                    if isinstance(record, dict):
-                        # Extract IP addresses
-                        ip = record.get("ip", "")
-                        if ip and ip not in seen:
-                            artifacts.append(self.build_artifact("ip", ip))
-                            seen.add(ip)
-
-                        # Extract domains
-                        domain = record.get("domain", "")
-                        if domain and domain not in seen:
-                            artifacts.append(self.build_artifact("domain", domain))
-                            seen.add(domain)
+                self._extract_artifacts_from_records(records, seen, artifacts)
 
         # Extract from TXT records
         txt_records = dns_records.get("txt", [])
-        for txt in txt_records:
-            # Look for URLs in TXT records
-            url_pattern = re.compile(r"https?://[^\s]+")
-            urls = url_pattern.findall(str(txt))
-            for url in urls:
-                if url not in seen:
-                    artifacts.append(self.build_artifact("url", url))
-                    seen.add(url)
+        self._extract_artifacts_from_txt(txt_records, seen, artifacts)
 
         return [asdict(artifact) for artifact in artifacts]
 

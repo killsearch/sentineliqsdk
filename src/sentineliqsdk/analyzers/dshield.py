@@ -35,6 +35,10 @@ from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.constants import HTTP_OK_MAX, HTTP_OK_MIN
 from sentineliqsdk.models import AnalyzerReport, Artifact, ModuleMetadata, TaxonomyLevel
 
+# Risk level thresholds
+_SAFE_RISK_THRESHOLD = 1
+_SUSPICIOUS_RISK_THRESHOLD = 6
+
 
 class DShieldAnalyzer(Analyzer):
     """Analyzer that queries SANS DShield for IP reputation and threat intelligence."""
@@ -87,9 +91,9 @@ class DShieldAnalyzer(Analyzer):
         # Add threat feeds count to increase detection rate
         total_risk = max_risk + threat_feeds_count
 
-        if total_risk <= 1:
+        if total_risk <= _SAFE_RISK_THRESHOLD:
             return total_risk, "safe"
-        if total_risk <= 6:
+        if total_risk <= _SUSPICIOUS_RISK_THRESHOLD:
             return total_risk, "suspicious"
         return total_risk, "malicious"
 
@@ -108,24 +112,9 @@ class DShieldAnalyzer(Analyzer):
 
         return threat_feeds_count, threat_feeds
 
-    def execute(self) -> AnalyzerReport:
-        """Execute DShield analysis."""
-        dtype = self.data_type
-        observable = self.get_data()
-
-        if dtype != "ip":
-            self.error(f"Unsupported data type for DShieldAnalyzer: {dtype}")
-
-        raw_data = self._fetch_ip_info(str(observable))
-
-        # Check if we have valid results
-        if dtype not in raw_data:
-            self.error("No data found for the provided IP")
-
-        info = raw_data[dtype]
-
-        # Process basic information
-        results = {
+    def _process_basic_info(self, info: dict[str, Any], observable: str) -> dict[str, Any]:
+        """Process basic IP information from DShield response."""
+        return {
             "ip": info.get("number", str(observable)),
             "count": info.get("count", 0) if isinstance(info.get("count"), int) else 0,
             "attacks": info.get("attacks", 0) if isinstance(info.get("attacks"), int) else 0,
@@ -143,37 +132,24 @@ class DShieldAnalyzer(Analyzer):
             else "None",
         }
 
-        # Process AS information
+    def _process_as_info(self, info: dict[str, Any], results: dict[str, Any]) -> None:
+        """Process AS (Autonomous System) information."""
         if "asabusecontact" in info:
             results["asabusecontact"] = (
                 info["asabusecontact"] if isinstance(info["asabusecontact"], str) else "Unknown"
             )
-        if "as" in info:
-            results["as"] = info["as"]
-        if "asname" in info:
-            results["asname"] = info["asname"]
-        if "ascountry" in info:
-            results["ascountry"] = info["ascountry"]
-        if "assize" in info:
-            results["assize"] = info["assize"]
-        if "network" in info:
-            results["network"] = info["network"]
+        for field in ["as", "asname", "ascountry", "assize", "network"]:
+            if field in info:
+                results[field] = info[field]
 
-        # Process threat feeds
-        threat_feeds_count, threat_feeds = self._process_threat_feeds(info)
-        results["threatfeedscount"] = threat_feeds_count
-        results["threatfeeds"] = threat_feeds
-
-        # Calculate risk level
-        max_risk, reputation = self._calculate_risk_level(results["attacks"], threat_feeds_count)
-        results["maxrisk"] = max_risk
-        results["reputation"] = reputation
-
-        # Build taxonomies
+    def _build_taxonomies(
+        self, results: dict[str, Any], threat_feeds_count: int, reputation: str, max_risk: int
+    ) -> list[dict[str, Any]]:
+        """Build taxonomy list for the analysis report."""
         taxonomies = []
+        level: TaxonomyLevel = reputation  # type: ignore
 
         # Main reputation taxonomy
-        level: TaxonomyLevel = reputation  # type: ignore
         score_value = f"{results['count']} count(s) / {results['attacks']} attack(s) / {threat_feeds_count} threatfeed(s)"
         taxonomies.append(self.build_taxonomy(level, "dshield", "score", score_value).to_dict())
 
@@ -198,9 +174,46 @@ class DShieldAnalyzer(Analyzer):
                 ).to_dict()
             )
 
+        return taxonomies
+
+    def execute(self) -> AnalyzerReport:
+        """Execute DShield analysis."""
+        dtype = self.data_type
+        observable = self.get_data()
+
+        if dtype != "ip":
+            self.error(f"Unsupported data type for DShieldAnalyzer: {dtype}")
+
+        raw_data = self._fetch_ip_info(str(observable))
+
+        # Check if we have valid results
+        if dtype not in raw_data:
+            self.error("No data found for the provided IP")
+
+        info = raw_data[dtype]
+
+        # Process basic information
+        results = self._process_basic_info(info, str(observable))
+
+        # Process AS information
+        self._process_as_info(info, results)
+
+        # Process threat feeds
+        threat_feeds_count, threat_feeds = self._process_threat_feeds(info)
+        results["threatfeedscount"] = threat_feeds_count
+        results["threatfeeds"] = threat_feeds
+
+        # Calculate risk level
+        max_risk, reputation = self._calculate_risk_level(results["attacks"], threat_feeds_count)
+        results["maxrisk"] = max_risk
+        results["reputation"] = reputation
+
+        # Build taxonomies
+        taxonomies = self._build_taxonomies(results, threat_feeds_count, reputation, max_risk)
+
         full_report = {
             "observable": observable,
-            "verdict": level,
+            "verdict": reputation,
             "taxonomy": taxonomies,
             "source": "dshield",
             "data_type": dtype,

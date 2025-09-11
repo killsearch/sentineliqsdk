@@ -1,3 +1,9 @@
+"""Analyzer para consultar a API CyberProtect.
+
+Este módulo implementa um analyzer que consulta a API da CyberProtect
+para obter informações de ameaças sobre hashes SHA256.
+"""
+
 from __future__ import annotations
 
 from typing import Literal
