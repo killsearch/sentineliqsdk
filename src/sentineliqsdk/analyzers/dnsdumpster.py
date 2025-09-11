@@ -18,13 +18,14 @@ Notes
 from __future__ import annotations
 
 import re
-from typing import Any
+from dataclasses import asdict
+from typing import Any, Literal, cast
 
 import httpx
 from bs4 import BeautifulSoup
 
 from sentineliqsdk.analyzers.base import Analyzer
-from sentineliqsdk.models import AnalyzerReport, ModuleMetadata
+from sentineliqsdk.models import AnalyzerReport, Artifact, ModuleMetadata
 
 _HTTP_OK = 200
 
@@ -70,7 +71,9 @@ class DnsdumpsterAnalyzer(Analyzer):
                 self.error("Could not find CSRF token on DNSdumpster homepage")
                 raise RuntimeError("Could not find CSRF token on DNSdumpster homepage")
 
-            csrf_token = csrf_input.get("value", "") if csrf_input else ""
+            csrf_token = (
+                csrf_input.get("value", "") if csrf_input and hasattr(csrf_input, "get") else ""
+            )
             cookies = {"csrftoken": csrf_token}
 
             return csrf_token, cookies
@@ -210,11 +213,11 @@ class DnsdumpsterAnalyzer(Analyzer):
 
     def _extract_artifacts(self, data: dict[str, Any]) -> list[dict[str, str]]:
         """Extract IP addresses, domains and URLs as artifacts."""
-        artifacts: list[dict[str, str]] = []
+        artifacts: list[Artifact] = []
         seen = set()
 
         if "dns_records" not in data:
-            return [artifact.to_dict() for artifact in artifacts]
+            return []
 
         dns_records = data["dns_records"]
 
@@ -247,7 +250,7 @@ class DnsdumpsterAnalyzer(Analyzer):
                     artifacts.append(self.build_artifact("url", url))
                     seen.add(url)
 
-        return artifacts
+        return [asdict(artifact) for artifact in artifacts]
 
     def execute(self) -> AnalyzerReport:
         """Execute DNSdumpster query and return an AnalyzerReport."""
@@ -276,16 +279,16 @@ class DnsdumpsterAnalyzer(Analyzer):
             total_records += len(txt_records)
 
         if total_records > 0:
-            level = "info"
+            level_val = cast(Literal["info", "safe", "suspicious", "malicious"], "info")
             predicate = "Records Found"
             value = f"{total_records} record(s)"
         else:
-            level = "info"
+            level_val = cast(Literal["info", "safe", "suspicious", "malicious"], "info")
             predicate = "No Records"
             value = "0 records"
 
         taxonomy = self.build_taxonomy(
-            level=level, namespace="DNSdumpster", predicate=predicate, value=value
+            level=level_val, namespace="DNSdumpster", predicate=predicate, value=value
         )
 
         full_report = {
