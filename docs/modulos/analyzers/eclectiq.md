@@ -333,13 +333,13 @@ results = pipeline.process("ip", "1.2.3.4")
 
 1. **Armazenamento Seguro de Credenciais**
    ```python
-   # Use sempre secrets, nunca hardcode
+   # Use sempre secrets, nunca hardcode nem variáveis de ambiente
    config = WorkerConfig(
        secrets={
            "eclectiq": {
-               "api_key": os.getenv("ECLECTIQ_API_KEY"),  # De variável de ambiente
-               "url": os.getenv("ECLECTIQ_URL"),
-               "name": os.getenv("ECLECTIQ_NAME")
+               "api_key": "sua_eclectiq_api_key",  # configure via WorkerConfig.secrets (recomendado)
+               "url": "https://sua-instancia-eclectiq",
+               "name": "seu_nome_de_instancia"
            }
        }
    )

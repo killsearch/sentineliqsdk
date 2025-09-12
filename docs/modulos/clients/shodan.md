@@ -236,17 +236,17 @@ except HTTPStatusError as e:
 
 ## Proxy Support
 
-The client automatically respects HTTP proxy settings from environment variables:
+O cliente respeita automaticamente as configurações de proxy definidas via `WorkerConfig.proxy` (o SDK exporta internamente para variáveis de ambiente quando necessário para bibliotecas stdlib):
 
 ```python
-import os
+from sentineliqsdk import WorkerConfig
+from sentineliqsdk.clients.shodan import ShodanClient
 
-# Set proxy via environment
-os.environ["http_proxy"] = "http://proxy.company.com:8080"
-os.environ["https_proxy"] = "https://proxy.company.com:8080"
+config = WorkerConfig()
+config.set_config("proxy.http", "http://proxy.company.com:8080")
+config.set_config("proxy.https", "https://proxy.company.com:8080")
 
-# Client will automatically use these proxies
-client = ShodanClient(api_key="your-key")
+client = ShodanClient(api_key="your-key", config=config)
 ```
 
 ## Request Options

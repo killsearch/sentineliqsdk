@@ -62,7 +62,7 @@ Mantenha a documentação sincronizada sempre que adicionar ou alterar comportam
 - Adicione uma página de uso programático para cada módulo em `docs/modulos/<kind>/<name>.md`.
   A página deve mostrar entrada dataclass (`WorkerInput`) e chamar `.execute()` (ou `.run()`),
   usando apenas stdlib + SDK. Atualize a navegação em `mkdocs.yml` na seção "Modules".
-- Se adicionar nova API pública ou módulos, garanta que páginas mkdocstrings existam e a navegação em
+- Se adicionar nova API pública ou módulos, garante que páginas mkdocstrings existam e a navegação em
   `mkdocs.yml` seja atualizada.
 - Valide localmente com `poe docs` (ou pré-visualize com `poe docs-serve`).
 
@@ -321,7 +321,7 @@ são substituídas por `"REMOVED"` no payload de erro.
 Assinatura: `Worker(input_data: WorkerInput, secret_phrases: tuple[str, ...] | None)`
 
 - `get_param(name, default=None, message=None)`: não usado neste repositório (apenas dataclasses).
-- `get_env(key, default=None, message=None)`: lê variáveis de ambiente.
+- `get_env(key, default=None, message=None)`: lê variáveis de ambiente, use apenas para configurações gerais de ambiente (nunca para segredos nem config específica de módulos).
 - `get_config(path, default=None)`: lê de `WorkerConfig.params` via caminho pontuado
   (ex.: `"shodan.method"`, `"webhook.headers"`).
 - `get_secret(path, default=None, message=None)`: lê de `WorkerConfig.secrets` via

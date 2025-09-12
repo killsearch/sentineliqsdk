@@ -320,18 +320,18 @@ python examples/analyzers/autofocus_example.py --data-type domain --data malicio
 # Executar busca real
 python examples/analyzers/autofocus_example.py --data-type ip --data 1.2.3.4 --service search_ioc --execute
 
-# Busca com API key específica
+# Configuração de API key (recomendada via WorkerConfig.secrets)
+# Defina em WorkerConfig.secrets["autofocus"]["api_key"] antes da execução
 python examples/analyzers/autofocus_example.py \
   --data-type url \
   --data "https://malicious.com/payload.exe" \
   --service search_ioc \
-  --apikey YOUR_API_KEY \
   --execute
 ```
 
 ## Limitações e Considerações
 
-1. **API Key**: É necessária uma chave de API válida do AutoFocus para uso em produção.
+1. **API Key**: É necessária uma chave de API válida do AutoFocus para uso em produção. Configure via `WorkerConfig.secrets`.
 
 2. **Rate Limiting**: A API do AutoFocus tem limites de taxa. Monitore o uso para evitar bloqueios.
 

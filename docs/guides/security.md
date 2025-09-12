@@ -541,7 +541,7 @@ class AuditedAnalyzer(Analyzer):
 
 #### Para Deployment
 - [ ] Configurar secrets de forma segura
-- [ ] Usar variáveis de ambiente para configuração
+- [ ] Usar `WorkerConfig` para configurações (e `WorkerConfig.secrets` para credenciais); evitar variáveis de ambiente para configs específicas de módulos
 - [ ] Implementar rotação de credenciais
 - [ ] Configurar logs de auditoria
 - [ ] Implementar monitoramento de segurança
@@ -561,7 +561,7 @@ class AuditedAnalyzer(Analyzer):
 ### Configuração Segura de Exemplo
 
 ```python
-# Exemplo de configuração segura
+# ✅ Exemplo de configuração segura seguindo as regras do SDK
 secure_config = WorkerConfig(
     check_tlp=True,
     max_tlp=2,  # Máximo AMBER
@@ -570,22 +570,22 @@ secure_config = WorkerConfig(
     auto_extract=True,
     secrets={
         "virustotal": {
-            "api_key": os.getenv("VT_API_KEY"),
+            "api_key": "sua_vt_api_key_aqui",  # Obtenha via get_secret()
             "rate_limit": 4
         },
         "shodan": {
-            "api_key": os.getenv("SHODAN_API_KEY"),
+            "api_key": "sua_shodan_api_key_aqui",  # Obtenha via get_secret()
             "timeout": 30
         },
         "database": {
-            "host": os.getenv("DB_HOST"),
-            "username": os.getenv("DB_USER"),
-            "password": os.getenv("DB_PASS"),
+            "host": "db.exemplo.com",  # Obtenha via get_secret()
+            "username": "usuario_db",  # Obtenha via get_secret()
+            "password": "senha_segura",  # Obtenha via get_secret()
             "ssl_mode": "require"
         },
         "encryption": {
-            "master_key": os.getenv("MASTER_KEY"),
-            "salt": os.getenv("ENCRYPTION_SALT")
+            "master_key": "chave_mestre_criptografia",  # Obtenha via get_secret()
+            "salt": "salt_aleatorio"  # Obtenha via get_secret()
         }
     }
 )

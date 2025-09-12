@@ -2,7 +2,7 @@
 
 Padronize novos clientes HTTP usando httpx (sincrono) com uma estrutura mínima e clara.
 
-- Usa `httpx.Client` com `timeout` e respeito a proxies de ambiente (`http_proxy`/`https_proxy`).
+- Usa `httpx.Client` com `timeout` e proxies definidos via `WorkerConfig.proxy` (o SDK exporta internamente para variáveis de ambiente quando necessário para bibliotecas stdlib).
 - Dataclass imutável com `base_url`, `timeout`, `user_agent` e credenciais.
 - Método privado `_request()` centraliza: query, headers, corpo (`json`/`data`/`content`),
   parse de resposta e erros.
@@ -97,6 +97,6 @@ Boas práticas:
 - Prefira `json=` para corpos JSON; use `data=` com `application/x-www-form-urlencoded` quando
   necessário; `content=` para bytes brutos.
 - Sempre defina `User-Agent` específico do cliente; inclua versão.
-- Propague timeouts adequados; `httpx` já respeita proxies via ambiente (SDK exporta para env).
+- Propague timeouts adequados; `httpx` respeita variáveis de ambiente que o SDK exporta a partir de `WorkerConfig.proxy`.
 - Em erros, propague corpo no `HTTPStatusError` para facilitar troubleshooting.
 

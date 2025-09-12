@@ -228,11 +228,10 @@ class SecureVirusTotalAnalyzer(Analyzer):
 # Exemplo de uso
 if __name__ == "__main__":
     import argparse
-    import os
     
     parser = argparse.ArgumentParser(description="Secure VirusTotal Analyzer Example")
     parser.add_argument("--ip", required=True, help="IP para analisar")
-    parser.add_argument("--api-key", help="VirusTotal API key (ou use VT_API_KEY env var)")
+    parser.add_argument("--api-key", help="VirusTotal API key (forneça via CLI ou WorkerConfig.secrets)")
     parser.add_argument("--execute", action="store_true", help="Executar análise real")
     
     args = parser.parse_args()
@@ -241,8 +240,8 @@ if __name__ == "__main__":
         print("Modo dry-run. Use --execute para análise real.")
         exit(0)
     
-    # Configurar credenciais
-    api_key = args.api_key or os.getenv("VT_API_KEY")
+    # Configurar credenciais (não use variáveis de ambiente)
+    api_key = args.api_key  # Recomendado: passar via CLI ou pré-configurar em WorkerConfig.secrets
     if not api_key:
         print("Erro: API key não fornecida")
         exit(1)
