@@ -268,11 +268,11 @@ class TestElasticsearchAnalyzer:
         assert "endpoint" in report.full_report["details"]
         assert report.full_report["details"]["endpoint"] == "_cat/indices"
 
-    def test_unsupported_data_type(self) -> None:
-        """Test error handling for unsupported data types."""
+    def test_invalid_other_data_type(self) -> None:
+        """Test error handling for invalid 'other' data type format."""
         input_data = WorkerInput(
             data_type="other",
-            data="test",
+            data="test",  # Invalid format, should be JSON
             config=self.config,
         )
         analyzer = ElasticsearchAnalyzer(input_data)
@@ -280,7 +280,7 @@ class TestElasticsearchAnalyzer:
         with pytest.raises(Exception) as exc_info:
             analyzer.execute()
 
-        assert "Unsupported data type" in str(exc_info.value)
+        assert "data must be a JSON string" in str(exc_info.value)
 
     def test_invalid_json_payload(self) -> None:
         """Test error handling for invalid JSON payload."""
