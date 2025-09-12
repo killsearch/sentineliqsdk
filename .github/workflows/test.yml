@@ -1,46 +1,132 @@
-name: Test
+name: CI • Dev Container (Lint & Test)
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   pull_request:
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-devcontainer
 
 jobs:
-  test:
+  prebuild:
+    name: Prebuild Devcontainer
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
+      - name: Pre-build image (cache GHCR)
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ${{ env.IMAGE_NAME }}
+          cacheFrom: ${{ env.IMAGE_NAME }}
+          push: always
+
+      - name: CI Summary (prebuild)
+        if: always()
+        run: |
+          echo "### Dev Container prebuild" >> $GITHUB_STEP_SUMMARY
+          echo "- image: \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+
+  lint:
+    name: Lint (Dev Container)
+    runs-on: ubuntu-latest
+    needs: [ prebuild ]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Run linters in Dev Container
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.IMAGE_NAME }}
+          push: never
+          runCmd: |
+            set -euo pipefail
+            poe lint
+
+      - name: Upload Lint Reports (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: |
+            **/lint-*.xml
+            **/ruff-report*.txt
+            **/mypy-report*.txt
+          if-no-files-found: ignore
+
+      - name: Lint Summary
+        if: always()
+        run: echo "### Lint finalizado" >> $GITHUB_STEP_SUMMARY
+
+  test:
+    name: Test (Dev Container) • py=${{ matrix.python-version }} • res=${{ matrix.resolution-strategy }}
+    runs-on: ubuntu-latest
+    needs: [ prebuild, lint ]
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.13"]
         resolution-strategy: ["highest"]
 
-    name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution-strategy }})
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 23
-
-      - name: Install @devcontainers/cli
-        run: npm install --location=global @devcontainers/cli@0.73.0
-
-      - name: Start Dev Container
-        run: |
-          git config --global init.defaultBranch main
-          devcontainer up --workspace-folder .
+      - name: Run tests in Dev Container
+        uses: devcontainers/ci@v0.3
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
           RESOLUTION_STRATEGY: ${{ matrix.resolution-strategy }}
+        with:
+          cacheFrom: ${{ env.IMAGE_NAME }}
+          push: never
+          runCmd: |
+            set -euo pipefail
+            poe test
 
-      - name: Lint package
-        run: devcontainer exec --workspace-folder . poe lint
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.python-version }}-${{ matrix.resolution-strategy }}
+          path: |
+            **/junit*.xml
+            **/test-results/*.xml
+          if-no-files-found: ignore
 
-      - name: Test package
-        run: devcontainer exec --workspace-folder . poe test
+      - name: Upload Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}-${{ matrix.resolution-strategy }}
+          path: |
+            **/coverage.xml
+            **/.coverage
+            **/htmlcov/**
+          if-no-files-found: ignore
+
+      - name: Tests Summary
+        if: always()
+        run: |
+          echo "### Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Resolution: ${{ matrix.resolution-strategy }}" >> $GITHUB_STEP_SUMMARY
