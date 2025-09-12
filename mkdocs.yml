@@ -23,6 +23,7 @@ nav:
   - Examples:
     - Malware Analysis: examples/malware-analysis.md
     - Responders: examples/responders.md
+    - Security: examples/security.md
     - Threat Intelligence: examples/threat-intelligence.md
   - Getting Started:
     - First Analyzer: getting-started/first-analyzer.md
@@ -30,9 +31,13 @@ nav:
     - Quick Start: getting-started/quick-start.md
   - Guides:
     - Agent Guide: guides/guide.md
+    - Hash Analysis: guides/hash-analysis.md
     - HTTPX Client Pattern: guides/httpx-client.md
+    - Security: guides/security.md
+    - Threat Intelligence: guides/threat-intelligence.md
   - Home: index.md
   - Modules:
+    - Base: modulos/base.md
     - Analyzers:
       - AbuseIPDB: modulos/analyzers/abuseipdb.md
       - AnyRun: modulos/analyzers/anyrun.md
@@ -52,9 +57,12 @@ nav:
       - Cuckoo Sandbox: modulos/analyzers/cuckoo.md
       - CyberChef: modulos/analyzers/cyberchef.md
       - CyberCrime Tracker: modulos/analyzers/cybercrime_tracker.md
+      - DNSDumpster: modulos/analyzers/dnsdumpster.md
       - Domain Mail SPF DMARC: modulos/analyzers/domain_mail_spf_dmarc.md
       - DomainTools: modulos/analyzers/domaintools.md
       - DShield: modulos/analyzers/dshield.md
+      - EchoTrail: modulos/analyzers/echotrail.md
+      - EclecticIQ: modulos/analyzers/eclectiq.md
       - MCAP: modulos/analyzers/mcap.md
       - Shodan: modulos/analyzers/shodan.md
     - Clients:
@@ -95,6 +103,10 @@ nav:
     - Models: reference/api/models.md
     - Responder: reference/api/responder.md
     - Worker: reference/api/worker.md
+  - Core:
+    - Secrets: core/secrets.md
+    - Taxonomy: core/taxonomy.md
+    - Worker Config: core/worker-config.md
   - Troubleshooting:
     - Common Issues: troubleshooting/common-issues.md
     - FAQ: troubleshooting/faq.md
