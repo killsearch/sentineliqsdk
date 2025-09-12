@@ -32,6 +32,16 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-docs-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-docs-
+
       - name: Sync project dependencies (dev)
         run: uv sync --group dev --all-extras
 
