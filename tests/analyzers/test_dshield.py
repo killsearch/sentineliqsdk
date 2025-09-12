@@ -240,7 +240,7 @@ def test_artifacts_extraction() -> None:
         artifacts = analyzer.artifacts(report.full_report)
 
         # Should extract AS and abuse contact
-        as_artifacts = [a for a in artifacts if a.data_type == "autonomous-system"]
+        as_artifacts = [a for a in artifacts if a.data_type == "asn"]
         mail_artifacts = [a for a in artifacts if a.data_type == "mail"]
 
         assert len(as_artifacts) >= 1
