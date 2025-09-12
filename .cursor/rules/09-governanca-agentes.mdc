@@ -1,0 +1,188 @@
+# 09 — Governança de Agentes (Analyzers, Responders, Detectores)
+
+Objetivo: Servir como base operacional para a IA interpretar solicitações, aplicar regras correspondentes, localizar informações necessárias e detectar/reportar violações das diretrizes do SentinelIQ SDK.
+
+──────────────────────────────────────────────────────────────────────────────
+
+## 1) Onde encontrar cada informação (Referências claras)
+
+- Guia central de agentes (fonte de verdade)
+  - c:\Users\luizg\sentineliqsdk\AGENTS.md
+
+- Regras do projeto (Cursor Rules)
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\01-fundamentos-core.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\02-desenvolvimento-analyzers.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\03-desenvolvimento-responders.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\04-desenvolvimento-detectores.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\05-desenvolvimento-messaging.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\06-exemplos-documentacao.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\07-workflow-desenvolvimento.mdc
+  - c:\Users\luizg\sentineliqsdk\.cursor\rules\08-commits-automaticos.mdc
+
+- Código-fonte (bases e estruturas)
+  - Base Worker/Analyzer/Responder/Extractor:
+    - c:\Users\luizg\sentineliqsdk\src\sentineliqsdk\core\worker.py
+    - c:\Users\luizg\sentineliqsdk\src\sentineliqsdk\analyzers\base.py
+    - c:\Users\luizg\sentineliqsdk\src\sentineliqsdk\responders\base.py
+    - c:\Users\luizg\sentineliqsdk\src\sentineliqsdk\extractors\regex.py
+  - Modelos/dataclasses e constantes:
+    - c:\Users\luizg\sentineliqsdk\src\sentineliqsdk\models.py
+    - c:\Users\luizg\sentineliqsdk\src\sentineliqsdk\constants.py
+
+- Documentação (MkDocs)
+  - Índice e navegação: c:\Users\luizg\sentineliqsdk\docs\index.md, c:\Users\luizg\sentineliqsdk\mkdocs.yml
+  - Guias/Tutoriais/Exemplos: c:\Users\luizg\sentineliqsdk\docs\
+  - Páginas de módulos: c:\Users\luizg\sentineliqsdk\docs\modulos\...
+
+- Exemplos e templates
+  - Exemplos: c:\Users\luizg\sentineliqsdk\examples\...
+  - Templates: c:\Users\luizg\sentineliqsdk\examples\_templates\...
+
+- Testes automatizados
+  - c:\Users\luizg\sentineliqsdk\tests\...
+
+──────────────────────────────────────────────────────────────────────────────
+
+## 2) Contexto completo para gestão do projeto (o que a IA deve considerar)
+
+- Linguagem/estilo: Python 3.13, imports absolutos, indentação 4 espaços, linha ≤ 100 colunas.
+- Padrões de classes
+  - Worker (base) → Analyzer, Responder, Producer, Consumer, Pipeline.
+- Convenções de nomes
+  - <Nome>Analyzer, <Nome>Responder, <Nome>Producer, <Nome>Consumer, <Nome>Pipeline, <Nome>Detector.
+- Metadados obrigatórios (ModuleMetadata)
+  - Todo Analyzer/Responder deve declarar METADATA e incluí-la em full_report.metadata.
+- Entrada/saída
+  - Entrada via dataclasses: WorkerInput (+ WorkerConfig, ProxyConfig). Sem dicionários legacy.
+  - Analyzer.report(...) → AnalyzerReport; Responder.report(...) → ResponderReport.
+- Segurança e configurações
+  - NUNCA usar os.environ diretamente; NUNCA hardcodar credenciais.
+  - SEMPRE usar WorkerConfig.secrets e métodos get_secret()/get_config().
+  - TLP/PAP: respeitar check_tlp/check_pap e limites máximos; erros encerram execução.
+- Extração (Analyzers)
+  - Auto-extract padrão (Extractor); construir taxonomy com build_taxonomy(...).
+- Exemplos e documentação
+  - Todo novo módulo exige exemplo executável em examples/ e página MkDocs correspondente.
+- Testes e qualidade
+  - Cobertura mínima desejável > 80%; lint com poe lint; testes com poe test.
+- Commits automáticos (obrigatório)
+  - Após QUALQUER modificação: executar pre-commit, git add, git commit (Conventional Commits).
+
+Interpretação de solicitações (heurística da IA)
+- “Criar novo analyzer/responder/detector” → usar scaffolding, seguir convenções, adicionar exemplo, testes e docs.
+- “Modificar comportamento de módulo existente” → localizar arquivo pelo nome/tipo, ajustar execute()/run(), manter METADATA e contratos.
+- “Adicionar credencial/configuração” → usar get_secret()/get_config(), atualizar docs e exemplo, NUNCA expor segredos.
+- “Integrar API/cliente” → criar client se necessário em sentineliqsdk/clients, receber secrets via WorkerConfig.secrets.
+- “Pipeline/messaging” → seguir padrões de Producer/Consumer/Pipeline e atualizar exemplos/docs.
+
+──────────────────────────────────────────────────────────────────────────────
+
+## 3) Mecanismos para identificar e reportar infrações
+
+Checklist de conformidade (aplicar SEMPRE)
+- [ ] Usa dataclasses (WorkerInput/WorkerConfig) — sem dicionários legacy
+- [ ] METADATA presente e incluída em full_report.metadata (quando aplicável)
+- [ ] Sem os.environ; segredos via get_secret() e WorkerConfig.secrets
+- [ ] Imports absolutos; from __future__ import annotations primeiro
+- [ ] Analyzer: build_taxonomy(...) e artifacts adequados (auto-extract quando habilitado)
+- [ ] Responder: operações via build_operation(...) quando aplicável
+- [ ] Exemplo em examples/<kind>/<nome>_example.py com flags --execute/--include-dangerous
+- [ ] Testes sob tests/<kind>/ com casos positivos/negativos
+- [ ] Documentação em docs/ atualizada e navegação no mkdocs.yml
+- [ ] pre-commit + commit (Conventional Commits)
+
+Padrões de violação (detecção)
+- Segurança
+  - Uso de os.environ em módulos do SDK
+  - Credenciais hardcoded ou logs que revelem segredos
+  - Falta de get_secret()/get_config() quando há credenciais/config
+- Contratos de I/O
+  - Ausência de WorkerInput; uso de dict legacy; run()/execute() não retornando Report
+- Metadados e exemplos
+  - METADATA ausente ou não inserida no full_report
+  - Exemplo inexistente em examples/ para novo módulo
+- Qualidade e docs
+  - Sem testes; docs não atualizadas; mkdocs.yml sem navegação do módulo
+- Commits
+  - Falta de pre-commit/commit automático após alterações
+
+Severidade sugerida
+- Crítica: segurança (segredos, os.environ), quebra de contrato I/O
+- Alta: ausência de METADATA, exemplo, testes
+- Média: docs/navegação faltantes, convenções de nome
+- Baixa: estilo/formatação menores
+
+Modelo de relatório de não conformidade (para uso da IA)
+```
+[NON-COMPLIANCE REPORT]
+Módulo/Arquivo: <path>
+Severidade: <Crítica|Alta|Média|Baixa>
+Regra violada: <descrição curta>
+Evidência: <trecho/caminho/explicação>
+Correção sugerida: <passos objetivos>
+Ações executadas: <edits|commits|tests|docs>
+Status: <corrigido|pendente>
+```
+
+Ações automáticas (recomendadas)
+- Corrigir imediatamente violações Críticas/Altas e commitar.
+- Criar tarefa de follow-up para itens Médios/Baixos se não resolvidos no mesmo PR.
+
+──────────────────────────────────────────────────────────────────────────────
+
+## 4) Procedimentos operacionais (passo a passo)
+
+Antes de implementar
+- Ler AGENTS.md e a regra específica em .cursor/rules.
+- Mapear o tipo (Analyzer/Responder/Detector/Producer/Consumer/Pipeline) e caminhos alvo.
+- Definir segredos/config em WorkerConfig.secrets e get_secret()/get_config().
+
+Durante a implementação
+- Respeitar contratos: execute() → Report; run() retorna execute().
+- Analyzer: construir taxonomy; respeitar auto_extract; sem side-effects perigosos sem flags.
+- Responder: construir operações com build_operation(); respeitar portões de segurança.
+- Imports absolutos; __future__ no topo; sem os.environ; sem hardcode de segredos.
+
+Após implementar
+- Adicionar exemplo executável em examples/ com --execute e --include-dangerous.
+- Adicionar/atualizar testes em tests/.
+- Atualizar documentação em docs/ e navegação em mkdocs.yml.
+- Executar poe lint, poe test, poe docs (quando aplicável).
+- Executar pre-commit; fazer commit com Conventional Commits.
+
+Commits (formato)
+- tipos: feat, fix, docs, style, refactor, test, chore, ci, perf, build
+- exemplo: `docs(rules): adicionar governança de agentes e mecanismos de compliance`
+
+──────────────────────────────────────────────────────────────────────────────
+
+## 5) Mapeamento Regras ↔ Agentes
+
+Analyzers
+- Regras principais: 01, 02, 06, 07, 08, AGENTS.md (metadados, taxonomy, auto_extract)
+- Fontes: src/sentineliqsdk/analyzers/, docs/modulos/analyzers/, tests/analyzers/, examples/analyzers/
+
+Responders
+- Regras principais: 01, 03, 06, 07, 08, AGENTS.md (operações e portões de segurança)
+- Fontes: src/sentineliqsdk/responders/, docs/modulos/responders/, tests/responders/, examples/responders/
+
+Detectores
+- Regras principais: 01, 04, 06, 07, 08, AGENTS.md (precedência e registro de detectores)
+- Fontes: src/sentineliqsdk/extractors/, docs/modulos/detectors/, tests/extractors/, examples/detectors/
+
+Messaging (Producers/Consumers) e Pipelines
+- Regras principais: 01, 05, 06, 07, 08, AGENTS.md
+- Fontes: src/sentineliqsdk/{producers,consumers,pipelines}/, docs/modulos/{...}/, tests/{...}/, examples/{...}/
+
+──────────────────────────────────────────────────────────────────────────────
+
+## 6) Navegação rápida (paths úteis)
+
+- Guia de Agentes: AGENTS.md
+- Regras Cursor: .cursor/rules/*.mdc
+- Código: src/sentineliqsdk/
+- Exemplos: examples/
+- Testes: tests/
+- Docs: docs/ e mkdocs.yml
+
+Fim do documento.

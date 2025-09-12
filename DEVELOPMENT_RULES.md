@@ -42,17 +42,23 @@ Ambientes suportados:
 
 Comandos úteis:
 ```bash
-# Criar ambiente
-uv sync --python 3.13 --all-extras
+# Criar ambiente (com dependências de desenvolvimento)
+uv sync --python 3.13 --group dev --all-extras
 
-# Ativar venv e instalar pre-commit
+# Ativar o ambiente virtual
+# - macOS/Linux (bash/zsh):
 source .venv/bin/activate
+# - Windows (PowerShell):
+. .\.venv\Scripts\Activate.ps1
+
+# Instalar hooks do pre-commit (alternativa sem ativar: `uv run pre-commit install --install-hooks`)
 pre-commit install --install-hooks
 
-# Tarefas principais
-poe lint
-poe test
-poe docs
+# Tarefas principais (sempre via uv)
+uv run poe lint
+uv run poe test
+uv run poe docs
+uv run poe docs-serve   # servidor local de docs (http://localhost:8000)
 ```
 
 ---
@@ -189,13 +195,14 @@ Para cada novo Analyzer/Responder/Detector, inclua um exemplo executável:
 
 Scaffolding com Poe:
 ```bash
-poe new -- --kind analyzer  --name Shodan
-poe new -- --kind responder --name BlockIp
-poe new -- --kind detector  --name MyType
-# atalhos
-poe new-analyzer  -- --name Shodan
-poe new-responder -- --name BlockIp
-poe new-detector  -- --name MyType
+uv run poe new -- --kind analyzer  --name Shodan
+uv run poe new -- --kind responder --name BlockIp
+uv run poe new -- --kind detector  --name MyType
+
+# Atalhos:
+uv run poe new-analyzer  -- --name Shodan
+uv run poe new-responder -- --name BlockIp
+uv run poe new-detector  -- --name MyType
 ```
 
 ---
@@ -203,11 +210,11 @@ poe new-detector  -- --name MyType
 ## Qualidade: Lint, Tipos e Testes
 
 Lint/Tipos:
-- `poe lint` executa pre-commit (Ruff + Mypy)
+- `uv run poe lint` executa pre-commit (Ruff + Mypy)
 - Regras principais: largura 100, imports absolutos, sem relativos
 
 Testes:
-- `poe test` executa pytest com cobertura gerando relatórios em `reports/`
+- `uv run poe test` executa pytest com cobertura gerando relatórios em `reports/`
 - Escreva testes focados no escopo alterado; evite corrigir falhas não relacionadas
 
 Práticas de validação:
@@ -218,26 +225,32 @@ Práticas de validação:
 
 ## Docs e Build
 
-- Docs: `poe docs` (MkDocs) → `docs/`
-- Build: `uv build`
+- Docs: `uv run poe docs` (MkDocs) gera o site em `site/` e usa fontes em `docs/`
+- Servir docs localmente: `uv run poe docs-serve` (http://localhost:8000)
+- CI de docs publica no GitHub Pages automaticamente em pushes para main e em Releases
+- Build do pacote: `uv build`
 
 ---
 
 ## Releases (CI/CD)
 
 Workflows:
-- `.github/workflows/test.yml` — Lint e testes (Dev Container + uv)
+- `.github/workflows/test.yml` — Lint e testes (uv)
+- `.github/workflows/docs.yml` — Build e deploy de documentação (GitHub Pages)
 - `.github/workflows/publish.yml` — Publicação PyPI via GitHub Release (OIDC Trusted Publisher)
 
 Fluxo recomendado:
-1. Garantir que `main` está verde
-2. `uv run cz bump` (ou `--increment patch|minor|major`, `--prerelease rc`)
-3. `git push origin main --follow-tags`
-4. Criar Release para a tag `vX.Y.Z`
-5. Acompanhar workflow “Publish”; verificar instalação `pip install sentineliqsdk==X.Y.Z`
+1. Garantir que `main` está verde (CI “CI” passou)
+2. Rodar bump de versão e changelog: `uv run cz bump` (ou `--increment patch|minor|major`, `--prerelease rc`)
+3. Enviar commits e tags: `git push origin main --follow-tags`
+4. Criar Release para a tag `vX.Y.Z` no GitHub
+5. Acompanhar workflows:
+   - “Publish”: valida tag == versão do pyproject, builda e publica no PyPI
+   - “Docs”: publica documentação no GitHub Pages
+6. Validar publicação: `pip install sentineliqsdk==X.Y.Z`
 
 Notas:
-- Tag `v$version` deve casar com `pyproject.toml`
+- A tag `v$version` deve casar com a versão em `pyproject.toml` (checado no CI)
 - Releases RC: marcar como “Pre-release”
 
 ---
@@ -256,8 +269,8 @@ Notas:
 Antes de abrir o PR:
 - [ ] Código segue padrões (imports absolutos, hints, 100 colunas)
 - [ ] Exemplos atualizados/adicionados em `examples/`
-- [ ] Testes cobrindo a mudança (`poe test` OK)
-- [ ] Lint/tipos passam (`poe lint` OK)
+- [ ] Testes cobrindo a mudança (`uv run poe test` OK)
+- [ ] Lint/tipos passam (`uv run poe lint` OK)
 - [ ] Documentação/AGENTS.md/README atualizados quando necessário
 
 Após review:
