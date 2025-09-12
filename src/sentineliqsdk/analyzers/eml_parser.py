@@ -30,9 +30,9 @@ import os
 from typing import Any
 
 try:
-    import eml_parser
+    import eml_parser  # type: ignore[import-untyped]
 except ImportError:
-    eml_parser = None
+    eml_parser = None  # type: ignore[assignment]
 
 from sentineliqsdk.analyzers.base import Analyzer
 from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
@@ -116,10 +116,10 @@ class EmlParserAnalyzer(Analyzer):
 
     def _analyze_authentication(self, parsed_email: dict[str, Any]) -> dict[str, Any]:
         """Analyze email authentication (SPF, DKIM, DMARC)."""
-        auth_info = {
-            "spf": None,
-            "dkim": None,
-            "dmarc": None,
+        auth_info: dict[str, str] = {
+            "spf": "unknown",
+            "dkim": "unknown",
+            "dmarc": "unknown",
         }
 
         if "header" in parsed_email:

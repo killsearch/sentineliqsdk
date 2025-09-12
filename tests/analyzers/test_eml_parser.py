@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from collections.abc import Generator
 from unittest.mock import Mock, patch
 
 import pytest
@@ -89,16 +90,13 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 """
 
     @pytest.fixture
-    def temp_eml_file(self, sample_eml_content: str) -> str:
+    def temp_eml_file(self, sample_eml_content: str) -> Generator[str]:
         """Create a temporary EML file for testing."""
-        temp_dir = tempfile.gettempdir()
-        temp_path = os.path.join(temp_dir, "test_sample.eml")
-        with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(sample_eml_content)
-        yield temp_path
+        temp_file = self._create_test_eml_file("test_sample.eml", sample_eml_content)
+        yield temp_file
         # Cleanup
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
+        if os.path.exists(temp_file):
+            os.unlink(temp_file)
 
     def _create_test_eml_file(self, filename: str, content: str) -> str:
         """Create a temporary EML file for testing."""
@@ -111,16 +109,13 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         return temp_path
 
     @pytest.fixture
-    def suspicious_temp_eml_file(self, suspicious_eml_content: str) -> str:
+    def suspicious_temp_eml_file(self, suspicious_eml_content: str) -> Generator[str]:
         """Create a temporary suspicious EML file for testing."""
-        temp_dir = tempfile.gettempdir()
-        temp_path = os.path.join(temp_dir, "test_suspicious.eml")
-        with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(suspicious_eml_content)
-        yield temp_path
+        temp_file = self._create_test_eml_file("test_suspicious.eml", suspicious_eml_content)
+        yield temp_file
         # Cleanup
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
+        if os.path.exists(temp_file):
+            os.unlink(temp_file)
 
     @pytest.fixture
     def worker_input(self, temp_eml_file: str) -> WorkerInput:
@@ -188,7 +183,7 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     @patch("sentineliqsdk.analyzers.eml_parser.eml_parser")
     def test_missing_eml_parser_dependency(self, mock_eml_parser: Mock) -> None:
         """Test error handling when eml_parser library is not available."""
-        mock_eml_parser = None
+        mock_eml_parser.side_effect = ImportError("eml_parser not available")
 
         with patch("sentineliqsdk.analyzers.eml_parser.eml_parser", None):
             worker_input = WorkerInput(
@@ -232,12 +227,14 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         report = analyzer.execute()
 
         assert isinstance(report, AnalyzerReport)
-        assert report.verdict in ["safe", "info"]
-        assert report.data_type == "file"
-        assert len(report.taxonomy) > 0
+        assert report.full_report["verdict"] in ["safe", "info"]
+        assert report.full_report["data_type"] == "file"
+        assert len(report.full_report["taxonomy"]) > 0
 
         # Check that authentication taxonomy is present
-        auth_taxonomies = [t for t in report.taxonomy if "auth_" in t.get("predicate", "")]
+        auth_taxonomies = [
+            t for t in report.full_report["taxonomy"] if "auth_" in t.get("predicate", "")
+        ]
         assert len(auth_taxonomies) > 0
 
     @patch("sentineliqsdk.analyzers.eml_parser.eml_parser")
@@ -280,13 +277,15 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         report = analyzer.execute()
 
         assert isinstance(report, AnalyzerReport)
-        assert report.verdict in ["suspicious", "malicious"]
-        assert report.data_type == "file"
-        assert len(report.taxonomy) > 0
+        assert report.full_report["verdict"] in ["suspicious", "malicious"]
+        assert report.full_report["data_type"] == "file"
+        assert len(report.full_report["taxonomy"]) > 0
 
         # Check for suspicious indicators in taxonomies
         suspicious_taxonomies = [
-            t for t in report.taxonomy if t.get("level") in ["suspicious", "malicious"]
+            t
+            for t in report.full_report["taxonomy"]
+            if t.get("level") in ["suspicious", "malicious"]
         ]
         assert len(suspicious_taxonomies) > 0
 
@@ -307,9 +306,9 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         report = analyzer.execute()
 
         # Check if URLs were extracted in details
-        assert hasattr(report, "details")
-        assert "extracted_urls" in report.details
-        urls = report.details["extracted_urls"]
+        assert "details" in report.full_report
+        assert "extracted_urls" in report.full_report["details"]
+        urls = report.full_report["details"]["extracted_urls"]
         assert len(urls) >= 2
         assert any("example.com" in url for url in urls)
         assert any("test.com" in url for url in urls)
@@ -344,16 +343,18 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         report = analyzer.execute()
 
         # Check if attachments were analyzed
-        assert hasattr(report, "details")
-        assert "attachments_info" in report.details
-        attachments = report.details["attachments_info"]
+        assert "details" in report.full_report
+        assert "attachments_info" in report.full_report["details"]
+        attachments = report.full_report["details"]["attachments_info"]
         assert len(attachments) == 2
 
         # Check for executable attachment detection (should make it suspicious)
-        assert report.verdict in ["suspicious", "malicious"]
+        assert report.full_report["verdict"] in ["suspicious", "malicious"]
 
         # Check attachment taxonomy
-        att_taxonomies = [t for t in report.taxonomy if "attachments" in t.get("predicate", "")]
+        att_taxonomies = [
+            t for t in report.full_report["taxonomy"] if "attachments" in t.get("predicate", "")
+        ]
         assert len(att_taxonomies) > 0
 
     def test_run_method(self, worker_input: WorkerInput) -> None:
@@ -393,9 +394,9 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         report = analyzer.execute()
 
         # Check authentication info in details
-        assert hasattr(report, "details")
-        assert "authentication_info" in report.details
-        auth_info = report.details["authentication_info"]
+        assert "details" in report.full_report
+        assert "authentication_info" in report.full_report["details"]
+        auth_info = report.full_report["details"]["authentication_info"]
 
         # Should have detected passing authentication
         assert auth_info.get("spf") == "pass"
@@ -403,7 +404,9 @@ TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         assert auth_info.get("dmarc") == "pass"
 
         # Check for authentication taxonomies
-        auth_taxonomies = [t for t in report.taxonomy if t.get("predicate", "").startswith("auth_")]
+        auth_taxonomies = [
+            t for t in report.full_report["taxonomy"] if t.get("predicate", "").startswith("auth_")
+        ]
         assert len(auth_taxonomies) >= 3  # SPF, DKIM, DMARC
 
     @patch("sentineliqsdk.analyzers.eml_parser.eml_parser")

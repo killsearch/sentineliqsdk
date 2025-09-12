@@ -173,13 +173,13 @@ def main() -> None:
         print("📧 EML PARSER ANALYSIS RESULTS")
         print("=" * 60)
 
-        print(f"\n📄 File: {report.observable}")
-        print(f"🎯 Verdict: {report.verdict.upper()}")
+        print(f"\n📄 File: {report.full_report.get('observable', args.data)}")
+        print(f"🎯 Verdict: {report.full_report['verdict'].upper()}")
 
         # Display taxonomies
-        if report.taxonomy:
+        if report.full_report.get("taxonomy"):
             print("\n🏷️  Taxonomies:")
-            for tax in report.taxonomy:
+            for tax in report.full_report["taxonomy"]:
                 level = tax.get("level", "unknown")
                 namespace = tax.get("namespace", "unknown")
                 predicate = tax.get("predicate", "unknown")
@@ -253,7 +253,7 @@ def main() -> None:
             print("\n" + "=" * 60)
             print("🔍 DETAILED ANALYSIS DATA")
             print("=" * 60)
-            print(json.dumps(report.to_dict(), indent=2, default=str))
+            print(json.dumps(report.full_report, indent=2, default=str))
 
         print("\n✅ Analysis completed successfully!")
 
