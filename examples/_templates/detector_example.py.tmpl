@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 
@@ -8,6 +9,14 @@ from sentineliqsdk.extractors.custom.{SNAKE_NAME}_detector import {CLASS_NAME}
 
 
 def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run {CLASS_NAME} detector example")
+    parser.add_argument("--execute", action="store_true", help="Execute real run (default: dry-run)")
+    args = parser.parse_args(argv)
+
+    if not args.execute:
+        print("Modo dry-run. Use --execute para executar o detector.")
+        return 0
+
     ext = Extractor()
     ext.register_detector({CLASS_NAME}(), before="hash")
     values = ["foo", "MY:example", "bar"]

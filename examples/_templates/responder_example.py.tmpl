@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 
@@ -8,7 +9,28 @@ from sentineliqsdk.responders.{SNAKE_NAME} import {CLASS_NAME}
 
 
 def main(argv: list[str]) -> int:
-    input_data = WorkerInput(data_type="ip", data="1.2.3.4")
+    """Run {CLASS_NAME} responder example with CLI arguments."""
+    parser = argparse.ArgumentParser(description="Run {CLASS_NAME} responder example")
+    parser.add_argument("--data", help="Target data")
+    parser.add_argument("--data-type", help="Type of target data")
+    parser.add_argument("--execute", action="store_true", help="Execute real operations")
+    parser.add_argument("--include-dangerous", action="store_true", help="Include dangerous operations")
+    args = parser.parse_args(argv)
+
+    # Dry-run safeguard
+    if not args.execute:
+        print("Modo dry-run. Use --execute para operações reais.")
+        return 0
+
+    # Dangerous operations safeguard (responder may perform impactful actions)
+    if not args.include_dangerous:
+        print("Operação potencialmente perigosa. Use --include-dangerous para prosseguir.")
+        return 0
+
+    input_data = WorkerInput(
+        data_type=args.data_type or "ip",
+        data=args.data or "1.2.3.4"
+    )
     report = {CLASS_NAME}(input_data).run()
     print(json.dumps(report.full_report, ensure_ascii=False))
     return 0
