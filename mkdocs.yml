@@ -63,6 +63,7 @@ nav:
       - DShield: modulos/analyzers/dshield.md
       - EchoTrail: modulos/analyzers/echotrail.md
       - EclecticIQ: modulos/analyzers/eclectiq.md
+      - EmailRep: modulos/analyzers/emailrep.md
       - MCAP: modulos/analyzers/mcap.md
       - Shodan: modulos/analyzers/shodan.md
     - Clients:
