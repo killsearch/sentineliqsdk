@@ -8,7 +8,7 @@ The Shodan client is built on top of `httpx` and provides:
 
 - **Complete API coverage** for all Shodan endpoints
 - **Automatic API key injection** as query parameter
-- **Proxy support** via environment variables
+- **Proxy support** via `WorkerConfig.proxy` (the SDK exports env vars for stdlib libraries when needed)
 - **Type-safe responses** with automatic JSON parsing
 - **Comprehensive error handling**
 

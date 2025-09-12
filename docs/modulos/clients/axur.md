@@ -9,7 +9,7 @@ The Axur client is built on top of `httpx` and provides:
 - **Generic API calls** via the `call()` method for any HTTP method/path
 - **Convenience wrappers** for common API operations
 - **Automatic authentication** using Bearer token
-- **Proxy support** via environment variables
+- **Proxy support** via `WorkerConfig.proxy` (the SDK exports env vars for stdlib libraries when needed)
 - **Dry-run capability** for testing without making actual requests
 
 ## Authentication
