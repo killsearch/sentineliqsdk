@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-01-27
+
+### Added
+- Comprehensive messaging system with Producers, Consumers, and Pipelines
+- Kafka Producer and Consumer implementations
+- Pipeline orchestration with security controls
+- Router system for message routing
+- Enhanced analyzer ecosystem with multiple new analyzers:
+  - ChainAbuse analyzer for blockchain threat intelligence
+  - ClamAV analyzer for malware detection
+  - Cluster25 analyzer for threat intelligence
+  - CrowdSec analyzer for IP reputation
+  - CrowdStrike Falcon analyzer integration
+  - CRT.sh analyzer for certificate transparency
+  - Cuckoo Sandbox analyzer
+  - CyberProtect analyzer
+  - Cylance analyzer
+  - DNSDumpster analyzer
+  - Domain Mail SPF/DMARC analyzer
+  - DomainTools analyzer
+  - DShield analyzer for IP reputation
+  - EchoTrail analyzer
+  - EclecticIQ analyzer
+
+### Fixed
+- DShield analyzer test artifact data type expectations
+- Test coverage and reliability improvements
+- Enhanced error handling across analyzers
+
+### Changed
+- Improved project structure with better separation of concerns
+- Enhanced configuration management
+- Better integration testing framework
+
 ## [0.3.0] - 2025-09-07
 
 ### Added
