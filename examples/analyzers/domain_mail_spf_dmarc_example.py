@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import traceback
 from pathlib import Path
 
 # Adicionar o diretório src ao path para importar o módulo
@@ -117,66 +118,79 @@ Exemplos de uso:
     except Exception as e:
         print(f"❌ Erro durante análise: {e}")
         if args.verbose:
-            import traceback
-
             traceback.print_exc()
         sys.exit(1)
 
 
-def print_summary(report: dict, verbose: bool = False):
-    """Imprime um resumo dos resultados."""
-    observable = report.get("observable", "N/A")
-    verdict = report.get("verdict", "unknown")
-
-    # Emojis baseados no verdict
-    verdict_emoji = {"safe": "✅", "suspicious": "⚠️", "malicious": "🚨", "info": "ℹ️"}.get(
+def _print_header(observable: str, verdict: str) -> None:
+    """Print the analysis header."""
+    verdict_emoji = {"safe": "✅", "suspicious": "⚠️", "malicious": "🚨", "info": "i"}.get(
         verdict, "❓"
     )
-
     print(f"\n{verdict_emoji} Resultado da Análise SPF/DMARC")
     print(f"📍 Domínio: {observable}")
     print(f"🎯 Verdict: {verdict.upper()}")
 
-    # Mostrar taxonomias
-    taxonomies = report.get("taxonomy", [])
-    if taxonomies:
-        print("\n📊 Configurações:")
-        for tax in taxonomies:
-            protocol = tax.get("predicate", "Unknown")
-            value = tax.get("value", "Unknown")
-            level = tax.get("level", "info")
 
-            status_emoji = {"safe": "✅", "suspicious": "⚠️", "malicious": "❌", "info": "ℹ️"}.get(
-                level, "❓"
-            )
+def _print_taxonomies(taxonomies: list) -> None:
+    """Print taxonomy information."""
+    if not taxonomies:
+        return
 
-            status_text = "Configurado" if value == "yes" else "Não Configurado"
-            print(f"   {status_emoji} {protocol}: {status_text}")
+    print("\n📊 Configurações:")
+    for tax in taxonomies:
+        protocol = tax.get("predicate", "Unknown")
+        value = tax.get("value", "Unknown")
+        level = tax.get("level", "info")
 
-    # Mostrar detalhes se verbose
+        status_emoji = {"safe": "✅", "suspicious": "⚠️", "malicious": "❌", "info": "i"}.get(
+            level, "❓"
+        )
+
+        status_text = "Configurado" if value == "yes" else "Não Configurado"
+        print(f"   {status_emoji} {protocol}: {status_text}")
+
+
+def _print_spf_details(spf_info: dict) -> None:
+    """Print SPF details."""
+    if not spf_info:
+        return
+
+    print("\n📧 Detalhes SPF:")
+    if "error" in spf_info:
+        print(f"   ❌ Erro: {spf_info['error']}")
+    else:
+        print("   ✅ Registro válido encontrado")
+        if "record" in spf_info:
+            print(f"   📝 Registro: {spf_info['record']}")
+
+
+def _print_dmarc_details(dmarc_info: dict) -> None:
+    """Print DMARC details."""
+    if not dmarc_info:
+        return
+
+    print("\n🔒 Detalhes DMARC:")
+    if "error" in dmarc_info:
+        print(f"   ❌ Erro: {dmarc_info['error']}")
+    else:
+        print("   ✅ Registro válido encontrado")
+        if "record" in dmarc_info:
+            print(f"   📝 Registro: {dmarc_info['record']}")
+
+
+def print_summary(report: dict, verbose: bool = False):
+    """Print analysis results summary."""
+    observable = report.get("observable", "N/A")
+    verdict = report.get("verdict", "unknown")
+
+    _print_header(observable, verdict)
+    _print_taxonomies(report.get("taxonomy", []))
+
     if verbose:
-        spf_info = report.get("spf", {})
-        dmarc_info = report.get("dmarc", {})
+        _print_spf_details(report.get("spf", {}))
+        _print_dmarc_details(report.get("dmarc", {}))
 
-        if spf_info:
-            print("\n📧 Detalhes SPF:")
-            if "error" in spf_info:
-                print(f"   ❌ Erro: {spf_info['error']}")
-            else:
-                print("   ✅ Registro válido encontrado")
-                if "record" in spf_info:
-                    print(f"   📝 Registro: {spf_info['record']}")
-
-        if dmarc_info:
-            print("\n🔒 Detalhes DMARC:")
-            if "error" in dmarc_info:
-                print(f"   ❌ Erro: {dmarc_info['error']}")
-            else:
-                print("   ✅ Registro válido encontrado")
-                if "record" in dmarc_info:
-                    print(f"   📝 Registro: {dmarc_info['record']}")
-
-    # Mostrar erro se houver
     if "error" in report:
         print(f"\n❌ Erro: {report['error']}")
 

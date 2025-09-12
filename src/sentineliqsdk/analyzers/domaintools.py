@@ -65,6 +65,10 @@ class DomainToolsAnalyzer(Analyzer):
     method calling capabilities.
     """
 
+    # Risk score thresholds
+    MALICIOUS_RISK_THRESHOLD = 70
+    SUSPICIOUS_RISK_THRESHOLD = 40
+
     METADATA = ModuleMetadata(
         name="DomainTools Analyzer",
         description="Comprehensive domain intelligence using DomainTools Iris API",
@@ -170,43 +174,65 @@ class DomainToolsAnalyzer(Analyzer):
 
         return results
 
+    def _check_risk_score(self, risk_score: Any) -> TaxonomyLevel | None:
+        """Check risk score and return verdict if applicable."""
+        if isinstance(risk_score, (int, float)):
+            if risk_score >= self.MALICIOUS_RISK_THRESHOLD:
+                return "malicious"
+            if risk_score >= self.SUSPICIOUS_RISK_THRESHOLD:
+                return "suspicious"
+            return "safe"
+        return None
+
+    def _check_risk_endpoint(self, payload: dict[str, Any]) -> TaxonomyLevel | None:
+        """Check risk score from risk endpoint."""
+        if "risk" in payload and isinstance(payload["risk"], dict):
+            risk_data = payload["risk"]
+            if "risk_score" in risk_data:
+                return self._check_risk_score(risk_data["risk_score"])
+        return None
+
+    def _check_iris_enrich(self, payload: dict[str, Any]) -> TaxonomyLevel | None:
+        """Check Iris Enrich results for risk indicators."""
+        if "iris_enrich" in payload and isinstance(payload["iris_enrich"], dict):
+            iris_data = payload["iris_enrich"]
+            if "results" in iris_data and isinstance(iris_data["results"], list):
+                for result in iris_data["results"]:
+                    if isinstance(result, dict) and "risk_score" in result:
+                        verdict = self._check_risk_score(result["risk_score"])
+                        if verdict and verdict != "safe":
+                            return verdict
+        return None
+
+    def _check_domain_profile(self, payload: dict[str, Any]) -> TaxonomyLevel | None:
+        """Check domain profile for suspicious indicators."""
+        if "domain_profile" in payload and isinstance(payload["domain_profile"], dict):
+            profile = payload["domain_profile"]
+            if "response" in profile and isinstance(profile["response"], dict):
+                response = profile["response"]
+                # Check for recent registration (potential indicator)
+                if "registrant" in response and "registration" in response:
+                    # Additional heuristics can be added here
+                    pass
+        return None
+
     def _verdict_from_domaintools(self, payload: dict[str, Any]) -> TaxonomyLevel:
         """Determine verdict based on DomainTools analysis results."""
         try:
             # Check risk score from risk endpoint
-            if "risk" in payload and isinstance(payload["risk"], dict):
-                risk_data = payload["risk"]
-                if "risk_score" in risk_data:
-                    risk_score = risk_data["risk_score"]
-                    if isinstance(risk_score, (int, float)):
-                        if risk_score >= 70:
-                            return "malicious"
-                        if risk_score >= 40:
-                            return "suspicious"
-                        return "safe"
+            verdict = self._check_risk_endpoint(payload)
+            if verdict:
+                return verdict
 
             # Check Iris Enrich results for risk indicators
-            if "iris_enrich" in payload and isinstance(payload["iris_enrich"], dict):
-                iris_data = payload["iris_enrich"]
-                if "results" in iris_data and isinstance(iris_data["results"], list):
-                    for result in iris_data["results"]:
-                        if isinstance(result, dict) and "risk_score" in result:
-                            risk_score = result["risk_score"]
-                            if isinstance(risk_score, (int, float)):
-                                if risk_score >= 70:
-                                    return "malicious"
-                                if risk_score >= 40:
-                                    return "suspicious"
+            verdict = self._check_iris_enrich(payload)
+            if verdict:
+                return verdict
 
             # Check domain profile for suspicious indicators
-            if "domain_profile" in payload and isinstance(payload["domain_profile"], dict):
-                profile = payload["domain_profile"]
-                if "response" in profile and isinstance(profile["response"], dict):
-                    response = profile["response"]
-                    # Check for recent registration (potential indicator)
-                    if "registrant" in response and "registration" in response:
-                        # Additional heuristics can be added here
-                        pass
+            verdict = self._check_domain_profile(payload)
+            if verdict:
+                return verdict
 
         except Exception:
             pass

@@ -10,17 +10,22 @@ Usage:
     python domaintools_example.py --data admin@example.com --data-type mail --execute
 
     # Dynamic method calling
-    python domaintools_example.py --data example.com --data-type domain --method iris_enrich --execute
+    python domaintools_example.py --data example.com --data-type domain --method iris_enrich \
+        --execute
 
     # JSON payload for advanced usage
-    python domaintools_example.py --data '{"method":"iris_enrich","params":{"domains":["example.com"]}}' --data-type other --execute
+    python domaintools_example.py \
+        --data '{"method":"iris_enrich","params":{"domains":["example.com"]}}' \
+        --data-type other --execute
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import traceback
 from pathlib import Path
 
 # Add src to path for development
@@ -31,7 +36,7 @@ from sentineliqsdk.analyzers.domaintools import DomainToolsAnalyzer
 
 
 def main() -> None:
-    """Main function to demonstrate DomainToolsAnalyzer usage."""
+    """Demonstrate DomainToolsAnalyzer usage."""
     parser = argparse.ArgumentParser(
         description="Example usage of DomainToolsAnalyzer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -86,8 +91,6 @@ def main() -> None:
         return
 
     # Get credentials
-    import os
-
     username = args.username or os.getenv("DOMAINTOOLS_USERNAME")
     api_key = args.api_key or os.getenv("DOMAINTOOLS_API_KEY")
 
@@ -160,71 +163,91 @@ def main() -> None:
     except Exception as e:
         print(f"❌ Error during analysis: {e}")
         if args.verbose:
-            import traceback
-
             traceback.print_exc()
         sys.exit(1)
+
+
+def _print_header(data: dict) -> None:
+    """Print report header information."""
+    print("\n" + "=" * 60)
+    print("📊 DOMAINTOOLS ANALYSIS REPORT")
+    print("=" * 60)
+    print(f"🎯 Observable: {data.get('observable', 'N/A')}")
+    print(f"📋 Data Type: {data.get('data_type', 'N/A')}")
+    print(f"⚖️  Verdict: {data.get('verdict', 'N/A').upper()}")
+    print(f"🏷️  Source: {data.get('source', 'N/A')}")
+
+
+def _print_taxonomy(data: dict) -> None:
+    """Print taxonomy information."""
+    if not data.get("taxonomy"):
+        return
+
+    print("\n🏷️  TAXONOMY:")
+    for tax in data["taxonomy"]:
+        if isinstance(tax, dict):
+            level = tax.get("level", "N/A")
+            namespace = tax.get("namespace", "N/A")
+            predicate = tax.get("predicate", "N/A")
+            print(f"   • {level.upper()}: {namespace}.{predicate}")
+
+
+def _print_basic_details(details: dict) -> None:
+    """Print basic analysis details."""
+    # Show available endpoints
+    endpoints = [k for k in details if k not in ["method", "params", "result"]]
+    if endpoints:
+        print(f"   • Endpoints queried: {', '.join(endpoints)}")
+
+    # Show method if dynamic call
+    if "method" in details:
+        print(f"   • API Method: {details['method']}")
+
+
+def _print_risk_info(details: dict) -> None:
+    """Print risk score information."""
+    if "risk" in details and isinstance(details["risk"], dict):
+        risk_data = details["risk"]
+        if "risk_score" in risk_data:
+            print(f"   • Risk Score: {risk_data['risk_score']}")
+
+
+def _print_domain_profile(details: dict) -> None:
+    """Print domain profile information."""
+    if "domain_profile" in details and isinstance(details["domain_profile"], dict):
+        profile = details["domain_profile"]
+        if "response" in profile and isinstance(profile["response"], dict):
+            response = profile["response"]
+            if "registrant" in response:
+                print("   • Domain profile data available")
+
+
+def _print_reverse_ip(details: dict) -> None:
+    """Print reverse IP information."""
+    if "reverse_ip" in details and isinstance(details["reverse_ip"], dict):
+        reverse_ip = details["reverse_ip"]
+        if "response" in reverse_ip and isinstance(reverse_ip["response"], dict):
+            response = reverse_ip["response"]
+            if "ip_addresses" in response:
+                ip_count = len(response["ip_addresses"])
+                print(f"   • Reverse IP: {ip_count} domains found")
 
 
 def print_summary(report, verbose: bool = False) -> None:
     """Print a human-readable summary of the analysis report."""
     data = report.to_dict()
 
-    print("\n" + "=" * 60)
-    print("📊 DOMAINTOOLS ANALYSIS REPORT")
-    print("=" * 60)
-
-    print(f"🎯 Observable: {data.get('observable', 'N/A')}")
-    print(f"📋 Data Type: {data.get('data_type', 'N/A')}")
-    print(f"⚖️  Verdict: {data.get('verdict', 'N/A').upper()}")
-    print(f"🏷️  Source: {data.get('source', 'N/A')}")
-
-    # Taxonomy information
-    if data.get("taxonomy"):
-        print("\n🏷️  TAXONOMY:")
-        for tax in data["taxonomy"]:
-            if isinstance(tax, dict):
-                level = tax.get("level", "N/A")
-                namespace = tax.get("namespace", "N/A")
-                predicate = tax.get("predicate", "N/A")
-                print(f"   • {level.upper()}: {namespace}.{predicate}")
+    _print_header(data)
+    _print_taxonomy(data)
 
     # Details summary
     if data.get("details"):
         details = data["details"]
         print("\n📋 ANALYSIS DETAILS:")
-
-        # Show available endpoints
-        endpoints = [k for k in details if k not in ["method", "params", "result"]]
-        if endpoints:
-            print(f"   • Endpoints queried: {', '.join(endpoints)}")
-
-        # Show method if dynamic call
-        if "method" in details:
-            print(f"   • API Method: {details['method']}")
-
-        # Show risk scores if available
-        if "risk" in details and isinstance(details["risk"], dict):
-            risk_data = details["risk"]
-            if "risk_score" in risk_data:
-                print(f"   • Risk Score: {risk_data['risk_score']}")
-
-        # Show domain profile summary
-        if "domain_profile" in details and isinstance(details["domain_profile"], dict):
-            profile = details["domain_profile"]
-            if "response" in profile and isinstance(profile["response"], dict):
-                response = profile["response"]
-                if "registrant" in response:
-                    print("   • Domain profile data available")
-
-        # Show reverse IP results
-        if "reverse_ip" in details and isinstance(details["reverse_ip"], dict):
-            reverse_ip = details["reverse_ip"]
-            if "response" in reverse_ip and isinstance(reverse_ip["response"], dict):
-                response = reverse_ip["response"]
-                if "ip_addresses" in response:
-                    ip_count = len(response["ip_addresses"])
-                    print(f"   • Reverse IP: {ip_count} domains found")
+        _print_basic_details(details)
+        _print_risk_info(details)
+        _print_domain_profile(details)
+        _print_reverse_ip(details)
 
     # Verbose output
     if verbose and "details" in data:

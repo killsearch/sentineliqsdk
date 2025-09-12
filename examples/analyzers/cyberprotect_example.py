@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import traceback
 from pathlib import Path
 
 # Adicionar o diretório src ao path para importar o módulo
@@ -130,8 +131,6 @@ Exemplos de uso:
     except Exception as e:
         print(f"❌ Erro durante a análise: {e}")
         if args.verbose:
-            import traceback
-
             traceback.print_exc()
         sys.exit(1)
 

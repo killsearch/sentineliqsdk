@@ -120,7 +120,7 @@ class TestEclecticIQAnalyzer:
     def test_get_source(self) -> None:
         """Test source name."""
         # O source é definido no execute method
-        assert "eclectiq" == "eclectiq"
+        assert True  # Source name is always 'eclectiq'
 
     @patch("requests.Session.get")
     def test_add_observable_info_success(self, mock_get) -> None:
@@ -240,10 +240,6 @@ class TestEclecticIQAnalyzer:
                         "estimated_threat_start_time": "2024-01-01T00:00:00Z",
                     },
                     "sources": ["https://test.com/source/1"],
-                    "meta": {
-                        "tags": ["suspicious"],
-                        "estimated_threat_start_time": "2024-01-01T00:00:00Z",
-                    },
                 }
             ],
         }

@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Example usage of EchoTrailAnalyzer.
+"""EchoTrail Analyzer Example.
 
-This example demonstrates how to use the EchoTrailAnalyzer to analyze file hashes
-using the EchoTrail API for threat intelligence and prevalence information.
+This example demonstrates how to use the EchoTrail analyzer to analyze file hashes.
 
 Usage:
     python echotrail_example.py --data 5d41402abc4b2a76b9719d911017c592 --data-type hash --execute
-    python echotrail_example.py --data e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 --data-type hash --execute
+    python echotrail_example.py \
+        --data e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 \
+        --data-type hash --execute
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import traceback
 from pathlib import Path
 
 # Add src to path for development
@@ -24,7 +27,7 @@ from sentineliqsdk.analyzers.echotrail import EchoTrailAnalyzer
 
 
 def main() -> None:
-    """Main function to demonstrate EchoTrailAnalyzer usage."""
+    """Demonstrate EchoTrailAnalyzer usage."""
     parser = argparse.ArgumentParser(
         description="Example usage of EchoTrailAnalyzer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -68,8 +71,6 @@ def main() -> None:
         return
 
     # Get credentials
-    import os
-
     api_key = args.api_key or os.getenv("ECHOTRAIL_API_KEY")
 
     if not api_key:
@@ -116,72 +117,85 @@ def main() -> None:
     except Exception as e:
         print(f"❌ Error during analysis: {e}")
         if args.verbose:
-            import traceback
-
             traceback.print_exc()
         sys.exit(1)
+
+
+def _print_header(data: dict) -> None:
+    """Print report header information."""
+    print("\n" + "=" * 60)
+    print("📊 ECHOTRAIL ANALYSIS REPORT")
+    print("=" * 60)
+    print(f"🎯 Hash: {data.get('observable', 'N/A')}")
+    print(f"📋 Data Type: {data.get('data_type', 'N/A')}")
+    print(f"⚖️  Verdict: {data.get('verdict', 'N/A').upper()}")
+    print(f"🏷️  Source: {data.get('source', 'N/A')}")
+
+
+def _print_taxonomy(data: dict) -> None:
+    """Print taxonomy information."""
+    if not data.get("taxonomy"):
+        return
+
+    print("\n🏷️  TAXONOMY:")
+    for tax in data["taxonomy"]:
+        if isinstance(tax, dict):
+            level = tax.get("level", "N/A")
+            namespace = tax.get("namespace", "N/A")
+            predicate = tax.get("predicate", "N/A")
+            value = tax.get("value", "N/A")
+            print(f"   • {level.upper()}: {namespace}.{predicate} = {value}")
+
+
+def _print_basic_details(details: dict) -> None:
+    """Print basic analysis details."""
+    # Show match status
+    if "matched" in details:
+        status = "✅ Found" if details["matched"] else "❌ Not found"
+        print(f"   • Match Status: {status}")
+
+    # Show key metrics
+    metrics = [
+        ("rank", "Rank"),
+        ("host_prev", "Host Prevalence"),
+        ("eps", "Events Per Second"),
+        ("description", "Description"),
+        ("intel", "Intelligence"),
+    ]
+
+    for key, label in metrics:
+        if key in details:
+            print(f"   • {label}: {details[key]}")
+
+
+def _print_related_counts(details: dict) -> None:
+    """Print related data counts."""
+    related_counts = []
+    fields = ["paths", "parents", "children", "grandparents", "hashes", "network"]
+
+    for field in fields:
+        if field in details and isinstance(details[field], list):
+            count = len(details[field])
+            if count > 0:
+                related_counts.append(f"{field}: {count}")
+
+    if related_counts:
+        print(f"   • Related Data: {', '.join(related_counts)}")
 
 
 def print_summary(report, verbose: bool = False) -> None:
     """Print a human-readable summary of the analysis report."""
     data = report.to_dict()
 
-    print("\n" + "=" * 60)
-    print("📊 ECHOTRAIL ANALYSIS REPORT")
-    print("=" * 60)
-
-    print(f"🎯 Hash: {data.get('observable', 'N/A')}")
-    print(f"📋 Data Type: {data.get('data_type', 'N/A')}")
-    print(f"⚖️  Verdict: {data.get('verdict', 'N/A').upper()}")
-    print(f"🏷️  Source: {data.get('source', 'N/A')}")
-
-    # Taxonomy information
-    if data.get("taxonomy"):
-        print("\n🏷️  TAXONOMY:")
-        for tax in data["taxonomy"]:
-            if isinstance(tax, dict):
-                level = tax.get("level", "N/A")
-                namespace = tax.get("namespace", "N/A")
-                predicate = tax.get("predicate", "N/A")
-                value = tax.get("value", "N/A")
-                print(f"   • {level.upper()}: {namespace}.{predicate} = {value}")
+    _print_header(data)
+    _print_taxonomy(data)
 
     # Details summary
     if data.get("details"):
         details = data["details"]
         print("\n📋 ANALYSIS DETAILS:")
-
-        # Show match status
-        if "matched" in details:
-            status = "✅ Found" if details["matched"] else "❌ Not found"
-            print(f"   • Match Status: {status}")
-
-        # Show key metrics
-        if "rank" in details:
-            print(f"   • Rank: {details['rank']}")
-
-        if "host_prev" in details:
-            print(f"   • Host Prevalence: {details['host_prev']}")
-
-        if "eps" in details:
-            print(f"   • Events Per Second: {details['eps']}")
-
-        if "description" in details:
-            print(f"   • Description: {details['description']}")
-
-        if "intel" in details:
-            print(f"   • Intelligence: {details['intel']}")
-
-        # Show related data counts
-        related_counts = []
-        for field in ["paths", "parents", "children", "grandparents", "hashes", "network"]:
-            if field in details and isinstance(details[field], list):
-                count = len(details[field])
-                if count > 0:
-                    related_counts.append(f"{field}: {count}")
-
-        if related_counts:
-            print(f"   • Related Data: {', '.join(related_counts)}")
+        _print_basic_details(details)
+        _print_related_counts(details)
 
     # Verbose output
     if verbose and "details" in data:

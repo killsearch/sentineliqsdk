@@ -26,7 +26,8 @@ Examples
     python examples/analyzers/eclectiq_example.py --execute --data-type domain --data "example.com"
 
     # Analyze hash
-    python examples/analyzers/eclectiq_example.py --execute --data-type hash --data "d41d8cd98f00b204e9800998ecf8427e"
+    python examples/analyzers/eclectiq_example.py --execute --data-type hash \
+        --data "d41d8cd98f00b204e9800998ecf8427e"
 
     # Analyze URL
     python examples/analyzers/eclectiq_example.py --execute --data-type url --data "https://example.com"

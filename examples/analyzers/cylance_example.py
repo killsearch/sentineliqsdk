@@ -8,7 +8,9 @@ usando a API da Cylance.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+import traceback
 from pathlib import Path
 
 # Adicionar o diretório src ao path para importar o SDK
@@ -17,9 +19,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 from sentineliqsdk import WorkerConfig, WorkerInput
 from sentineliqsdk.analyzers.cylance import CylanceAnalyzer
 
+# Constantes
+SHA256_HASH_LENGTH = 64
 
-def main() -> None:
-    """Função principal do exemplo."""
+
+def _create_argument_parser() -> argparse.ArgumentParser:
+    """Criar e configurar o parser de argumentos."""
     parser = argparse.ArgumentParser(
         description="Exemplo de uso do CylanceAnalyzer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -103,8 +108,11 @@ Nota: Este exemplo requer credenciais válidas da API Cylance.
         help="Exibir informações detalhadas",
     )
 
-    args = parser.parse_args()
+    return parser
 
+
+def _validate_arguments(args: argparse.Namespace) -> bool:
+    """Validar argumentos de entrada."""
     # Verificação de modo dry-run
     if not args.execute:
         print("❌ Modo dry-run. Use --execute para operações reais.")
@@ -113,36 +121,93 @@ Nota: Este exemplo requer credenciais válidas da API Cylance.
         print(f"   Data Type: {args.data_type}")
         print(f"   TLP: {args.tlp}")
         print(f"   PAP: {args.pap}")
-        return
+        return False
 
     # Validar hash SHA256
-    if args.data_type == "hash" and len(args.data) != 64:
-        print("❌ Erro: Apenas hashes SHA256 (64 caracteres) são suportados.")
+    if args.data_type == "hash" and len(args.data) != SHA256_HASH_LENGTH:
+        print(f"❌ Erro: Apenas hashes SHA256 ({SHA256_HASH_LENGTH} caracteres) são suportados.")
+        return False
+
+    return True
+
+
+def _create_worker_config(args: argparse.Namespace) -> WorkerConfig:
+    """Criar configuração do worker com secrets."""
+    secrets: dict[str, dict[str, str]] = {}
+    if args.tenant_id or args.app_id or args.app_secret or args.region:
+        secrets["cylance"] = {}
+        if args.tenant_id:
+            secrets["cylance"]["tenant_id"] = args.tenant_id
+        if args.app_id:
+            secrets["cylance"]["app_id"] = args.app_id
+        if args.app_secret:
+            secrets["cylance"]["app_secret"] = args.app_secret
+        if args.region:
+            secrets["cylance"]["region"] = args.region
+
+    return WorkerConfig(
+        check_tlp=True,
+        max_tlp=args.tlp,
+        check_pap=True,
+        max_pap=args.pap,
+        auto_extract=True,
+        secrets=secrets,
+    )
+
+
+def _print_results(result, args: argparse.Namespace) -> None:
+    """Imprimir resultados da análise."""
+    print("\n✅ Análise concluída!")
+    print(f"\n📊 Resultado: {result.full_report.get('verdict', 'N/A').upper()}")
+
+    if result.full_report.get("taxonomy"):
+        for tax in result.full_report["taxonomy"]:
+            print(f"   {tax['namespace']}: {tax['predicate']}")
+
+    if args.verbose and hasattr(result, "full_report"):
+        print("\n📋 Relatório completo:")
+        print(json.dumps(result.full_report, indent=2, ensure_ascii=False))
+
+    # Verificar se há informações de ameaça
+    if (
+        hasattr(result, "full_report")
+        and "hashlookup" in result.full_report
+        and result.full_report["hashlookup"] != "hash_not_found"
+    ):
+        _print_threat_info(result.full_report["hashlookup"])
+
+
+def _print_threat_info(hashlookup: dict) -> None:
+    """Imprimir informações de ameaça."""
+    if "sample" in hashlookup:
+        sample = hashlookup["sample"]
+        print("\n🔍 Informações da amostra:")
+        print(f"   Nome: {sample.get('sample_name', 'N/A')}")
+        print(f"   Score Cylance: {sample.get('cylance_score', 'N/A')}")
+        print(f"   Classificação: {sample.get('classification', 'N/A')}")
+        print(f"   Assinado: {sample.get('signed', 'N/A')}")
+        print(f"   Quarentena Global: {sample.get('global_quarantined', 'N/A')}")
+
+    # Mostrar dispositivos afetados
+    device_count = len([k for k in hashlookup if k != "sample"])
+    if device_count > 0:
+        print(f"\n🖥️  Dispositivos afetados: {device_count}")
+        for key, device in hashlookup.items():
+            if key != "sample":
+                print(f"   - {device.get('name', 'N/A')} ({device.get('state', 'N/A')})")
+
+
+def main() -> None:
+    """Função principal do exemplo."""
+    parser = _create_argument_parser()
+    args = parser.parse_args()
+
+    if not _validate_arguments(args):
         return
 
     try:
-        # Configurar secrets
-        secrets: dict[str, dict[str, str]] = {}
-        if args.tenant_id or args.app_id or args.app_secret or args.region:
-            secrets["cylance"] = {}
-            if args.tenant_id:
-                secrets["cylance"]["tenant_id"] = args.tenant_id
-            if args.app_id:
-                secrets["cylance"]["app_id"] = args.app_id
-            if args.app_secret:
-                secrets["cylance"]["app_secret"] = args.app_secret
-            if args.region:
-                secrets["cylance"]["region"] = args.region
-
         # Criar configuração do worker
-        config = WorkerConfig(
-            check_tlp=True,
-            max_tlp=args.tlp,
-            check_pap=True,
-            max_pap=args.pap,
-            auto_extract=True,
-            secrets=secrets,
-        )
+        config = _create_worker_config(args)
 
         # Criar input do worker
         worker_input = WorkerInput(
@@ -163,50 +228,13 @@ Nota: Este exemplo requer credenciais válidas da API Cylance.
         result = analyzer.run()
 
         # Exibir resultados
-        print("\n✅ Análise concluída!")
-        print(f"\n📊 Resultado: {result.full_report.get('verdict', 'N/A').upper()}")
-
-        if result.full_report.get("taxonomy"):
-            for tax in result.full_report["taxonomy"]:
-                print(f"   {tax['namespace']}: {tax['predicate']}")
-
-        if args.verbose and hasattr(result, "full_report"):
-            print("\n📋 Relatório completo:")
-            import json
-
-            print(json.dumps(result.full_report, indent=2, ensure_ascii=False))
-
-        # Verificar se há informações de ameaça
-        if (
-            hasattr(result, "full_report")
-            and "hashlookup" in result.full_report
-            and result.full_report["hashlookup"] != "hash_not_found"
-        ):
-            hashlookup = result.full_report["hashlookup"]
-            if "sample" in hashlookup:
-                sample = hashlookup["sample"]
-                print("\n🔍 Informações da amostra:")
-                print(f"   Nome: {sample.get('sample_name', 'N/A')}")
-                print(f"   Score Cylance: {sample.get('cylance_score', 'N/A')}")
-                print(f"   Classificação: {sample.get('classification', 'N/A')}")
-                print(f"   Assinado: {sample.get('signed', 'N/A')}")
-                print(f"   Quarentena Global: {sample.get('global_quarantined', 'N/A')}")
-
-            # Mostrar dispositivos afetados
-            device_count = len([k for k in hashlookup if k != "sample"])
-            if device_count > 0:
-                print(f"\n🖥️  Dispositivos afetados: {device_count}")
-                for key, device in hashlookup.items():
-                    if key != "sample":
-                        print(f"   - {device.get('name', 'N/A')} ({device.get('state', 'N/A')})")
+        _print_results(result, args)
 
     except KeyboardInterrupt:
         print("\n❌ Operação cancelada pelo usuário.")
     except Exception as e:
         print(f"❌ Erro durante a análise: {e!s}")
         if args.verbose:
-            import traceback
-
             traceback.print_exc()
 
 

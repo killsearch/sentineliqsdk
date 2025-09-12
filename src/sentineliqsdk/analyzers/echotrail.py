@@ -31,6 +31,12 @@ class EchoTrailAnalyzer(Analyzer):
     including paths, parents, children, and network information.
     """
 
+    # Threat assessment thresholds
+    MALICIOUS_RANK_THRESHOLD = 10
+    SUSPICIOUS_RANK_THRESHOLD = 100
+    LOW_PREVALENCE_THRESHOLD = 0.01  # Less than 1%
+    HIGH_EPS_THRESHOLD = 1000
+
     METADATA = ModuleMetadata(
         name="EchoTrail Analyzer",
         description="File hash analysis using EchoTrail API for prevalence and reputation insights",
@@ -133,19 +139,19 @@ class EchoTrailAnalyzer(Analyzer):
         # Check rank - lower rank indicates more suspicious
         rank = result.get("rank")
         if rank is not None:
-            if rank <= 10:
+            if rank <= self.MALICIOUS_RANK_THRESHOLD:
                 return "malicious"
-            if rank <= 100:
+            if rank <= self.SUSPICIOUS_RANK_THRESHOLD:
                 return "suspicious"
 
         # Check host prevalence - very low prevalence might be suspicious
         host_prev = result.get("host_prev")
-        if host_prev is not None and host_prev < 0.01:  # Less than 1%
+        if host_prev is not None and host_prev < self.LOW_PREVALENCE_THRESHOLD:
             return "suspicious"
 
         # Check EPS (Events Per Second) - very high might indicate malware
         eps = result.get("eps")
-        if eps is not None and eps > 1000:
+        if eps is not None and eps > self.HIGH_EPS_THRESHOLD:
             return "suspicious"
 
         return "safe"

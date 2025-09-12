@@ -42,6 +42,11 @@ from sentineliqsdk.models import AnalyzerReport, ModuleMetadata, TaxonomyLevel
 class EclecticIQAnalyzer(Analyzer):
     """Analisador para buscar observáveis em instância EclecticIQ configurada."""
 
+    # Constantes para scores de maliciosidade
+    HIGH_MALICIOUS_THRESHOLD = 70
+    SUSPICIOUS_THRESHOLD = 30
+    MAX_ENTITY_COUNT_THRESHOLD = 1000
+
     METADATA = ModuleMetadata(
         name="EclecticIQ Analyzer",
         description="Busca observáveis em instância EclecticIQ configurada",
@@ -158,9 +163,9 @@ class EclecticIQAnalyzer(Analyzer):
 
         # Se há score de maliciosidade, usar para determinar veredito
         if obs_score is not None:
-            if obs_score >= 70:
+            if obs_score >= self.HIGH_MALICIOUS_THRESHOLD:
                 return "malicious"
-            if obs_score >= 30:
+            if obs_score >= self.SUSPICIOUS_THRESHOLD:
                 return "suspicious"
             return "safe"
 
