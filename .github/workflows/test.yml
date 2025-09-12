@@ -1,46 +1,58 @@
-name: Test
+name: CI
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  lint-and-test:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.13"]
-        resolution-strategy: ["highest"]
-
-    name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution-strategy }})
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
+      - name: Setup uv (Python ${{ matrix.python-version }})
+        uses: astral-sh/setup-uv@v6
         with:
-          node-version: 23
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install @devcontainers/cli
-        run: npm install --location=global @devcontainers/cli@0.73.0
-
-      - name: Start Dev Container
+      - name: Display versions
         run: |
-          git config --global init.defaultBranch main
-          devcontainer up --workspace-folder .
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-          RESOLUTION_STRATEGY: ${{ matrix.resolution-strategy }}
+          uv --version
+          python -V
 
-      - name: Lint package
-        run: devcontainer exec --workspace-folder . poe lint
+      - name: Sync project dependencies (dev)
+        run: uv sync --group dev --all-extras
 
-      - name: Test package
-        run: devcontainer exec --workspace-folder . poe test
+      - name: Lint (pre-commit via Poe)
+        run: uv run poe lint
+
+      - name: Type check (mypy)
+        run: uv run mypy
+
+      - name: Run tests (pytest + coverage via Poe)
+        run: uv run poe test
+
+      - name: Upload reports (mypy/pytest/coverage)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ runner.os }}-py${{ matrix.python-version }}
+          path: |
+            reports/**
+          if-no-files-found: warn

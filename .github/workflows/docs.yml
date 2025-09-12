@@ -1,11 +1,22 @@
 name: Docs
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "README.md"
   release:
-    types: [created]
+    types: [ created ]
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -16,29 +27,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
+      - name: Setup uv (Python 3.13)
+        uses: astral-sh/setup-uv@v6
         with:
-          node-version: 23
+          python-version: "3.13"
 
-      - name: Install @devcontainers/cli
-        run: npm install --location=global @devcontainers/cli@0.73.0
-
-      - name: Start Dev Container
-        run: |
-          git config --global init.defaultBranch main
-          devcontainer up --workspace-folder .
-        env:
-          PYTHON_VERSION: 3.13
-          RESOLUTION_STRATEGY: highest
-
-      - name: Ensure dev dependencies (uv)
-        run: devcontainer exec --workspace-folder . uv sync --group dev --all-extras
+      - name: Sync project dependencies (dev)
+        run: uv sync --group dev --all-extras
 
       - name: Build docs (MkDocs)
-        run: devcontainer exec --workspace-folder . bash -lc 'PYTHONPATH=src poe docs'
+        run: uv run poe docs
 
-      - name: Deploy to gh-pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -2,24 +2,54 @@ name: Publish
 
 on:
   release:
-    types:
-      - created
+    types: [ created ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     environment: pypi
-    permissions:
-      id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: Install uv
+      - name: Setup uv (Python 3.13)
         uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
 
-      - name: Publish package
+      - name: Sync project (no dev)
+        run: uv sync --all-extras
+
+      - name: Verify tag matches project version
+        shell: bash
         run: |
-          uv build
-          uv publish
+          PYPROJECT_VERSION=$(uv run python -c "import tomllib,sys; import pathlib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          TAG_REF="${GITHUB_REF##*/}"
+          if [[ "v${PYPROJECT_VERSION}" != "${TAG_REF}" ]]; then
+            echo "Tag ${TAG_REF} does not match project version v${PYPROJECT_VERSION}" >&2
+            exit 1
+          fi
+
+      - name: Build package (sdist + wheel)
+        run: uv build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.ref_name }}
+          path: dist/**
+
+      - name: Publish to PyPI (OIDC Trusted Publisher)
+        run: uv publish
